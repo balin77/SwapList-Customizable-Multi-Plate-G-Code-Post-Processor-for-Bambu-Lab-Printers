@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="google" content="notranslate" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>swaplist.app (local)</title>
+
+  <link rel="icon" type="image/png" href="https://swaplist.app/dat/favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="https://swaplist.app/dat/favicon/favicon.svg">
+  <link rel="shortcut icon" href="https://swaplist.app/dat/favicon/favicon.ico" sizes="16x16 32x32 48x48 64x64">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://swaplist.app/dat/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="https://swaplist.app/dat/favicon/site.webmanifest">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+
+<body class="notranslate" translate="no">
+  <input type="checkbox" class="hidden" id="debug_outline" />
+  <div id="app_wrapper">
+    <div id="app_header">
+      <div>
+        <label for="_debug_outline">
+          <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" />
+        </label>
+        <div id="statistics" class="hidden">
+          <div id="queue_statistics">
+            <h3>Queue statistics:</h3>
+            <div>
+              <span> Duration: </span>
+              <span id="total_time"> 19m 12s </span>
+            </div>
+            <div>
+              <span> Plates: </span>
+              <span id="used_plates"> 3 </span>
+            </div>
+          </div>
+          <div id="filament_statistics">
+            <h3>Filament usage statistics:</h3>
+            <div id="filament_total">
+              <div title="1">Slot 1: <br> 0.08m <br> 0.23g</div>
+              <div title="2">Slot 2: <br> 0.08m <br> 0.23g</div>
+              <div title="3">Slot 3: <br> 0.08m <br> 0.23g</div>
+              <div title="4">Slot 4: <br> 0.08m <br> 0.23g</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div id="action_buttons" class="hidden">
+          <!-- 1) Mode-Toggle: erscheint zusammen mit action_buttons -->
+          <div id="mode_switch" class="mode-toggle hidden">
+            <input type="radio" id="mode_a1m" name="mode" value="A1M" checked>
+            <label for="mode_a1m">A1&nbsp;Mini</label>
+
+            <input type="radio" id="mode_x1" name="mode" value="X1">
+            <label for="mode_x1">X1</label>
+
+            <input type="radio" id="mode_p1" name="mode" value="P1">
+            <label for="mode_p1">P1</label>
+          </div>
+
+          <!-- 2) Generate + Progressbar -->
+          <button id="export" onclick="export_3mf()">Generate SWAP file</button>
+
+          <button id="export_gcode" onclick="export_gcode_txt()">Export GCODE (txt)</button>
+          <!-- 3) Reset ganz unten -->
+          <button id="reset" onclick="location.reload()">Reset</button>
+          <div id="progress_bar" style="opacity: 0; width: 100;">
+            <div id="progress_scale" style="width: 0%; display: flex;"> </div>
+          </div>
+
+          <input autocomplete="off" type="checkbox" id="show_settings" onchange="toggle_settings(this.checked)"
+            name="show_settings" />
+          <label for="show_settings"> Show settings </label>
+        </div>
+      </div>
+    </div>
+
+    <div id="app_content">
+      <div id="plates_wrapper">
+        <div id="drop_zones_wrapper">
+          <div id="drop_zone" class="">
+            <p>DROP YOUR FILE(S) HERE</p><i>...or click to select</i>
+          </div>
+          <div id="spacer_cell"> </div>
+          <div id="drop_zone_instant" class="">
+            <p class="">DROP HERE FOR <br><i>EXPRESS CONVERSION </i></p>
+          </div>
+        </div>
+        <ol id="playlist_ol"></ol>
+      </div>
+
+      <div id="settings_wrapper">
+        <div>
+          <label for="file_name">Custom file name:</label> <br>
+          <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name"
+            onclick="custom_file_name(this)" onload="adj_field_length(this,5,26)" onkeyup="adj_field_length(this,5,26)"
+            onkeypress="adj_field_length(this,5,26)">
+          <span> .swap.3mf</span>
+          <br><br>
+          <input id="loops" autocomplete="off" onchange="update_statistics();" type="number" min="1" max="9999" step="1"
+            value="1">
+          <label for="loops">Loop repeats</label>
+          <details class="tool_info">
+            <summary></summary>
+            <p>This number defines how many times the entire
+              queue will be reprinted.</p>
+            <p> Example: Plate "A"
+              is set to 3 repeats, plate "B" is set to 1
+              repeat and the "Loop repeats" is set to 2.
+              This will result in following printing order: </p>
+            <p> A A A B A A A B .</p>
+          </details>
+          <!-- Extra Settings für X1/P1 -->
+
+          <div id="x1p1-settings" class="hidden">
+            <label>
+              <input type="checkbox" id="opt_filament_purge_off">
+              Turn off filament purge
+              <details class="tool_info">
+                <summary></summary>
+                <p>Disable the filament purge sequence after the first plate.
+                  This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
+              </details>
+            </label>
+            <label>
+              <input type="checkbox" id="opt_purge" autocomplete="off" checked />
+              Hide nozzle load line in model
+              <details class="tool_info">
+                <summary></summary>
+                <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
+                  deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
+              </details>
+            </label>
+            <label>
+              <input type="checkbox" id="opt_bedlevel_cooling">
+              Raise Bed Level for cooling
+              <details class="tool_info">
+                <summary></summary>
+                <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
+                  prints the printer cover must be removed to avoid collision.</p>
+              </details>
+            </label>
+            <div id="advanced-cooldown-settings">
+              <label for="raisebed_offset_mm">Bed raise offset before push-out (mm)</label>
+              <input id="raisebed_offset_mm" type="number" step="1" min="5" max="200" value="30">
+              <details class="tool_info">
+                <summary></summary>
+                <p>Defines how much the bed is raised before performing the push-out sequence.</p>
+              </details>
+
+              <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
+              <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
+              <details class="tool_info">
+                <summary></summary>
+                <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
+              </details>
+            </div>
+          </div>
+
+        </div>
+        <br><br><br>
+        <details>
+          <summary>Log</summary>
+          <p> 00-23</p>
+          <ul id="log">
+            <li> Bug fix - redundant AMS swaps removed (earlier there was an extruding attempt at low temperature before
+              print resulting in "clicking" noise)</li>
+          </ul>
+          <p> 00-24</p>
+          <ul id="log">
+            <li> Bug fix - AMS material asignment issue in Bambustudio on MacOS (caused by "&gt;&lt;" in
+              slice_info.config ) </li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" autocomplete="off" accept=".3mf, .gcode" id="file" class="hidden" name="file" multiple />
+
+  <li id="list_item_prototype" class="list_item hidden">
+    <button class="plate-remove" onclick="removePlate(this)">×</button>
+    <div class="p_title">
+      <span class="f_id"> some_id </span>
+      <span class="f_name single-line"> some_file.3mf </span>
+      <span class="p_name"> some_plate </span> <br>
+    </div>
+
+    <img class="p_icon" />
+    <div class="p_info" title="Duration of the plate printing and number of repeats.">
+      <span class="p_time"> [plate_time] </span>
+      <input class="p_rep" onchange="update_statistics();" type="number" min="0" max="9999" step="1" value="1">
+    </div>
+    <div class="p_filaments">
+      <div class="p_filament_prototype">
+        <div class="f_color"> </div> <br>
+        <span>Slot</span> <span class="f_slot"> </span> <br>
+        <span class="f_type"> </span> <br>
+        <span class="f_used_g"> </span> <span>g</span> <br>
+        <span class="f_used_m"> </span> <span>m</span>
+      </div>
+    </div>
+    <div class="plate-x1p1-settings hidden">
+      <div class="plate-x1p1-header">Objects on this plate</div>
+
+      <label class="obj-count-label">
+        <span>Number of objects:</span>
+        <select class="obj-count" autocomplete="off">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+
+      <div class="obj-coords"></div>
+    </div>
+  </li>
+
+  <div id="site-info">
+    <div id="err"> </div>
+
+    <p>Multiprinter Version V1</p>
+    <p>Based on V00-24</p>
+
+    <details>
+      <summary> Download self-test 3MF file </summary>
+      <br><a href="https://swaplist.app/dat/selftest_files/Selftes-BBS_SWAP-A1M_v02.3mf"><b>Bambu Studio </b> self-test
+        file </a>
+      <br><br><a href="https://swaplist.app/dat/selftest_files/Selftes-ORCA_SWAP-A1M_v02.3mf"><b>Orca Slicer </b>
+        self-test file </a>
+      <br>
+    </details>
+    <details>
+      <summary>Data security</summary>
+      <p>
+        This app uses your browser as an environment and runs locally on your computer.
+        This means none of your data is sent to our server or any third party cloud provider.
+        You can even save this app as a web page and use it completely offline.
+        This site also does not use cookies or store any personal information on your device.
+      </p>
+    </details>
+
+    <details>
+      <summary>Information about site operator</summary>
+      <p>
+        Novibar GmbH<br>
+        Muehlenstr. 51<br>
+        59348 Luedinghausen<br>
+        Germany
+      </p>
+    </details>
+  </div>
+  </div>
+
+  <!-- Vendor libs (CDN for convenience; you can replace with local files in assets/js/libs/) -->
+  <script src="assets/js/libs/jszip_m.js"></script>
+  <script src="assets/js/libs/spark-md5.min.js"></script>
+  <script src="assets/js/libs/obfsc.js"></script>
+
+  <!-- App logic -->
+  <script src="assets/js/commands.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+
+</html>

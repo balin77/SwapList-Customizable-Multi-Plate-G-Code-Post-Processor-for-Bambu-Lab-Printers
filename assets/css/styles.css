@@ -1,0 +1,654 @@
+:root {
+  --ci_1:#00BBDC;
+  --ci_2:#00eeff;
+}
+
+*{ font-family:'Noto Sans','Arial',sans-serif; }
+
+body{
+  font-size:14px;
+  margin:0;
+}
+
+#app_wrapper{
+  max-width:1110px;
+  margin:0 auto;
+  padding:10px 20px;
+}
+
+/* ---------- Playlist / Plates ---------- */
+
+#playlist_ol{
+  padding:0;
+  counter-reset:list-number;
+}
+
+#logo{ padding:15px 0; }
+
+.list_item{
+  width:210px;
+  /* Höhe dynamisch, keine Scrollbars */
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+
+  background:#ccc;
+  border:#999 1px solid;
+  border-radius:8px;
+  opacity:1;
+  padding:5px;
+  margin:5px;
+  display:inline-block;
+}
+
+/* Nummerierung voranstellen */
+.list_item::before{
+  display:inline-block;
+  width:30px;
+  text-align:center;
+  counter-increment:list-number;
+  content:counter(list-number);
+  font-size:16pt;
+  font-weight:600;
+  vertical-align:top;
+  margin-top:5px;
+  color:#777;
+}
+
+/* Single-line Truncation */
+.single-line{
+  width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  display:inline-block;
+}
+
+/* Plate-Elemente */
+.p_icon{
+  width:100%;
+  max-width: 200px; 
+  background-color:#ddd;
+  border-radius:4px;
+}
+.p_info{
+  display:inline-block;
+  width:190px;
+  padding:10px 5px;
+}
+.p_title{
+  width:150px;
+  display:inline-block;
+  margin-bottom:8px;
+  overflow:hidden;
+}
+.p_name{ display:inline-block; color:#888; }
+.f_id{ display:none; }
+
+.p_time{
+  display:inline-block;
+  vertical-align:middle;
+  font-size:14pt;
+  color:#777;
+}
+
+.p_rep{
+  width:55px;
+  height:25px;
+  background:#ddd;
+  border-radius:4px;
+  font-size:14pt;
+  font-weight:500;
+  float:right;
+  text-align:center;
+}
+
+/* Filamente in der Plate */
+.p_filaments{ margin-top:5px; width:200px; }
+.f_color{
+  height:20px; width:20px;
+  border-radius:11px;
+  border:1px solid #888;
+  display:inline-block;
+}
+.p_filament{
+  display:inline-block;
+  font-size:6pt;
+  text-align:center;
+  width:40px;
+}
+.p_filament_prototype{ display:none; }
+
+/* Drag&Drop States */
+#playlist_ol li.targeted{ background:#C3E1ED; opacity:.3; }
+#playlist_ol li.active{
+  background:#f5f5f5;
+  border-right:5px solid var(--ci_1);
+  margin:5px 0 -5px 0;
+}
+#playlist_ol li.active .file-input,
+#playlist_ol li.active ._p_rep,
+.p_time,
+li.active .p_info,
+.p_icon{ pointer-events:none; }
+
+/* ---------- Header / Progress / Stats ---------- */
+
+#total_size_label{
+  font-weight:600;
+  font-size:16px;
+  text-align:center;
+  padding:10px;
+  position:relative;
+  top:-30px;
+  min-width:100px;
+  color:#aaa;
+}
+
+#progress_bar{
+  background-color:#eee;
+  display:block;
+  height:5px;
+  width:170px;    
+  border:1px solid #ccc;
+}
+#progress_scale{
+  height:100%;
+  background:linear-gradient(90deg,var(--ci_1),var(--ci_1),var(--ci_2),var(--ci_1),var(--ci_1));
+  background-size:300% 100%;
+  animation:move 2s ease infinite;
+  width:50%;
+}
+@keyframes move{
+  0%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+.inactive{ color:#aaa; opacity:.5; }
+
+#file_name, #file_name~span{ font-family:'Courier New',Courier,monospace; }
+#file_name{
+  width:300px;
+  height:20px;
+  background:#fafafa;
+  border-radius:4px;
+  margin-top:5px;
+}
+#file_name~span{ color:#777; }
+
+::placeholder{ color:#888; }
+
+details summary{ cursor:pointer; }
+.tool_info, details.tool_info summary{ display:inline; }
+.tool_info[open]{ padding:8px; background-color:#eee; }
+details[open].tool_info{ display:block; margin:5px auto; }
+details[open].tool_info summary::before{
+  content:'X';
+  background-color:#EDF07A;
+  width:30px;
+  border-radius:3px;
+  display:inline-block;
+  text-align:center;
+}
+details.tool_info summary::before{ content:'( ? )'; }
+.tool_info>summary{ color:#777; }
+
+#debug_outline:checked ~ * *{ border:#00BBDC 1px solid; }
+#debug_outline:checked ~ * *:hover{ border:#f00 1px dotted; }
+
+#app_header {
+  display: flex;                 /* Flexbox statt float */
+  justify-content: space-between;/* Links & Rechts trennen */
+  align-items: flex-start; 
+  width: 100%;
+  border-bottom: #555 1px solid;
+  padding: 10px 0;               /* etwas Abstand */
+}
+
+/* Linker Block (Logo + Stats) */
+#app_header > div:first-child {
+  display: flex;
+  flex-direction: column;  /* Statt nebeneinander jetzt untereinander */
+  align-items: flex-start; /* Links ausrichten */
+  gap: 10px;
+}
+
+/* Rechter Block (Buttons + Show settings) */
+#app_header > div:last-child {
+  display: flex;
+  flex-direction: column; /* Buttons untereinander */
+  align-items: flex-end;  /* Rechts ausrichten */
+  gap: 10px;
+}
+
+/* ---------- Queue/Stats ---------- */
+
+#queue_statistics>* > *:nth-child(1){
+  display:inline-block;
+  width:9ch;
+  font-size:10pt;
+}
+
+#total_time, #used_plates{
+  font-size:16pt;
+  font-weight:600;
+}
+
+#statistics>div{ margin:10px 0; }
+#queue_statistics{
+  border-right:#777 1px solid;
+  padding-right:20px;
+  margin-right:20px;
+}
+#filament_total>div{
+  margin-right:20px;
+  display:inline-block;
+}
+#statistics h3{ margin:0 0 5px 0; }
+#statistics>div{ display:inline-block; vertical-align:text-top; }
+
+/* ---------- Buttons / Actions ---------- */
+
+#export{
+  background-color:#EDF07A;
+  border:#555 2px solid;
+  border-radius:5px;
+  height: 60px;
+  width:170px;
+  vertical-align:middle;
+  font-weight:600;
+  cursor:pointer;
+}
+#export:hover{ background-color:#fdffbf; }
+
+#show_set_cont{ margin-top:20px; }
+
+#reset{
+  background-color:#555;
+  color:#EDF07A;
+  border:#555 2px solid;
+  border-radius:5px;
+  width:170px;
+  height:30px;
+  vertical-align:middle;
+  font-weight:600;
+  cursor:pointer;
+  margin-top: auto; /* Reset ganz nach unten drücken */
+}
+
+
+
+/* Segmented mode toggle */
+.mode-toggle{
+  display:inline-flex;
+  border:1px solid #555;
+  border-radius:8px;
+  overflow:hidden;
+  width: 168px;
+}
+.mode-toggle input{ display:none; }
+.mode-toggle label{
+  padding:5px 12px;
+  cursor:pointer;
+  user-select:none;
+  font-weight:600;
+  background:#eee;
+  flex:1
+}
+.mode-toggle label + input + label{ border-left:1px solid #555; }
+.mode-toggle input:checked + label{ background:#EDF07A; }
+
+.mode-toggle:hover{
+  background-color:#f5f5f5;     /* dezentes Hover wie die anderen */
+}
+
+#mode_switch.hidden{ display:none !important; }
+
+
+
+
+/* ---------- Dropzones ---------- */
+
+#drop_zones_wrapper{
+  display:table;
+  width:100%;
+  height:200px;
+}
+#drop_zone, #drop_zone_instant{
+  border:3px solid #9DB0CC;
+  border-radius:10px;
+  border-style:dashed;
+  display:table-cell;
+  padding:10px;
+  vertical-align:middle;
+}
+#drop_zone{
+  background-color:#D9E6E6;
+  width:70%;
+  margin-right:30px;
+}
+#drop_zone_instant{ background-color:#E3E6D9; min-width:150px; }
+
+#drop_zone.drop_zone_active,
+#drop_zone_instant.drop_zone_active{ background-color:#6eff42; }
+
+.mini_drop_zone #drop_zone_instant,
+.mini_drop_zone #spacer_cell{ display:none; }
+
+#drop_zones_wrapper.mini_drop_zone{ height:50px; }
+#drop_zones_wrapper.mini_drop_zone p{ font-size:16pt; }
+#drop_zones_wrapper.mini_drop_zone div{ padding:5px; }
+
+#drop_zones_wrapper.focused,
+#drop_zones_wrapper.mini_drop_zone.focused{ height:500px; }
+
+#drop_zone>p, #drop_zone>i{
+  text-align:center;
+  color:#9DB0CC;
+}
+#drop_zone>p{
+  font-weight:800;
+  font-size:24pt;
+  margin:0;
+}
+#drop_zone>i{ display:block; font-size:16pt; }
+#drop_zone_instant>p{
+  text-align:center;
+  font-weight:300;
+  color:#9DB0CC;
+  font-size:20pt;
+}
+#drop_zone_instant i{ font-weight:800; }
+
+/* ---------- Layout: Settings / Plates ---------- */
+
+#app_content{
+  padding-top:20px;
+  display:table;
+  width:100%;
+}
+
+#settings_wrapper{
+  min-width:100px;
+  width:300px;
+  padding:0 20px;
+  vertical-align:top;
+  display:table-cell;
+}
+#settings_wrapper>div{
+  border-left:#555 1px solid;
+  padding-left:20px;
+  height:100%;
+}
+
+#plates_wrapper{ display:table-cell; }
+#settings_wrapper{ display:none; }
+#spacer_cell{ display:table-cell; min-width:20px; }
+
+#version{ color:#bbb; text-align:right; }
+
+/* ---------- Global X1/P1 Settings (rechts) ---------- */
+
+#x1p1-settings{
+  margin-top:10px;
+  padding:8px 10px;
+  border-top:1px solid #e9edf3;
+}
+#x1p1-settings label[for="object-count"]{
+  display:block;
+  margin:10px 0 6px;
+}
+#object-count{ margin-bottom:12px; }
+
+/* Globale Koordinaten (falls genutzt) */
+#object-coords{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:6px;
+}
+.obj-coord{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:8px 10px;
+  background:#f8fafc;
+  border:1px solid #e6e8ee;
+  border-radius:8px;
+}
+.obj-coord b{ min-width:90px; }
+.obj-coord label{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+}
+.obj-coord input[type="number"]{
+  width:8ch;
+  padding:4px 6px;
+}
+
+/* Checkbox-Bereich (unter Trennlinie) */
+#mode_options{
+  margin-top:14px;
+  padding-top:10px;
+
+}
+#mode_options label{ margin-left:6px; }
+
+/* ---------- Per-Plate X1/P1 Settings ---------- */
+
+.plate-x1p1-settings{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid #e9edf3;
+
+  /* stellt sicher, dass die Box mitwächst */
+  height:auto;
+  max-height:none;
+  overflow:visible;
+}
+.plate-x1p1-header{
+  font-weight:600;
+  margin-bottom:8px;
+  color:#2b3a49;
+}
+.obj-count-label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+.obj-coords{
+  display:grid;
+  gap:8px;
+}
+
+/* Titel oben, X/Y kompakt in 1 Zeile */
+.obj-coord-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:6px 8px;
+  background:#fafbfc;
+  border:1px solid #eef2f6;
+  border-radius:8px;
+}
+.obj-coord-row b{ min-width:82px; }
+.obj-coord-row label{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.obj-coord-row input[type="number"]{ width:8ch; }
+
+/* ---------- Inputs / Loops ---------- */
+
+#loops{
+  width:55px;
+  border-radius:4px;
+  font-weight:500;
+  text-align:center;
+}
+
+.loops{
+  width:50px;
+  height:20px;
+  background:#fafafa;
+  border-radius:4px;
+}
+
+/* ---------- Utility ---------- */
+
+.hidden{ display:none; }
+
+/* Optional: visuelle Andeutung für X1/P1 (falls globaler state so gesetzt würde)
+body[data-mode="X1P1"] #export { background-color:#d9f7ff; }
+body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
+
+/* Box-Modell stabilisieren – Padding zählt zur Breite */
+.list_item,
+.plate-x1p1-settings,
+.obj-coord-row { box-sizing: border-box; }
+
+/* Per‑Plate Settings leicht schmaler innen, damit alles sicher reinpasst */
+.plate-x1p1-settings { padding: 10px 8px 0; }
+
+/* Name oben, X/Y darunter in einer kompakten Zeile */
+.obj-coord-row{
+  display: flex;
+  flex-wrap: wrap;        /* erlaubt Umbruch nach der Überschrift */
+  align-items: center;
+  gap: 8px;               /* etwas enger, damit es in 200px passt */
+  padding: 6px 8px;
+  background: #fafbfc;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  width: 100%;            /* niemals breiter als die Karte */
+}
+
+.obj-coord-row b{
+  flex: 0 0 100%;         /* eigene Zeile */
+  margin-bottom: 4px;
+}
+
+.obj-coord-row label{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.obj-coord-row input[type="number"]{
+  width: 6ch;             /* schmaler als vorher (8ch) */
+  padding: 3px 6px;
+}
+
+/* 1) Export-GCODE-Button: gleiches Styling wie #export, aber grau */
+#export_gcode{
+  background-color:#eee;        /* grau lassen */
+  color:#333;
+  border:#555 2px solid;
+  border-radius:5px;
+  width:170px;
+  height:30px;                  /* wie #export */
+  vertical-align:middle;
+  font-weight:600;
+  cursor:pointer;
+}
+#export_gcode:hover{
+  background-color:#f5f5f5;     /* dezentes Hover wie die anderen */
+}
+
+#action_buttons.hidden {
+  display: none;        /* unsichtbar, aber Platz bleibt */
+  pointer-events: none;   /* verhindert Klicks */
+}
+
+/* Aktionsbereich vertikal anordnen */
+#action_buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;         /* gleichmäßiger Abstand */
+  width: 170px;
+  margin-top: 10px;   /* statt großem Abstand nach unten */
+}
+
+.coord-error {
+  background-color: #ffcccc !important;
+  border: 2px solid #ff0000 !important;
+}
+
+/* Einheitlicher Block für alle globalen Optionen */
+#x1p1-settings label,
+#advanced-cooldown-settings label {
+  display: block;
+  margin: 14px 0 4px 0;   /* schöner Abstand oben/unten */
+  font-weight: normal;    /* kein Fett */
+  color: #2b3a49;         /* gleiche Farbe wie Texte */
+}
+
+/* Eingabefelder für Zahlen */
+#x1p1-settings input[type="number"],
+#advanced-cooldown-settings input[type="number"] {
+  margin: 4px 0 8px 0;    /* gleichmäßiger Abstand zum nächsten Element */
+  padding: 4px 6px;
+  width: 80px;
+}
+
+/* Checkboxen */
+#x1p1-settings input[type="checkbox"] {
+  margin-right: 6px;      /* etwas Platz zum Labeltext */
+  vertical-align: middle; /* besser ausgerichtet */
+}
+
+/* Abstände um den ganzen Block */
+#x1p1-settings,
+#advanced-cooldown-settings {
+  margin: 18px 0;
+  padding: 0;
+}
+
+/* Override: Site-Info nicht rechts ankleben */
+#site-info {
+  max-width:1110px;
+  text-align: right;  
+  margin:0 auto;
+  padding:10px 20px;         
+}
+
+#site-info details {
+  margin-bottom: 1em;
+}
+
+#site-info summary {
+  display: inline-block;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #838383;
+}
+
+.plate-remove {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: #f55;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.plate-remove:hover {
+  opacity: 1;
+  background: #d00;
+}
+.list_item {
+  position: relative; /* wichtig, damit .plate-remove absolut dazu steht */
+}
