@@ -29,42 +29,42 @@ var USE_BEDLEVEL_COOLING = false; // default: aus
 
 const PRINTER_MODEL_MAP = {
   "Bambu Lab X1 Carbon": "X1",
-  "Bambu Lab X1":        "X1",
-  "Bambu Lab X1E":       "X1",
-  "Bambu Lab A1 mini":   "A1M",
-  "Bambu Lab P1S":       "P1",
-  "Bambu Lab P1P":       "P1",
+  "Bambu Lab X1": "X1",
+  "Bambu Lab X1E": "X1",
+  "Bambu Lab A1 mini": "A1M",
+  "Bambu Lab P1S": "P1",
+  "Bambu Lab P1P": "P1",
 };
 
-function parsePrinterModelFromGcode(gtext){
+function parsePrinterModelFromGcode(gtext) {
   const m = gtext.match(/^[ \t]*;[ \t]*printer_model\s*=\s*(.+)$/mi);
   if (!m) return null;
   const raw = m[1].trim();
 
   if (/^Bambu Lab X1(?: Carbon|E)?$/i.test(raw)) return "X1";
-  if (/^Bambu Lab A1 mini$/i.test(raw))          return "A1M";
-  if (/^Bambu Lab P1(?:S|P)$/i.test(raw))        return "P1";
+  if (/^Bambu Lab A1 mini$/i.test(raw)) return "A1M";
+  if (/^Bambu Lab P1(?:S|P)$/i.test(raw)) return "P1";
   return "UNSUPPORTED"; // alles andere
 }
 
-function ensureModeOrReject(detectedMode, fileName){
-  if (detectedMode === "UNSUPPORTED" || !detectedMode){
+function ensureModeOrReject(detectedMode, fileName) {
+  if (detectedMode === "UNSUPPORTED" || !detectedMode) {
     alert(`This printer model is not supported yet in this app (file: ${fileName}).`);
     return false;
   }
 
-  if (CURRENT_MODE == null){
+  if (CURRENT_MODE == null) {
     setMode(detectedMode);
     // Radios visuell spiegeln (falls sichtbar)
-    const map = { A1M:'mode_a1m', X1:'mode_x1', P1:'mode_p1' };
+    const map = { A1M: 'mode_a1m', X1: 'mode_x1', P1: 'mode_p1' };
     const rb = document.getElementById(map[detectedMode]);
     if (rb) rb.checked = true;
     return true;
   }
 
-  if (CURRENT_MODE !== detectedMode){
+  if (CURRENT_MODE !== detectedMode) {
     alert(
-      `Printer mismatch.\nLoaded queue is ${CURRENT_MODE}, new file is ${detectedMode}.\n`+
+      `Printer mismatch.\nLoaded queue is ${CURRENT_MODE}, new file is ${detectedMode}.\n` +
       `The new plate will not be added.`
     );
     return false;
@@ -72,7 +72,7 @@ function ensureModeOrReject(detectedMode, fileName){
   return true;
 }
 
-function modeFromPrinterModel(model){
+function modeFromPrinterModel(model) {
   return model ? PRINTER_MODEL_MAP[model] || null : null;
 }
 
@@ -142,7 +142,7 @@ function initialize_page() {
   var mA1 = document.getElementById('mode_a1m');
   var mX1 = document.getElementById('mode_x1');
   var mP1 = document.getElementById('mode_p1');
-  if (mA1 && mX1 && mP1){
+  if (mA1 && mX1 && mP1) {
     // Deaktivieren: nur noch per detect → setMode()
     mA1.disabled = true;
     mX1.disabled = true;
@@ -172,6 +172,22 @@ function initialize_page() {
     USE_BEDLEVEL_COOLING = chkCool.checked; // initial übernehmen (default false)
   }
 
+  // Secure push-off UI wiring
+  const chkSec = document.getElementById("opt_secure_pushoff");
+  const lvlInp = document.getElementById("extra_pushoff_levels");
+  const lvlLbl = document.getElementById("extra_pushoff_levels_label");
+  const lvlHelp = document.getElementById("extra_pushoff_levels_help");
+
+  function reflectSecureUI() {
+    const on = getSecurePushOffEnabled();
+    if (lvlInp) lvlInp.disabled = !on;
+    if (lvlLbl) lvlLbl.style.opacity = on ? "1" : "0.5";
+    if (lvlHelp) lvlHelp.style.display = on ? "" : "none";
+  }
+  if (chkSec) {
+    chkSec.addEventListener("change", reflectSecureUI);
+    reflectSecureUI(); // initial
+  }
 
   // nach dem Radiobutton-Setup & setMode(...):
 
@@ -256,6 +272,23 @@ function getCooldownTargetBedTemp() {
   return Number.isFinite(v) ? Math.max(0, Math.min(120, v)) : 23;
 }
 
+function getSecurePushOffEnabled() {
+  const el = document.getElementById("opt_secure_pushoff");
+  return !!(el && el.checked);
+}
+
+function getExtraPushOffLevels() {
+  const el = document.getElementById("extra_pushoff_levels");
+  const n = el ? parseInt(el.value, 10) : 1;
+  return Number.isFinite(n) ? Math.max(1, Math.min(10, n)) : 1;
+}
+
+function getCooldownMaxTime() {
+  const el = document.getElementById("cooldown_max_time");
+  const n = el ? parseInt(el.value, 10) : 40;
+  return Number.isFinite(n) ? Math.max(5, Math.min(120, n)) : 40;
+}
+
 function dropHandler(ev, instant) {
   ev.preventDefault();
 
@@ -306,9 +339,9 @@ function dragOutHandler(ev) {
   ev.preventDefault();
 }
 
-function update_progress(i){
+function update_progress(i) {
   // p_scale zeigt auf #progress_scale
-  if (i < 0){
+  if (i < 0) {
     console.log("Progressbar:", i);
     p_scale.style.width = "0%";
     // wieder ausblenden
@@ -316,7 +349,7 @@ function update_progress(i){
   } else {
     // einblenden + Breite setzen
     p_scale.parentElement.style.opacity = "1";
-    const pct = Math.max(0, Math.min(100, i|0));
+    const pct = Math.max(0, Math.min(100, i | 0));
     p_scale.style.width = pct + "%";
   }
 }
@@ -397,7 +430,7 @@ function buildPushOffSequence(xs) {
   return xs.map(x => {
     const xOff = (x - 8).toFixed(2); // 2 Nachkommastellen, wenn du magst
     return [
-      `G1 X${xOff} Y254 F1200`, // rausfahren hoch
+      `G1 X${xOff} Y254 F2000`, // rausfahren hoch
       `G1 X${xOff} Y5 F300`,    // langsam runter
       `G1 X${xOff} Y254 F2000`  // schnell zurück
     ].join("\n");
@@ -410,15 +443,22 @@ function parseMaxZHeight(gcodeStr) {
 }
 
 function buildPushOffPayload(gcode, ctx) {
-  // ctx.coords: absteigend sortierte X‑Koordinaten je Platte
+  // Per-object sequence (unchanged)
   const perObjectSeq = buildPushOffSequence(ctx.coords || []);
 
-  // max_z_height aus dem Original‑Plate‑GCode lesen (oder ersatzweise aus gcode)
+  // Read max_z_height from the plate header/orig
   const maxZ = parseMaxZHeight(ctx.sourcePlateText || gcode);
-  const staircaseSeq = buildFixedPushOffMultiZ(maxZ);
+
+  // Secure push-off staircase (only if enabled)
+  let staircaseSeq = "";
+  if (getSecurePushOffEnabled()) {
+    const levels = getExtraPushOffLevels(); // 1..10
+    staircaseSeq = buildFixedPushOffMultiZ(maxZ, levels);
+  }
 
   return [perObjectSeq, staircaseSeq].filter(Boolean).join("\n");
 }
+
 
 
 function buildRaiseBedAfterCooldownPayload(gcodeSection, ctx) {
@@ -442,25 +482,32 @@ function buildRaiseBedAfterCooldownPayload(gcodeSection, ctx) {
   ].join("\n");
 }
 
-function buildCooldownFansWaitPayload(gcodeSection, ctx) {
-  const target = getCooldownTargetBedTemp();         // z.B. 23 °C
-  const sVal = Math.max(0, Math.round(target - 5)); // S = target − 5 (ganzzahlig)
-  const lines = 40;  // Anzahl Wiederholungen wie bisher (~60 min Kommentar)
+function buildCooldownFansWaitPayload(gcode, ctx) {
+  const targetTemp = getCooldownTargetBedTemp(); // dein bisheriger Getter für °C
+  const waitTemp = Math.max(0, targetTemp - 5); // wie gehabt: -5 °C offset
+  const maxTimeMin = getCooldownMaxTime();        // NEW
 
-  const waits = Array.from({ length: lines }, () => `  M190 S${sVal} ; wait for bed temp`).join("\n");
+  const lines = [];
 
-  return `; ====== Cool Down =====
-M106 P2 S255        ;turn Aux fan on
-M106 P3 S200        ;turn on chamber cooling fan
-M400
+  lines.push("; ====== Cool Down =====");
+  lines.push("M106 P2 S255        ;turn Aux fan on");
+  lines.push("M106 P3 S200        ;turn on chamber cooling fan");
+  lines.push("M400");
 
-${waits}
+  // Anzahl Wiederholungen = Minuten
+  for (let i = 0; i < maxTimeMin; i++) {
+    lines.push(`M190 S${waitTemp} ; wait for bed temp`);
+  }
+  lines.push(`; total max wait time of all lines = ${maxTimeMin} min`);
 
-M106 P2 S0         ;turn off Aux fan 
-M106 P3 S0         ;turn off chamber cooling fan 
-M400
-;>>> Cooldown_fans_wait END`;
+  lines.push("M106 P2 S0         ;turn off Aux fan");
+  lines.push("M106 P3 S0         ;turn off chamber cooling fan");
+  lines.push("M400");
+  lines.push(";>>> Cooldown_fans_wait END");
+
+  return lines.join("\n");
 }
+
 
 
 function resolveDynamicPayload(fnId, gcode, ctx) {
@@ -477,48 +524,66 @@ function resolveDynamicPayload(fnId, gcode, ctx) {
 }
 
 
-function buildFixedPushOffMultiZ(maxZmm) {
-  if (!Number.isFinite(maxZmm)) return "";
+// Multi‑Z push‑off: only "levels" mode (no legacy staircase).
+// - levels = 1  → only final push at Z=1
+// - levels >= 2 → evenly spaced heights from maxZ down, then always final at Z=1
+// Feed rates:
+//   * feedZ:     Z moves
+//   * feedDown:  approach to Y=5   (slower)
+//   * feedBack:  moves to Y=254    (faster, "reverse" legs)
+function buildFixedPushOffMultiZ(maxZmm, levels) {
+  if (!Number.isFinite(maxZmm) || maxZmm <= 1) return "";
 
-  const XsDesc = [200, 150, 100, 50];         // absteigend
+  const XsDesc = [200, 150, 100, 50]; // descending
+  const Z_FLOOR = 1;                   // final floor
+  const feedZ = 600;
+  const feedDown = 1000;                // towards Y=5 (approach)
+  const feedBack = 2000;                // towards Y=254 (reverse – faster)
+
   const fmt = v => {
     const s = (Math.round(v * 1000) / 1000).toString();
     return s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
   };
 
-  const Z_MIN = 1;    // mm
-  const STEP = 30;   // mm (3 cm)
-  const MAX_STEPS = 50; // harte Kappe, falls maxZ extrem groß ist
-
   const lines = [];
-  let steps = 0;
 
-  // erste Treppenstufe ist maxZ - 30mm, dann weiter runter
-  for (let z = maxZmm - STEP; z > Z_MIN && steps < MAX_STEPS; z -= STEP, steps++) {
-    lines.push(`;--- PUSH_OFF staircase at Z=${fmt(Math.max(z, Z_MIN))} mm ---`);
-    lines.push(`G1 Z${fmt(Math.max(z, Z_MIN))} F600`);
+  function emitPushAt(z) {
+    const zt = Math.max(Z_FLOOR, z);
+    lines.push(`;--- PUSH_OFF at Z=${fmt(zt)} mm ---`);
+    lines.push(`G1 Z${fmt(zt)} F${feedZ}`);
     for (const X of XsDesc) {
       const xOff = fmt(X - 8);
-      lines.push(`G1 X${xOff} Y254 F1000`);
-      lines.push(`G1 X${xOff} Y5   F1000`);
-      lines.push(`G1 X${xOff} Y254 F1000`);
+      // reverse (fast) to back edge
+      lines.push(`G1 X${xOff} Y254 F${feedBack}`);
+      // approach (slower) down
+      lines.push(`G1 X${xOff} Y5   F${feedDown}`);
+      // reverse (fast) back up
+      lines.push(`G1 X${xOff} Y254 F${feedBack}`);
     }
   }
 
-  // falls die Schleife nie unter 1 mm kam, füge eine letzte Stufe bei 1 mm hinzu
-  if (steps === 0 || (maxZmm - STEP) > Z_MIN) {
-    lines.push(`;--- PUSH_OFF staircase at Z=${fmt(Z_MIN)} mm (floor) ---`);
-    lines.push(`G1 Z${fmt(Z_MIN)} F600`);
-    for (const X of XsDesc) {
-      const xOff = fmt(X - 8);
-      lines.push(`G1 X${xOff} Y254 F1000`);
-      lines.push(`G1 X${xOff} Y5   F1000`);
-      lines.push(`G1 X${xOff} Y254 F1000`);
-    }
+  const n = Number.isInteger(levels) ? Math.max(1, Math.min(10, levels)) : 1;
+
+  if (n === 1) {
+    // Only final push at Z=1
+    emitPushAt(Z_FLOOR);
+    return lines.join("\n");
   }
+
+  const step = maxZmm / n; // equal divisions
+  // Intermediate levels: maxZ - i*step (i=1..n-1), skip any that are <= 1
+  for (let i = 1; i < n; i++) {
+    const z = maxZmm - i * step;
+    if (z <= Z_FLOOR + 1e-6) break;
+    emitPushAt(z);
+  }
+  // Always finish at floor
+  emitPushAt(Z_FLOOR);
 
   return lines.join("\n");
 }
+
+
 
 // ersetzt den Inhalt zwischen Start/End-Markern
 function injectBetweenMarkers(gcode, startMark, endMark, content) {
@@ -596,7 +661,7 @@ function validatePlateXCoords() {
   return true; // alles ok
 }
 
-function removePlate(btn){
+function removePlate(btn) {
   const li = btn.closest("li.list_item");
   if (!li) return;
 
@@ -642,7 +707,7 @@ function handleFile(f) {
 
       // Eine GCODE-Datei öffnen (reicht für Modelldetektion)
       const firstPlateText = await zip.file(firstPlatePath).async("text");
-      const detectedMode   = parsePrinterModelFromGcode(firstPlateText);
+      const detectedMode = parsePrinterModelFromGcode(firstPlateText);
 
       if (!ensureModeOrReject(detectedMode, f.name)) {
         // Frühe Rückkehr: nichts wurde in Arrays/UI eingefügt

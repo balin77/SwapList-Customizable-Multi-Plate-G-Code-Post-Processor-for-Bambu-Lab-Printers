@@ -158,22 +158,56 @@
                 <summary></summary>
                 <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
               </details>
+              <label for="cooldown_max_time">Max cooldown time (min)</label>
+              <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
+              <details class="tool_info">
+                <summary></summary>
+                <p>
+                  Defines the maximum cooldown duration in minutes.
+                  The app will insert repeated <code>M190</code> commands to wait for the bed
+                  until this total time is reached. Default is 40 minutes.
+                </p>
+              </details>
             </div>
+            <label>
+              <input type="checkbox" id="opt_secure_pushoff" checked>
+              Secure push‑off sequence
+              <details class="tool_info">
+                <summary></summary>
+                <p>
+                  When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
+                  before the final push at Z=1. This helps avoid collisions and smooths the ejection.
+                </p>
+              </details>
+            </label>
+
+            <label for="extra_pushoff_levels" id="extra_pushoff_levels_label">
+              Additional push‑off levels
+            </label>
+            <input id="extra_pushoff_levels" type="number" step="1" min="1" max="10" value="2">
+            <details class="tool_info" id="extra_pushoff_levels_help">
+              <summary></summary>
+              <p>
+                Defines how the maximum Z height is divided. Example: if max Z is 10&nbsp;mm
+                and you enter <b>2</b>, push‑offs occur around Z≈5 and the final one at Z=1.
+                If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
+                A value of <b>1</b> means only a final push at Z=1.
+              </p>
+            </details>
+
           </div>
 
         </div>
         <br><br><br>
         <details>
           <summary>Log</summary>
-          <p> 00-23</p>
+          <p>V1</p>
           <ul id="log">
-            <li> Bug fix - redundant AMS swaps removed (earlier there was an extruding attempt at low temperature before
-              print resulting in "clicking" noise)</li>
+            <li>Initial commit</li>
           </ul>
-          <p> 00-24</p>
+          <p>V1.1</p>
           <ul id="log">
-            <li> Bug fix - AMS material asignment issue in Bambustudio on MacOS (caused by "&gt;&lt;" in
-              slice_info.config ) </li>
+            <li>Added two new features: option for advanced cooldown settings and secure push-off sequence</li>
           </ul>
         </details>
       </div>
@@ -225,7 +259,7 @@
   <div id="site-info">
     <div id="err"> </div>
 
-    <p>Multiprinter Version V1</p>
+    <p>Multiprinter Version V1.1</p>
     <p>Based on V00-24</p>
 
     <details>
