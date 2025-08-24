@@ -13,12 +13,12 @@ window.SWAP_RULES = [
     description: "Disable bed leveling if plateIndex > 0",
     enabled: true,
     start: ";===== bed leveling ==================================",
-    end:   ";===== bed leveling end ================================",
+    end: ";===== bed leveling end ================================",
     useRegex: false,
     scope: "startseq",
     when: {
-      modes: ["X1","P1"],
-      requireTrue:  [],            // keine Checkbox
+      modes: ["X1", "P1"],
+      requireTrue: [],            // keine Checkbox
       requireFalse: []
     },
     onlyIf: { plateIndexGreaterThan: 0 }, // <— Kontextbedingung
@@ -31,12 +31,12 @@ window.SWAP_RULES = [
     order: 50,
     action: "disable_between",
     start: "M412 S1 ; ===turn on filament runout detection===",
-    end:   "M109 S200 ; drop nozzle temp, make filament shink a bit",
+    end: "M109 S200 ; drop nozzle temp, make filament shink a bit",
     useRegex: false,
     scope: "startseq",
     when: {
-      modes: ["X1","P1"],                // nur X1/P1 relevant
-      requireTrue:  ["opt_filament_purge_off"], // nur wenn Checkbox an
+      modes: ["X1", "P1"],                // nur X1/P1 relevant
+      requireTrue: ["opt_filament_purge_off"], // nur wenn Checkbox an
       requireFalse: []
     },
     onlyIf: {
@@ -48,12 +48,12 @@ window.SWAP_RULES = [
     description: "Disable register first layer scan block",
     enabled: true,
     start: ";=========register first layer scan=====",
-    end:   ";=============turn on fans to prevent PLA jamming=================",
+    end: ";=============turn on fans to prevent PLA jamming=================",
     useRegex: false,
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für diese Modi
-      requireTrue:  [],     // keine Checkbox notwendig
+      requireTrue: [],     // keine Checkbox notwendig
       requireFalse: []      // keine Ausschluss-Checkbox
     },
     action: "disable_between"
@@ -63,12 +63,12 @@ window.SWAP_RULES = [
     description: "Disable scanner clarity check",
     enabled: true,
     start: ";===== check scanner clarity ===========================",
-    end:   ";===== check scanner clarity end =======================",
+    end: ";===== check scanner clarity end =======================",
     useRegex: false,
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für diese Modi
-      requireTrue:  [],     // keine Checkbox notwendig
+      requireTrue: [],     // keine Checkbox notwendig
       requireFalse: []      // keine Ausschluss-Checkbox
     },
     action: "disable_between"
@@ -78,12 +78,12 @@ window.SWAP_RULES = [
     description: "Disable mech mode fast check block",
     enabled: true,
     start: "turn on big fan ,to cool down toolhead",
-    end:   ";===== nozzle load line ===============================",
+    end: ";===== nozzle load line ===============================",
     useRegex: false,
     scope: "startseq",
     when: {
-      modes: ["X1","P1"],   // nur für diese Modi
-      requireTrue:  [],     // keine Checkbox notwendig
+      modes: ["X1", "P1"],   // nur für diese Modi
+      requireTrue: [],     // keine Checkbox notwendig
       requireFalse: []      // keine Ausschluss-Checkbox
     },
     onlyIf: { plateIndexGreaterThan: 0 }, // <— Kontextbedingung
@@ -95,17 +95,17 @@ window.SWAP_RULES = [
     enabled: true,
     // äußere Schranken (grobe Grenzen)
     start: ";===== nozzle load line ===============================",
-    end:   ";===== for Textured PEI Plate",
+    end: ";===== for Textured PEI Plate",
     useRegex: false,
     scope: "startseq",
     // innere Schranken (feiner Bereich)
     innerStart: "T1000",
-    innerEnd:   "M400",
+    innerEnd: "M400",
     innerUseRegex: false,
 
     when: {
-      modes: ["X1","P1"],
-      requireTrue:  [],
+      modes: ["X1", "P1"],
+      requireTrue: [],
       requireFalse: []
     },
     action: "disable_inner_between"
@@ -115,12 +115,12 @@ window.SWAP_RULES = [
     description: "Disable extrinsic parameter calibration paint",
     enabled: true,
     start: ";===== draw extrinsic para cali paint =================",
-    end:   ";========turn off light and wait extrude temperature =============",
+    end: ";========turn off light and wait extrude temperature =============",
     useRegex: false,
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für diese Modi anwenden
-      requireTrue:  [],     // keine Checkbox-Bedingung
+      requireTrue: [],     // keine Checkbox-Bedingung
       requireFalse: []      // keine Ausschluss-Bedingung
     },
     action: "disable_between"
@@ -130,12 +130,12 @@ window.SWAP_RULES = [
     description: "Disable purge line to wipe the nozzle",
     enabled: true,
     start: ";===== purge line to wipe the nozzle ============================",
-    end:   "; MACHINE_START_GCODE_END",
+    end: "; MACHINE_START_GCODE_END",
     useRegex: false,
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für X1 und P1
-      requireTrue:  [],     // keine zusätzlichen Bedingungen
+      requireTrue: [],     // keine zusätzlichen Bedingungen
       requireFalse: []      // keine Ausschlussbedingungen
     },
     action: "disable_between"
@@ -145,12 +145,12 @@ window.SWAP_RULES = [
     description: "Disable saving calibration data (M973 S4 + M400)",
     enabled: true,
     start: ";========turn off light and wait extrude temperature =============",
-    end:   ";===== purge line to wipe the nozzle ============================",
+    end: ";===== purge line to wipe the nozzle ============================",
     useRegex: false,
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur in X1/P1
-      requireTrue:  [],     
+      requireTrue: [],
       requireFalse: []
     },
     action: "disable_lines",
@@ -164,13 +164,13 @@ window.SWAP_RULES = [
     description: "Disable lowering of print bed after print",
     enabled: true,
     start: "M17 S",
-    end:   "M17 R ; restore z current",
+    end: "M17 R ; restore z current",
     useRegex: false,
     scope: "endseq",
     when: {
-      modes: ["X1","P1"],   // nur für diese Modi
-      requireTrue:  [],     
-      requireFalse: []      
+      modes: ["X1", "P1"],   // nur für diese Modi
+      requireTrue: [],
+      requireFalse: []
     },
     action: "disable_between"
   },
@@ -186,12 +186,12 @@ window.SWAP_RULES = [
     scope: "endseq",
     wrapWithMarkers: true,
     when: {
-      modes: ["X1","P1"],
-      requireTrue:  ["opt_bedlevel_cooling"],  // nur, wenn aktiv
+      modes: ["X1", "P1"],
+      requireTrue: ["opt_bedlevel_cooling"],  // nur, wenn aktiv
       requireFalse: []
     },
     payload:
-  `; ====== Cool Down : optional lift =====
+      `; ====== Cool Down : optional lift =====
   M400                ;wait for all print moves to be done
   M17 Z0.4            ;lower z motor current to reduce impact if there is something in the top
   G1 Z1 F600          ;move nozzle up, BE VERY CAREFUL this can hit the top of your print, extruder or AMS
@@ -209,7 +209,7 @@ window.SWAP_RULES = [
     useRegex: true,           // ← WICHTIG!
     scope: "endseq",
     wrapWithMarkers: true,
-    when: { modes: ["X1","P1"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1"], requireTrue: [], requireFalse: [] },
     payloadFnId: "cooldownFansWait"
   },
   {
@@ -225,8 +225,8 @@ window.SWAP_RULES = [
     scope: "endseq",
     wrapWithMarkers: true,             // idempotent
     when: {
-      modes: ["X1","P1"],
-      requireTrue:  [],
+      modes: ["X1", "P1"],
+      requireTrue: [],
       requireFalse: []
     },
     // Dynamischer Inhalt wird in app.js generiert:
@@ -236,7 +236,7 @@ window.SWAP_RULES = [
     id: "push_off_sequence",
     description: "Insert push-off sequence after raising bed",
     enabled: true,
-    order: 40,                               
+    order: 40,
     action: "insert_after",
     anchor: ";>>> INSERT:raise_bed_after_cooldown END",  // direkt an die vorige Regel anhängen
     occurrence: "last",
@@ -244,8 +244,8 @@ window.SWAP_RULES = [
     scope: "endseq",
     wrapWithMarkers: true,
     when: {
-      modes: ["X1","P1"],
-      requireTrue:  [],
+      modes: ["X1", "P1"],
+      requireTrue: [],
       requireFalse: []
     },
     // Dynamisch generierter Inhalt (siehe Payload-Builder unten)
@@ -262,7 +262,7 @@ window.SWAP_RULES = [
     // globaler Regex, keine äußeren Marker nötig:
     pattern: "^\\s*M73\\s+P100\\s+R0[^\n]*$",
     patternFlags: "gmi",
-    when: { modes: ["X1","P1"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1"], requireTrue: [], requireFalse: [] },
     onlyIf: { isLastPlate: false }
   },
   /* 2) A1M: globaler Starter nur einmal ganz vorne (erste Platte) */
@@ -286,11 +286,38 @@ window.SWAP_RULES = [
     enabled: true,
     scope: "body",
     order: 80,
-    when: { modes: ["X1","P1"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1"], requireTrue: [], requireFalse: [] },
     action: "bump_first_extrusion_to_e3"   // nutzt deine bestehende Logik als Helper
+  },
+  /* A1M: Startsegment nur vor der allerersten Platte — auf ALL anwenden */
+  {
+    id: "a1m_prepend_startseg",
+    description: "Prepend _1n1_gC0d3 at very top (A1M only, first plate)",
+    enabled: true,
+    order: 5,
+    action: "prepend",
+    scope: "all",                         // <— wichtig
+    when: { modes: ["A1M"], requireTrue: [], requireFalse: [] },
+    onlyIf: { plateIndexEquals: 0 },
+    // nimm payloadVar ODER payloadFnId (beides geht, wenn window.* gesetzt)
+    payloadVar: "_1n1_gC0d3",
+    wrapWithMarkers: true
+  },
+  /* A1M: Endsegment an JEDE Platte — Fallback: ans Dateiende appenden */
+  {
+    id: "a1m_append_endseg",
+    description: "Insert A1M end-segment BEFORE ; EXECUTABLE_BLOCK_END (each plate)",
+    enabled: true,
+    order: 95,
+    action: "insert_before",
+    // exakt diese Zeile/Variante zuverlässig treffen:
+    anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_END[ \\t]*(\\n|$)",
+    useRegex: true,
+    occurrence: "last",
+    scope: "all",                              // auf dem gesamten Gcode arbeiten
+    when: { modes: ["A1M"], requireTrue: [], requireFalse: [] },
+    payloadVar: "_5vvAp_gC0d3",                // kommt aus obfsc.js → window._5vvAp_gC0d3
+    wrapWithMarkers: true                      // idempotent
   }
-
-
-
 ];
 

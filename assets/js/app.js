@@ -136,6 +136,18 @@ function renderCoordInputs(count, targetDiv) {
   }
 }
 
+function assertA1mSegmentsAvailable() {
+  if (CURRENT_MODE === 'A1M') {
+    const hasStart = typeof window._1n1_gC0d3 === 'string' && window._1n1_gC0d3.trim() !== '';
+    const hasEnd = typeof window._5vvAp_gC0d3 === 'string' && window._5vvAp_gC0d3.trim() !== '';
+    if (!hasStart || !hasEnd) {
+      alert("A1M-Start/End-Segmente fehlen (_1n1_gC0d3 / _5vvAp_gC0d3). Bitte obfsc.js vor commands.js/app.js einbinden.");
+      throw new Error("Missing A1M segments");
+    }
+  }
+}
+
+
 function initialize_page() {
 
   // mode toggle listeners
@@ -512,6 +524,12 @@ function buildCooldownFansWaitPayload(gcode, ctx) {
 
 function resolveDynamicPayload(fnId, gcode, ctx) {
   switch (fnId) {
+    case "a1mStartSeg":
+      if (typeof window._1n1_gC0d3 === "string" && window._1n1_gC0d3.trim()) return window._1n1_gC0d3;
+      throw new Error("_1n1_gC0d3 missing (A1M start segment)");
+    case "a1mEndSeg":
+      if (typeof window._5vvAp_gC0d3 === "string" && window._5vvAp_gC0d3.trim()) return window._5vvAp_gC0d3;
+      throw new Error("_5vvAp_gC0d3 missing (A1M end segment)");
     case "raiseBedAfterCoolDown":
       return buildRaiseBedAfterCooldownPayload(gcode, ctx);
     case "cooldownFansWait":
@@ -938,6 +956,40 @@ function prependBlock(gcode, block, { guardId = "", wrapWithMarkers = true } = {
   return payload + needsNL + gcode;
 }
 
+// Anker-basiert VOR eine Zeile einfügen (first/last Vorkommen)
+function insertBeforeAnchor(gcode, anchor, payload, {
+  useRegex = false, occurrence = "last", guardId = "", wrapWithMarkers = true
+} = {}) {
+  if (!payload) return gcode;
+
+  const re = useRegex
+    ? new RegExp(anchor, "gm")
+    : new RegExp(`(^|\\n)[ \\t]*${_escRe(anchor)}[^\\n]*(\\n|$)`, "gm");
+
+  let match = null;
+  if (occurrence === "first") {
+    match = re.exec(gcode);
+  } else {
+    let m, last = null;
+    while ((m = re.exec(gcode)) !== null) {
+      if (m[0].length === 0) break;
+      last = m;
+    }
+    match = last;
+  }
+  if (!match) return gcode;
+
+  const insertPos = match.index; // ← VOR dem Anchor
+  let block = payload.replace(/\r\n/g, "\n");
+  if (wrapWithMarkers && guardId) {
+    if (_alreadyInserted(gcode, guardId)) return gcode;
+    block = `;<<< INSERT:${guardId} START\n${block}\n;>>> INSERT:${guardId} END\n`;
+  }
+  return gcode.slice(0, insertPos) + block + gcode.slice(insertPos);
+}
+
+
+
 // Anker-basiert hinter eine Zeile einfügen (first/last Vorkommen)
 function insertAfterAnchor(gcode, anchor, payload, {
   useRegex = false, occurrence = "last", guardId = "", wrapWithMarkers = true
@@ -1198,6 +1250,29 @@ function applySwapRulesToGcode(gcode, rules, ctx) {
           if (out === before) extra.reason = extra.anchorFound ? "guardId_alreadyInserted_or_noChange" : "anchor_not_found";
           break;
         }
+        case "insert_before": {
+          let payload = rule.payload || "";
+          if (!payload && rule.payloadVar) payload = resolvePayloadVar(rule.payloadVar);
+          if (!payload && rule.payloadFnId) payload = resolveDynamicPayload(rule.payloadFnId, out, ctx);
+
+          const extra = {};
+          extra.anchorFound = _hasAnchor(out, rule.anchor, !!rule.useRegex);
+          extra.payloadBytes = (payload || "").length;
+
+          const before = out;
+          out = insertBeforeAnchor(out, rule.anchor, payload, {
+            useRegex: !!rule.useRegex,
+            occurrence: rule.occurrence || "last",
+            guardId: rule.id || "",
+            wrapWithMarkers: rule.wrapWithMarkers !== false
+          });
+          if (out === before) {
+            extra.reason = extra.anchorFound ? "guardId_alreadyInserted_or_noChange" : "anchor_not_found";
+          }
+          _logRule(rule, ctx, rule.scope || "body", before, out, extra);
+          break;
+        }
+
         default:
           extra.note = "unknown_action";
           break;
@@ -1242,6 +1317,7 @@ function applySwapRulesToGcode(gcode, rules, ctx) {
 
 
 async function export_3mf() {
+  if (CURRENT_MODE === 'A1M') assertA1mSegmentsAvailable();
   try {
     if (!validatePlateXCoords()) return;
     update_progress(5);
