@@ -65,7 +65,5 @@ const mod_set_temp =
     "  </plate>\n" +
     "</config> ";
 
-// Stelle sicher, dass die Segmente global erreichbar sind (Rule-Engine nutzt window[...] / globalThis[...])
-window._1n1_gC0d3 = _1n1_gC0d3;
-window._5vvAp_gC0d3 = _5vvAp_gC0d3;
-window.model_settings_template = model_settings_template;
+
+export { model_settings_template };

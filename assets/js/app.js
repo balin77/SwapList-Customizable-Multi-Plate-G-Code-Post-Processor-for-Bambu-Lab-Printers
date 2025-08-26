@@ -136,17 +136,363 @@ function renderCoordInputs(count, targetDiv) {
   }
 }
 
-function assertA1mSegmentsAvailable() {
-  if (CURRENT_MODE === 'A1M') {
-    const hasStart = typeof window._1n1_gC0d3 === 'string' && window._1n1_gC0d3.trim() !== '';
-    const hasEnd = typeof window._5vvAp_gC0d3 === 'string' && window._5vvAp_gC0d3.trim() !== '';
-    if (!hasStart || !hasEnd) {
-      alert("A1M-Start/End-Segmente fehlen (_1n1_gC0d3 / _5vvAp_gC0d3). Bitte obfsc.js vor commands.js/app.js einbinden.");
-      throw new Error("Missing A1M segments");
-    }
+// === AMS GLOBAL STATE ===
+const GLOBAL_AMS = {
+  devices: [],                 // [{id:0, slots:[{key:'P0S0', color:'#rrggbb'|null, conflict:false} x4]}]
+  overridesPerPlate: new Map(),// plateIndex -> { 'P0S1': 'P1S2', ... }
+  seenKeys: new Set(),         // alle in allen Platten gefundenen Keys
+};
+
+// Hilfen Key<->Index
+function keyToIndex(key) { const m = /^P(\d+)S(\d+)$/.exec(key); if (!m) return null; return (+m[1]) * 4 + (+m[2]); }
+function indexToKey(idx) { return `P${Math.floor(idx / 4)}S${idx % 4}`; }
+
+const PLATE_OVERRIDES = Object.create(null); // plateOriginIndex -> { "P{p}S{s}": {toP, toS} }
+
+// robust gegen .1 / .11 usw.
+const RE_AMS_START = /^\s*M620(?!\.)\b([^;\n]*)/gmi;
+const RE_AMS_END = /^\s*M621(?!\.)\b([^;\n]*)/gmi;
+
+// parse param-blob wie " P0 S3 A"
+function _parseAmsParams(paramBlob) {
+  const P = /(?:^|\s)P(\d+)/i.exec(paramBlob);
+  const S = /(?:^|\s)S(\d{1,3})/i.exec(paramBlob);
+  const A = /\bA\b/i.test(paramBlob);
+  const p = P ? +P[1] : 0;
+  const s = S ? +S[1] : 255;
+  return { p, s, A };
+}
+function _key(p, s) { return `P${p}S${s}`; }
+
+// GCode scannen: nutzt M620… Zeilen
+function scanAmsInGcode(str) {
+  const used = new Set();
+
+  // M620 / M621 ... S<num>  (optional "A")
+  str.replace(/(^|\n)\s*M62[01]\s+S(\d+)\b/gi, (_, $1, n) => { const v = +n; if (v >= 0 && v < 255) used.add(v); });
+
+  // M620.11 ... I<num>  (alter Extruder)
+  str.replace(/(^|\n)\s*M620\.11\b[^I\n]*\bI(\d+)/gi, (_, $1, n) => { const v = +n; if (v >= 0 && v < 255) used.add(v); });
+
+  // Tool T<num> (nur "kleine" Werte als Extruder interpretieren)
+  str.replace(/(^|\n)\s*T(\d+)\b/gi, (_, $1, n) => { const v = +n; if (v >= 0 && v < 255) used.add(v); });
+
+  const usedKeys = [...used].map(indexToKey);
+  return { usedKeys };
+}
+
+function ensureDeviceCountFromKeys(keys) {
+  let maxP = -1;
+  keys.forEach(k => {
+    const m = /^P(\d+)S(\d+)$/.exec(k);
+    if (m) maxP = Math.max(maxP, +m[1]);
+  });
+  const needed = maxP + 1;
+  while (GLOBAL_AMS.devices.length < needed) {
+    const id = GLOBAL_AMS.devices.length;
+    GLOBAL_AMS.devices.push({
+      id,
+      slots: [0, 1, 2, 3].map(s => ({ key: `P${id}S${s}`, color: null, conflict: false }))
+    });
   }
 }
 
+function mergePlateColorsIntoGlobal(li) {
+  // Versuche aus der Plattenliste (links unten im Card) Farben je Slot (1..4) zu lesen → P0S(0..3)
+  const els = li.querySelectorAll('.p_filament');
+  els.forEach(el => {
+    const slotText = el.querySelector('.f_slot')?.innerText?.trim(); // "1".."4"
+    const color = el.querySelector('.f_color')?.dataset?.f_color || el.querySelector('.f_color')?.style?.backgroundColor;
+    if (!slotText || !color) return;
+    const s = (+slotText) - 1;
+    if (s < 0 || s > 3) return;
+    ensureDeviceCountFromKeys(['P0S0']); // mind. ein Gerät
+    const slot = GLOBAL_AMS.devices[0].slots[s];
+    if (!slot.color) slot.color = colorToHex(color);
+    else if (slot.color.toLowerCase() !== colorToHex(color).toLowerCase()) slot.conflict = true;
+  });
+}
+
+function colorToHex(c) {
+  // akzeptiert bereits Hex
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return c;
+  // rgb(a)
+  const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/i.exec(c || "");
+  if (!m) return '#ffffff';
+  const to2 = v => ('0' + Math.max(0, Math.min(255, +v)).toString(16)).slice(-2);
+  return '#' + to2(m[1]) + to2(m[2]) + to2(m[3]);
+}
+
+
+// aus Plate-UI (deine Filamentliste) Farben je Slot ableiten
+function learnAmsColorsFromPlate(li) {
+  const fls = li.querySelectorAll(".p_filaments .p_filament");
+
+  // Mindestens ein Gerät (P0) bereitstellen
+  if (!GLOBAL_AMS.devices[0]) {
+    GLOBAL_AMS.devices[0] = {
+      id: 0,
+      slots: [0, 1, 2, 3].map(s => ({ key: `P0S${s}`, color: null, conflict: false }))
+    };
+  }
+
+  fls.forEach(fl => {
+    const slot1based = +(fl.querySelector(".f_slot")?.innerText || "0");
+    if (!slot1based) return;
+
+    const rawColor =
+      fl.querySelector(".f_color")?.dataset.f_color ||
+      fl.querySelector(".f_color")?.style?.backgroundColor ||
+      "";
+
+    const p = 0;                 // solange nichts anderes detektiert: P0
+    const s = slot1based - 1;    // 0-basiert
+    if (s < 0 || s > 3) return;
+
+    const key = `P${p}S${s}`;
+    GLOBAL_AMS.seenKeys.add(key);
+
+    const slot = GLOBAL_AMS.devices[p].slots[s];
+    if (!slot) return;
+
+    if (rawColor) {
+      const hex = colorToHex(rawColor);
+      if (!slot.color) {
+        slot.color = hex;
+      } else if (slot.color.toLowerCase() !== hex.toLowerCase()) {
+        slot.conflict = true; // widersprüchliche Farbangaben
+      }
+    }
+  });
+}
+
+function renderAmsOverview() {
+  const host = document.getElementById('ams_overview');
+  if (!host) return;
+
+  // Geräte aus allen bisher gesehenen Keys sicherstellen
+  ensureDeviceCountFromKeys(AMS.seenKeys);
+
+  host.innerHTML = "";
+  if (GLOBAL_AMS.devices.length === 0) { host.classList.add('hidden'); return; }
+  host.classList.remove('hidden');
+
+  GLOBAL_AMS.devices.forEach(dev => {
+    const title = document.createElement('div');
+    title.className = 'ams-device-title';
+    title.textContent = `AMS P${dev.id}`;
+
+    const row = document.createElement('div');
+    row.className = 'ams-device';
+    dev.slots.forEach(sl => {
+      const cell = document.createElement('div');
+      cell.className = 'ams-slot' + (sl.conflict ? ' conflict' : '');
+      cell.title = `${sl.key} – Farbe festlegen`;
+      cell.addEventListener('click', () => pickSlotColor(dev.id, sl.key));
+
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      if (sl.color) dot.style.background = sl.color;
+
+      const lab = document.createElement('span');
+      lab.className = 'label';
+      lab.textContent = sl.key;
+
+      cell.append(dot, lab);
+      row.appendChild(cell);
+    });
+
+    host.appendChild(title);
+    host.appendChild(row);
+  });
+}
+
+function pickSlotColor(pIndex, key) {
+  const slot = GLOBAL_AMS.devices[pIndex].slots[keyToIndex(key) % 4];
+  const inp = document.createElement('input');
+  inp.type = 'color';
+  inp.value = slot.color || '#ffffff';
+  inp.onchange = e => {
+    slot.color = e.target.value;
+    slot.conflict = false;
+    renderAmsOverview();
+    // live in den Plate-Chips aktualisieren
+    document.querySelectorAll(`[data-slot-key="${key}"] .dot`).forEach(d => d.style.backgroundColor = e.target.value);
+  };
+  inp.click();
+}
+
+
+function openColorPickerForSlot(key, anchorEl) {
+  // simpler Inline-Colorpicker
+  const input = document.createElement("input");
+  input.type = "color";
+  input.style.position = "absolute";
+  input.style.visibility = "hidden";
+  document.body.appendChild(input);
+  input.addEventListener("input", () => {
+    GLOBAL_AMS.slots[key] = { color: input.value, ambiguous: false };
+    renderAmsOverview();
+    // alle Plate-UIs aktualisieren (Farbring)
+    document.querySelectorAll(".ams-remap").forEach(div => rebuildPlateRemapUI(div.closest("li.list_item")));
+    document.body.removeChild(input);
+  }, { once: true });
+  input.click();
+}
+
+function buildPlateAmsUI(li, plateIndex, usedKeys) {
+  // Keys merken (für Gerätezahl/Übersicht)
+  usedKeys.forEach(k => GLOBAL_AMS.seenKeys.add(k));
+  ensureDeviceCountFromKeys(usedKeys);
+  mergePlateColorsIntoGlobal(li);
+
+  // Container anlegen/finden
+  let wrap = li.querySelector('.plate-ams');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'plate-ams';
+    wrap.innerHTML = '<div style="font-size:12px;margin-bottom:.25rem;color:#666">AMS slots on this plate</div>';
+    li.appendChild(wrap);
+  }
+  wrap.querySelectorAll('.slot-chip').forEach(n => n.remove());
+
+  // Overrides für diese Platte
+  const ov = GLOBAL_AMS.overridesPerPlate.get(plateIndex) || {};
+
+  usedKeys.forEach(origKey => {
+    const chip = document.createElement('div');
+    chip.className = 'slot-chip';
+    chip.dataset.plateIndex = plateIndex;
+    chip.dataset.slotKey = origKey;
+
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    const orig = getGlobalSlot(origKey);
+    if (orig && orig.color) dot.style.backgroundColor = orig.color;
+
+    const label = document.createElement('span');
+    label.textContent = origKey;
+
+    chip.append(dot, label);
+
+    const newKey = ov[origKey];
+    if (newKey) {
+      chip.classList.add('original-overridden'); // das Original ist durchgestrichen
+      // und wir zeigen den neuen Chip direkt daneben
+      const chipNew = document.createElement('div');
+      chipNew.className = 'slot-chip';
+      chipNew.title = `Override: ${origKey} → ${newKey}`;
+      const dotN = document.createElement('span'); dotN.className = 'dot';
+      const slN = getGlobalSlot(newKey); if (slN && slN.color) dotN.style.backgroundColor = slN.color;
+      const labN = document.createElement('span'); labN.textContent = `→ ${newKey}`;
+      chipNew.append(dotN, labN);
+      wrap.appendChild(chipNew);
+    }
+
+    chip.addEventListener('click', (ev) => openSlotMenu(ev.currentTarget, plateIndex, origKey));
+    wrap.appendChild(chip);
+  });
+
+  // globale Übersicht updaten
+  renderAmsOverview();
+}
+
+function getGlobalSlot(key) {
+  const m = /^P(\d+)S(\d+)$/.exec(key); if (!m) return null;
+  const p = +m[1], s = +m[2];
+  return GLOBAL_AMS.devices[p]?.slots[s] || null;
+}
+
+function openSlotMenu(anchorEl, plateIndex, origKey) {
+  closeAnySlotMenu();
+
+  // Menü
+  const menu = document.createElement('div');
+  menu.className = 'slot-menu';
+  menu.id = 'slot-menu-open';
+
+  GLOBAL_AMS.devices.forEach(dev => {
+    dev.slots.forEach(sl => {
+      const it = document.createElement('div');
+      it.className = 'item';
+      it.dataset.key = sl.key;
+      const d = document.createElement('span'); d.className = 'dot'; if (sl.color) d.style.backgroundColor = sl.color;
+      const t = document.createElement('span'); t.textContent = sl.key;
+      it.append(d, t);
+      it.addEventListener('click', () => {
+        setPlateOverride(plateIndex, origKey, sl.key);
+        closeAnySlotMenu();
+        // neu rendern (nur diese Platte)
+        const li = anchorEl.closest('li.list_item');
+        if (li) {
+          // Rebuild using last usedKeys for this plate (scan not needed again; store last?)
+          // pragmatisch: wir lesen die Chips neu aus AMS.seenKeys (origKey blieb erhalten)
+          buildPlateAmsUI(li, plateIndex, new Set([origKey])); // minimal refresh
+        }
+      });
+      menu.appendChild(it);
+    });
+  });
+
+  document.body.appendChild(menu);
+  const rect = anchorEl.getBoundingClientRect();
+  menu.style.left = (window.scrollX + rect.left) + 'px';
+  menu.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+
+  // outside-click schließen
+  setTimeout(() => {
+    document.addEventListener('mousedown', closeAnySlotMenu, { once: true });
+  }, 0);
+}
+
+function closeAnySlotMenu() {
+  const m = document.getElementById('slot-menu-open');
+  if (m) m.remove();
+}
+
+function setPlateOverride(plateIndex, fromKey, toKey) {
+  if (!GLOBAL_AMS.overridesPerPlate.has(plateIndex)) GLOBAL_AMS.overridesPerPlate.set(plateIndex, {});
+  const map = GLOBAL_AMS.overridesPerPlate.get(plateIndex);
+  if (toKey === fromKey) delete map[fromKey];
+  else map[fromKey] = toKey;
+}
+
+
+// Ersetzung beim Export: pro Platte
+function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
+  // UI speichert Overrides hier: Map<number, { fromKey: toKey }>
+  const map = GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
+  if (!map || Object.keys(map).length === 0) return gcode;
+
+  function rewrite(cmd, blob) {
+    // Original-Parameter der Zeile auslesen
+    const { p: origP, s: origS } = _parseAmsParams(blob || "");
+    const fromKey = `P${origP}S${origS}`;
+    const toKey = map[fromKey];
+    if (!toKey) return `${cmd}${blob}`; // nichts zu tun
+
+    const m = /^P(\d+)S(\d+)$/.exec(toKey);
+    if (!m) return `${cmd}${blob}`;
+
+    const toP = +m[1];
+    const toS = +m[2];
+    const aFlag = /\bA\b/i.test(blob) ? " A" : "";
+    return `${cmd} P${toP} S${toS}${aFlag}`;
+  }
+
+  // Nur M620/M621 ohne Suffix (.1/.11) anfassen
+  let out = gcode.replace(
+    /^\s*(M620)(?!\.)\b([^\n\r]*)$/gmi,
+    (_, cmd, rest) => rewrite(cmd, rest)
+  );
+  out = out.replace(
+    /^\s*(M621)(?!\.)\b([^\n\r]*)$/gmi,
+    (_, cmd, rest) => rewrite(cmd, rest)
+  );
+  return out;
+}
+
+// ===== Ende AMS =====
 
 function initialize_page() {
 
@@ -374,8 +720,8 @@ const err01 = "No sliced data found. " + "\n" + err_default;
 function reject_file(msg) {
   alert(msg);
   my_files.pop();
-}
-
+  
+// Field length adjustment
 function adj_field_length(trg, min, max) {
   if (trg.value == "")
     trg_val = trg.placeholder;
@@ -524,12 +870,6 @@ function buildCooldownFansWaitPayload(gcode, ctx) {
 
 function resolveDynamicPayload(fnId, gcode, ctx) {
   switch (fnId) {
-    case "a1mStartSeg":
-      if (typeof window._1n1_gC0d3 === "string" && window._1n1_gC0d3.trim()) return window._1n1_gC0d3;
-      throw new Error("_1n1_gC0d3 missing (A1M start segment)");
-    case "a1mEndSeg":
-      if (typeof window._5vvAp_gC0d3 === "string" && window._5vvAp_gC0d3.trim()) return window._5vvAp_gC0d3;
-      throw new Error("_5vvAp_gC0d3 missing (A1M end segment)");
     case "raiseBedAfterCoolDown":
       return buildRaiseBedAfterCooldownPayload(gcode, ctx);
     case "cooldownFansWait":
@@ -621,36 +961,6 @@ function injectBetweenMarkers(gcode, startMark, endMark, content) {
   const tail = (needsNLAfter ? "\n" : "") + after;
 
   return before + middle + tail;
-}
-
-// M73 "Print finished" (wir lassen NUR den letzten im Gesamtergebnis stehen)
-const M73_FINISH_RE = /^[ \t]*M73[ \t]+P100[ \t]+R0[^\n]*\n?/gmi;
-
-// Entfernt ALLE Vorkommen
-function removeAllM73FinishLines(g) {
-  return g.replace(M73_FINISH_RE, "");
-}
-
-// Behält NUR das letzte Vorkommen; falls keins existiert, hängt eins am Ende an
-function keepOnlyLastM73Finish(g) {
-  const matches = [...g.matchAll(M73_FINISH_RE)];
-  if (matches.length === 0) {
-    return g.replace(/\s*$/, "") + "\nM73 P100 R0\n";
-  }
-  if (matches.length === 1) return g; // schon ok
-
-  // Alle bis auf das letzte entfernen (ohne Index-Verschiebungsfehler -> Ranges zusammensetzen)
-  const last = matches[matches.length - 1];
-  const rangesToDrop = matches.slice(0, -1).map(m => [m.index, m.index + m[0].length]);
-
-  let out = "";
-  let cursor = 0;
-  for (const [a, b] of rangesToDrop) {
-    out += g.slice(cursor, a);
-    cursor = b;
-  }
-  out += g.slice(cursor); // Rest inkl. letztem M73
-  return out;
 }
 
 function validatePlateXCoords() {
@@ -821,12 +1131,21 @@ function handleFile(f) {
             my_fl.className = "p_filament";
           }
 
+          learnAmsColorsFromPlate(li);
+
           relativePath.async("string").then(async function (content) {
 
             const time_flag = "total estimated time: ";
             const time_place = content.indexOf(time_flag) + time_flag.length;
             const time_sting = content.slice(time_place, content.indexOf("\n", time_place));
             p_time.innerText = time_sting;
+
+            // AMS-Slots der Platte erkennen + UI aufbauen
+            const { usedKeys } = scanAmsInGcode(content);
+            buildPlateAmsUI(li, /* plateOriginIndex: */ i, usedKeys);
+
+            // Header-Übersicht erneuern (Gerätezahl + Farben)
+            renderAmsOverview();
 
             var time_int = 0;
 
@@ -842,7 +1161,7 @@ function handleFile(f) {
             t = time_sting.match(/\d+[d]/);
             time_int += (t ? parseInt(t) : 0) * 60 * 60 * 24;
 
-            p_time.title = await time_int;
+            p_time.title = time_int;
 
             update_statistics();
 
@@ -931,12 +1250,6 @@ function _findLineAfterIndex(src, idx) {
 function _findLineStartBeforeIndex(src, idx) {
   const prevNl = src.lastIndexOf("\n", idx - 1);
   return (prevNl === -1) ? 0 : prevNl + 1;
-}
-
-function _matchLineRegex(raw, isRegex) {
-  // Zeilenweise suchen; Ende darf \n ODER Dateiende sein.
-  if (isRegex) return new RegExp(raw, "gm");
-  return new RegExp(`(^|\\n)[ \\t]*${_escRe(raw)}[^\\n]*(?:\\r?\\n|$)`, "gm");
 }
 
 function _commentNonEmptyLines(block) {
@@ -1255,21 +1568,21 @@ function applySwapRulesToGcode(gcode, rules, ctx) {
           if (!payload && rule.payloadVar) payload = resolvePayloadVar(rule.payloadVar);
           if (!payload && rule.payloadFnId) payload = resolveDynamicPayload(rule.payloadFnId, out, ctx);
 
-          const extra = {};
           extra.anchorFound = _hasAnchor(out, rule.anchor, !!rule.useRegex);
           extra.payloadBytes = (payload || "").length;
 
-          const before = out;
+          const beforeS = out;
           out = insertBeforeAnchor(out, rule.anchor, payload, {
             useRegex: !!rule.useRegex,
             occurrence: rule.occurrence || "last",
             guardId: rule.id || "",
             wrapWithMarkers: rule.wrapWithMarkers !== false
           });
-          if (out === before) {
-            extra.reason = extra.anchorFound ? "guardId_alreadyInserted_or_noChange" : "anchor_not_found";
+          if (out === beforeS) {
+            extra.reason = extra.anchorFound
+              ? "guardId_alreadyInserted_or_noChange"
+              : "anchor_not_found";
           }
-          _logRule(rule, ctx, rule.scope || "body", before, out, extra);
           break;
         }
 
@@ -1317,7 +1630,6 @@ function applySwapRulesToGcode(gcode, rules, ctx) {
 
 
 async function export_3mf() {
-  if (CURRENT_MODE === 'A1M') assertA1mSegmentsAvailable();
   try {
     if (!validatePlateXCoords()) return;
     update_progress(5);
@@ -1327,6 +1639,7 @@ async function export_3mf() {
     const my_plates = playlist_ol.getElementsByTagName("li");
     const platesOnce = [];
     const coordsOnce = [];
+    const originIdxOnce = [];
 
     for (let i = 0; i < my_plates.length; i++) {
       const c_f_id = my_plates[i].getElementsByClassName("f_id")[0].title;
@@ -1342,6 +1655,7 @@ async function export_3mf() {
         for (let r = 0; r < p_rep; r++) {
           platesOnce.push(plateText);
           coordsOnce.push(xsDesc);
+          originIdxOnce.push(i);
         }
       }
     }
@@ -1363,7 +1677,12 @@ async function export_3mf() {
 
       // Beim Start jeder Platte (z.B. in export_3mf vor applySwapRulesToGcode):
       console.log(`\n===== RULE PASS for plate ${i + 1}/${totalPlates} (mode=${CURRENT_MODE}) =====`);
-      return applySwapRulesToGcode(src, (window.SWAP_RULES || []), ctx);
+      let out = applySwapRulesToGcode(src, (window.SWAP_RULES || []), ctx);
+
+      // AMS-Overrides dieser Ursprungs-Platte anwenden
+      const originIdx = originIdxOnce[i];
+      out = applyAmsOverridesToPlate(out, originIdx);
+      return out;
     });
 
     // 3) Loops
@@ -1465,58 +1784,6 @@ async function export_3mf() {
   }
 }
 
-// findet erste G1-Zeile mit E und ersetzt den E-Wert durch 3
-function forceFirstExtrusionTo3mm(gcode, plateIndex = -1) {
-  const lines = gcode.split(/\r?\n/);
-
-  // Regexe
-  const reG1 = /^\s*G1\b/i;
-  const reX = /\bX[-+]?\d*\.?\d+/i;
-  const reY = /\bY[-+]?\d*\.?\d+/i;
-  const reE = /\bE([-+]?\d*\.?\d+)/i; // capture E-Wert
-  const reEsub = /\bE[-+]?\d*\.?\d+/i;  // zum Ersetzen
-
-  let hit = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i];
-
-    // komplette Kommentarzeilen überspringen
-    if (/^\s*;/.test(raw)) continue;
-
-    // Inline-Kommentar abtrennen (nur Code links vom ';' ansehen)
-    const code = raw.split(';', 1)[0];
-
-    if (!reG1.test(code)) continue;
-    if (!reX.test(code) || !reY.test(code)) continue;
-
-    const mE = code.match(reE);
-    if (!mE) continue;
-
-    const eVal = parseFloat(mE[1]);
-    if (!Number.isFinite(eVal) || eVal <= 0) continue; // “erste Extrusion” => E > 0
-
-    hit = i;
-    break;
-  }
-
-  if (hit === -1) {
-    console.warn(`[forceFirstExtrusionTo3mm] plate=${plateIndex} → keine passende G1‑Extrusion gefunden.`);
-    return gcode;
-  }
-
-  const before = lines[hit];
-  lines[hit] = lines[hit].replace(reEsub, 'E3');
-  const after = lines[hit];
-
-  // ausführlicher Log
-  console.log(`[forceFirstExtrusionTo3mm] plate=${plateIndex} line=${hit + 1}`);
-  console.log('  before:', before);
-  console.log('   after:', after);
-
-  return lines.join('\n');
-}
-
 function _countPattern(src, pattern, flags = "gm") {
   try { return [...src.matchAll(new RegExp(pattern, flags))].length; }
   catch (_) { return 0; }
@@ -1570,22 +1837,6 @@ function _ruleActiveWhy(rule, ctx) {
   if (Number.isFinite(onlyIf.plateIndexEquals) && !(ctx.plateIndex === onlyIf.plateIndexEquals)) return "plateIndexEquals_false";
   if (typeof onlyIf.isLastPlate === "boolean" && !(!!ctx.isLastPlate === onlyIf.isLastPlate)) return "isLastPlate_mismatch";
   return "active";
-}
-
-
-
-function disable_gcode_line(str, index) {
-  if (index > str.length - 1) return str;
-  return str.substring(0, index) + ";" + str.substring(index + 1);
-}
-
-function disable_gcode_block(str, index) {
-  if (index > str.length - 1) return str;
-  const block_end = str.substring(index).search(/\n[^\s]/);
-  var replacement_string = "M109 S230 \n ;SWAP - AMS block removed";
-  while (replacement_string.length < block_end - 1) { replacement_string += "/"; }
-  replacement_string += "\n";
-  return str.substring(0, index) + replacement_string + str.substring(index + block_end);
 }
 
 function disable_ams_block(str, index) {
@@ -1986,6 +2237,7 @@ async function export_gcode_txt() {
     const my_plates = playlist_ol.getElementsByTagName("li");
     const platesOnce = [];
     const coordsOnce = [];
+    const originIdxOnce = [];
 
     for (let i = 0; i < my_plates.length; i++) {
       const c_f_id = my_plates[i].getElementsByClassName("f_id")[0].title;
@@ -2001,6 +2253,7 @@ async function export_gcode_txt() {
         for (let r = 0; r < p_rep; r++) {
           platesOnce.push(plateText);
           coordsOnce.push(xsDesc);
+          originIdxOnce.push(i);
         }
       }
     }
@@ -2025,7 +2278,12 @@ async function export_gcode_txt() {
         sourcePlateText: src
       });
       console.log(`\n===== RULE PASS for plate ${i + 1}/${totalPlates} (mode=${CURRENT_MODE}) =====`);
-      return applySwapRulesToGcode(src, (window.SWAP_RULES || []), ctx);
+      let out = applySwapRulesToGcode(src, (window.SWAP_RULES || []), ctx);
+
+      // AMS-Overrides dieser Ursprungs-Platte anwenden
+      const originIdx = originIdxOnce[i];
+      out = applyAmsOverridesToPlate(out, originIdx);
+      return out;
     });
 
     // 4) Loops auf die modifizierten Platten anwenden
