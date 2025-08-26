@@ -1,0 +1,17 @@
+{
+  "name": "swapmod-app",
+  "version": "1.0.0",
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "jszip": "^3.10.1"
+  },
+  "scripts": {
+    "dev": "esbuild assets/js/index.js --bundle --outfile=dist/bundle.js --format=iife --sourcemap --target=es2020 --watch",
+    "serve": "esbuild assets/js/index.js --bundle --outfile=dist/bundle.js --format=iife --sourcemap --target=es2020 --servedir=. --watch",
+    "build": "esbuild assets/js/index.js --bundle --outfile=dist/bundle.js --format=iife --minify --sourcemap --target=es2020"
+  },
+  "dependencies": {
+    "spark-md5": "^3.0.2"
+  }
+}

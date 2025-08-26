@@ -22,9 +22,7 @@
   <div id="app_wrapper">
     <div id="app_header">
       <div>
-        <label for="_debug_outline">
-          <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" />
-        </label>
+        <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo">
         <div id="statistics" class="hidden">
           <div id="queue_statistics">
             <h3>Queue statistics:</h3>
@@ -63,17 +61,16 @@
           </div>
 
           <!-- 2) Generate + Progressbar -->
-          <button id="export" onclick="export_3mf()">Generate SWAP file</button>
+          <button id="export">Generate SWAP file</button>
 
-          <button id="export_gcode" onclick="export_gcode_txt()">Export GCODE (txt)</button>
+          <button id="export_gcode">Export GCODE</button>
           <!-- 3) Reset ganz unten -->
-          <button id="reset" onclick="location.reload()">Reset</button>
-          <div id="progress_bar" style="opacity: 0; width: 100;">
+          <button id="reset">Reset</button>
+          <div id="progress_bar" style="opacity: 0; width: 100%;">
             <div id="progress_scale" style="width: 0%; display: flex;"> </div>
           </div>
 
-          <input autocomplete="off" type="checkbox" id="show_settings" onchange="toggle_settings(this.checked)"
-            name="show_settings" />
+          <input autocomplete="off" type="checkbox" id="show_settings" name="show_settings">
           <label for="show_settings"> Show settings </label>
         </div>
       </div>
@@ -96,13 +93,10 @@
       <div id="settings_wrapper">
         <div>
           <label for="file_name">Custom file name:</label> <br>
-          <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name"
-            onclick="custom_file_name(this)" onload="adj_field_length(this,5,26)" onkeyup="adj_field_length(this,5,26)"
-            onkeypress="adj_field_length(this,5,26)">
+          <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name">
           <span> .swap.3mf</span>
           <br><br>
-          <input id="loops" autocomplete="off" onchange="update_statistics();" type="number" min="1" max="9999" step="1"
-            value="1">
+          <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
           <label for="loops">Loop repeats</label>
           <details class="tool_info">
             <summary></summary>
@@ -202,11 +196,11 @@
         <details>
           <summary>Log</summary>
           <p>V1</p>
-          <ul id="log">
+          <ul id="logv1">
             <li>Initial commit</li>
           </ul>
           <p>V1.1</p>
-          <ul id="log">
+          <ul id="logv1.1">
             <li>Added two new features: option for advanced cooldown settings and secure push-off sequence</li>
           </ul>
         </details>
@@ -216,45 +210,47 @@
 
   <input type="file" autocomplete="off" accept=".3mf, .gcode" id="file" class="hidden" name="file" multiple />
 
-  <li id="list_item_prototype" class="list_item hidden">
-    <button class="plate-remove" onclick="removePlate(this)">×</button>
-    <div class="p_title">
-      <span class="f_id"> some_id </span>
-      <span class="f_name single-line"> some_file.3mf </span>
-      <span class="p_name"> some_plate </span> <br>
-    </div>
-
-    <img class="p_icon" />
-    <div class="p_info" title="Duration of the plate printing and number of repeats.">
-      <span class="p_time"> [plate_time] </span>
-      <input class="p_rep" onchange="update_statistics();" type="number" min="0" max="9999" step="1" value="1">
-    </div>
-    <div class="p_filaments">
-      <div class="p_filament_prototype">
-        <div class="f_color"> </div> <br>
-        <span>Slot</span> <span class="f_slot"> </span> <br>
-        <span class="f_type"> </span> <br>
-        <span class="f_used_g"> </span> <span>g</span> <br>
-        <span class="f_used_m"> </span> <span>m</span>
+  <template id="list_item_prototype">
+    <li class="list_item hidden">
+      <button class="plate-remove">×</button>
+      <div class="p_title">
+        <span class="f_id"> some_id </span>
+        <span class="f_name single-line"> some_file.3mf </span>
+        <span class="p_name"> some_plate </span> <br>
       </div>
-    </div>
-    <div class="plate-x1p1-settings hidden">
-      <div class="plate-x1p1-header">Objects on this plate</div>
 
-      <label class="obj-count-label">
-        <span>Number of objects:</span>
-        <select class="obj-count" autocomplete="off">
-          <option value="1" selected>1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </label>
+      <img class="p_icon" />
+      <div class="p_info" title="Duration of the plate printing and number of repeats.">
+        <span class="p_time"> [plate_time] </span>
+        <input class="p_rep" type="number" min="0" max="9999" step="1" value="1">
+      </div>
+      <div class="p_filaments">
+        <div class="p_filament_prototype">
+          <div class="f_color"> </div> <br>
+          <span>Slot</span> <span class="f_slot"> </span> <br>
+          <span class="f_type"> </span> <br>
+          <span class="f_used_g"> </span> <span>g</span> <br>
+          <span class="f_used_m"> </span> <span>m</span>
+        </div>
+      </div>
+      <div class="plate-x1p1-settings hidden">
+        <div class="plate-x1p1-header">Objects on this plate</div>
 
-      <div class="obj-coords"></div>
-    </div>
-  </li>
+        <label class="obj-count-label">
+          <span>Number of objects:</span>
+          <select class="obj-count" autocomplete="off">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+
+        <div class="obj-coords"></div>
+      </div>
+    </li>
+  </template>
 
   <div id="site-info">
     <div id="err"> </div>
@@ -292,14 +288,7 @@
   </div>
   </div>
 
-  <!-- Vendor libs (CDN for convenience; you can replace with local files in assets/js/libs/) -->
-  <script src="assets/js/libs/jszip_m.js"></script>
-  <script src="assets/js/libs/spark-md5.min.js"></script>
-  <script src="assets/js/libs/obfsc.js"></script>
-
-  <!-- App logic -->
-  <script src="assets/js/commands.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="dist/bundle.js"></script>
 </body>
 
 </html>
