@@ -61,22 +61,24 @@ export function update_filament_usage() {
 
   const my_fil_data = list.getElementsByClassName("p_filament");
 
-  const used_m = [];  // index = slot
-  const used_g = [];
-  const f_type = [];
-  const f_color = [];
+  const used_m = [];             // [slot] → m
+  const used_g = [];             // [slot] → g
+  const slot_type_candidates = [];// [slot] → Array originaler Typen
+  const slot_color_lastSeen = []; // optional: letzte Plate-Farbe (nur informativ)
 
   let ams_max = -1;
 
   for (let i = 0; i < my_fil_data.length; i++) {
     const row = my_fil_data[i];
 
+    // aktuell ausgewählter Slot (nach evtl. manueller Umbelegung)
     const slotIdx1 = parseInt(row.getElementsByClassName("f_slot")[0]?.innerText, 10);
     if (!Number.isFinite(slotIdx1)) continue;
     const slot = slotIdx1 - 1;
 
     if (!used_m[slot]) used_m[slot] = 0;
     if (!used_g[slot]) used_g[slot] = 0;
+    if (!slot_type_candidates[slot]) slot_type_candidates[slot] = [];
 
     const repEl = row.parentElement?.parentElement?.getElementsByClassName("p_rep")[0];
     const r = parseFloat(repEl?.value) || 0;
@@ -87,8 +89,16 @@ export function update_filament_usage() {
     used_m[slot] += r * mVal;
     used_g[slot] += r * gVal;
 
-    f_type[slot]  = row.getElementsByClassName("f_type")[0]?.innerText || "";
-    f_color[slot] = row.getElementsByClassName("f_color")[0]?.dataset?.f_color || "";
+    // ORIGINALER Typ (vom Einlesen) bevorzugt
+    const tEl = row.getElementsByClassName("f_type")[0];
+    const tOrig = tEl?.dataset?.origType || "";
+    const tShow = tEl?.innerText || "";
+    const t = tOrig || tShow || "";
+    if (t) slot_type_candidates[slot].push(t);
+
+    // letzte gesehene (Plate-)Farbe merken – rein informativ
+    const color = row.getElementsByClassName("f_color")[0]?.dataset?.f_color || "";
+    if (color) slot_color_lastSeen[slot] = color;
 
     if (slot > ams_max && r > 0) {
       ams_max = slot;
@@ -103,7 +113,7 @@ export function update_filament_usage() {
   const used_m_scaled = used_m.map(m => (m || 0) * loops);
   const used_g_scaled = used_g.map(g => (g || 0) * loops);
 
-  // UI ausgeben
+  // UI ausgeben – nur Slots mit Nutzung anzeigen (m>0 oder g>0)
   fil_stat.innerHTML = "";
   for (let s = 0; s < Math.max(used_m_scaled.length, used_g_scaled.length); s++) {
     const m = used_m_scaled[s] || 0;
@@ -114,11 +124,16 @@ export function update_filament_usage() {
     const mRounded = Math.round(m * 100) / 100;
     const gRounded = Math.round(g * 100) / 100;
     div.innerHTML = `Slot ${s + 1}: <br>${mRounded}m <br> ${gRounded}g`;
-    div.dataset.used_m = String(mRounded);
-    div.dataset.used_g = String(gRounded);
-    div.dataset.f_type = f_type[s] || "";
-    div.dataset.f_color = f_color[s] || "";
+
+    // ————— Daten für Export/Picker —————
+    div.dataset.used_m   = String(mRounded);
+    div.dataset.used_g   = String(gRounded);
+    // Typ: erste brauchbare Kandidatur
+    const typeFirst = (slot_type_candidates[s] || []).find(x => !!x) || "";
+    div.dataset.f_type   = typeFirst;           // ← wichtig für slice_info
+    // Farbe setzt später renderTotalsColors() (globaler Slot-Farbwert)
     div.title = String(s + 1);
+
     fil_stat.appendChild(div);
   }
 }

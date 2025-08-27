@@ -2,15 +2,20 @@ import JSZip from "jszip";
 import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
-import { download , collectAndTransform, chunked_md5} from "./ioUtils.js";
-import { model_settings_template } from "../libs/obfsc.js";
+import { download, collectAndTransform, chunked_md5 } from "./ioUtils.js";
+import { model_settings_xml } from "../config/xmlConfig.js";
+import { colorToHex } from "../utils/colors.js";
+import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
+
 
 export async function export_3mf() {
   try {
     if (!validatePlateXCoords()) return;
     update_progress(5);
 
-    const result = await collectAndTransform({ applyRules: true, applyOptimization: true });
+
+    // Collect and transform the data
+    const result = await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
     if (result.empty) {
       alert("Keine aktiven Platten (Repeats=0).");
       update_progress(-1);
@@ -25,44 +30,74 @@ export async function export_3mf() {
     // 3MF Basis
     const baseZip = await JSZip.loadAsync(state.my_files[0]);
 
-    const oldPlates = await baseZip.file(/plate_\d+\.gcode\b$/);
+    const oldPlates = baseZip.file(/plate_\d+\.gcode\b$/);
     oldPlates.forEach(f => baseZip.remove(f.name));
 
     if (baseZip.file("Metadata/custom_gcode_per_layer.xml")) {
-      await baseZip.remove("Metadata/custom_gcode_per_layer.xml");
+      baseZip.remove("Metadata/custom_gcode_per_layer.xml");
     }
 
-    // project_settings vom "größten AMS"-File
+    // project_settings vom "größten AMS"-File lesen
     const projZip = await JSZip.loadAsync(state.my_files[state.ams_max_file_id]);
-    const projSettings = await projZip.file("Metadata/project_settings.config").async("text");
-    baseZip.file("Metadata/project_settings.config", projSettings);
+    let projSettingsText = await projZip.file("Metadata/project_settings.config").async("text");
+
+    // NEU: aus Template + aktuellen Statistik-Slots/Farben fertiges JSON bauen
+    const newProjSettings = buildProjectSettingsForUsedSlots(projSettingsText);
+
+    // in die 3MF packen
+    baseZip.file("Metadata/project_settings.config", newProjSettings);
 
     // model_settings + slice_info
-    baseZip.file("Metadata/model_settings.config", model_settings_template);
+    baseZip.file("Metadata/model_settings.config", model_settings_xml);
 
     const sliceInfoStr = await baseZip.file("Metadata/slice_info.config").async("text");
     const parser = new DOMParser();
     const slicer_config_xml = parser.parseFromString(sliceInfoStr, "text/xml");
 
+    // auf eine Plate reduzieren
     const platesXML = slicer_config_xml.getElementsByTagName("plate");
     while (platesXML.length > 1) platesXML[platesXML.length - 1].remove();
 
     const indexNode = platesXML[0].querySelector("[key='index']");
     if (indexNode) indexNode.setAttribute("value", "1");
 
+    // Alte Filament-Knoten leeren
     let filamentNodes = platesXML[0].getElementsByTagName("filament");
     while (filamentNodes.length > 0) filamentNodes[filamentNodes.length - 1].remove();
 
-    const fil_stat_slots = document.getElementById("filament_total").childNodes;
-    for (let i = 0; i < fil_stat_slots.length; i++) {
-      const filament_tag = slicer_config_xml.createElement("filament");
-      platesXML[0].appendChild(filament_tag);
+    // Nur direkte Slot-Divs nehmen (keine Textnodes) und nur verwendete Slots exportieren
+    const slotDivs = document
+      .getElementById("filament_total")
+      ?.querySelectorAll(":scope > div[title]") || [];
 
-      filament_tag.id = fil_stat_slots[i].title;
-      filament_tag.setAttribute("type",  fil_stat_slots[i].dataset.f_type);
-      filament_tag.setAttribute("color", fil_stat_slots[i].dataset.f_color);
-      filament_tag.setAttribute("used_m", fil_stat_slots[i].dataset.used_m);
-      filament_tag.setAttribute("used_g", fil_stat_slots[i].dataset.used_g);
+    for (let i = 0; i < slotDivs.length; i++) {
+      const div = slotDivs[i];
+
+      // Verbrauch lesen (falls 0/leer -> Slot überspringen)
+      const usedM = parseFloat(div.dataset.used_m || "0") || 0;
+      const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+      if (usedM <= 0 && usedG <= 0) continue;
+
+      // Slot-ID aus title (1..4)
+      const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
+
+      // Farbe bevorzugt vom Swatch holen
+      const sw = div.querySelector(":scope > .f_color");
+      let colorRaw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
+      const hex = colorToHex(colorRaw || "#cccccc");
+
+      // Typ vorerst immer PLA (Producer/Settings folgen in project_settings.config später)
+      const type = "PLA";
+
+      // Filament-Node schreiben
+      const filament_tag = slicer_config_xml.createElement("filament");
+      filament_tag.id = String(slotId);
+      filament_tag.setAttribute("type", type);
+      filament_tag.setAttribute("color", hex);
+      filament_tag.setAttribute("used_m", String(usedM));
+      filament_tag.setAttribute("used_g", String(usedG));
+
+      platesXML[0].appendChild(filament_tag);
     }
 
     const s = new XMLSerializer();

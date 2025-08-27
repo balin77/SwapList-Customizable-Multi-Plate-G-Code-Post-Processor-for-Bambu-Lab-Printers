@@ -136,31 +136,48 @@ export function handleFile(f) {
 
           var my_fl;
 
-          for (var filament_id = 0; filament_id < config_filaments.length; filament_id++) {
-            my_fl = p_filament_prototype.cloneNode(true);
+          // Neue Filamentzeilen erstellen
+          // Neue Filamentzeilen erstellen
+          for (let filament_id = 0; filament_id < config_filaments.length; filament_id++) {
+            const cfg = config_filaments[filament_id];
+
+            const color = cfg.getAttribute("color") || "#cccccc";
+            const type = cfg.getAttribute("type") || "PLA";
+
+            // Verbrauch robust parsen (keine "undefined" schreiben)
+            const usedM = parseFloat(cfg.getAttribute("used_m") || "0") || 0;
+            const usedG = parseFloat(cfg.getAttribute("used_g") || "0") || 0;
+
+            // Slot 1..4 aus dem Attribut "id" holen (Fallback = Index+1)
+            const slotAttr = cfg.getAttribute("id");
+            let slotNum = parseInt(slotAttr, 10);
+            if (!Number.isFinite(slotNum)) slotNum = filament_id + 1;   // Fallback
+            slotNum = Math.max(1, Math.min(4, slotNum));                // clamp 1..4
+
+            // Zeile klonen + anhängen
+            const my_fl = p_filament_prototype.cloneNode(true);
             p_filaments.appendChild(my_fl);
 
-            // Filamentfarbe und Slot-Text setzen
-            my_fl.getElementsByClassName("f_color")[0].style.backgroundColor = config_filaments[filament_id].getAttribute("color");
-            my_fl.getElementsByClassName("f_color")[0].dataset.f_color = config_filaments[filament_id].getAttribute("color");
+            // Farbe setzen (sichtbar + als Datenquelle)
+            const sw = my_fl.getElementsByClassName("f_color")[0];
+            sw.style.backgroundColor = color;
+            sw.dataset.f_color = color;
 
-            //  Slot 1..4 aus dem Attribut "id" holen (Fallback = Index+1)
-            const slotAttr = config_filaments[filament_id].getAttribute("id");
-            let slotNum = parseInt(slotAttr, 10);
-            if (!Number.isFinite(slotNum)) slotNum = filament_id + 1;       // Fallback
-            slotNum = Math.max(1, Math.min(4, slotNum));                    // clamp 1..4
+            // Slot-Text setzen (sichtbar) …
+            const slotEl = my_fl.getElementsByClassName("f_slot")[0];
+            slotEl.innerText = String(slotNum);
+            // … und Original-Slot/Typ für spätere Exporte merken
+            slotEl.dataset.origSlot = String(slotNum);
+            slotEl.dataset.origType = type;
 
-            // Slot anzeigen …
-            my_fl.getElementsByClassName("f_slot")[0].innerText = slotNum;
-            // … und **Original**-Slot für späteres Mapping speichern
-            my_fl.getElementsByClassName("f_slot")[0].dataset.origSlot = String(slotNum);
+            // Typ + Verbrauchswerte
+            my_fl.getElementsByClassName("f_type")[0].innerText = type;
+            my_fl.getElementsByClassName("f_used_m")[0].innerText = usedM.toString();
+            my_fl.getElementsByClassName("f_used_g")[0].innerText = usedG.toString();
 
-            // Filamenttyp und Verbrauchswerte setzen
-            my_fl.getElementsByClassName("f_type")[0].innerText = config_filaments[filament_id].getAttribute("type");
-            my_fl.getElementsByClassName("f_used_m")[0].innerText = config_filaments[filament_id].getAttribute("used_m");
-            my_fl.getElementsByClassName("f_used_g")[0].innerText = config_filaments[filament_id].getAttribute("used_g");
             my_fl.className = "p_filament";
           }
+
 
           // Plate-Swatches (Filamentfarben) mit Slot-Texten verknüpfen
           syncPlateFilamentSwatches(li);
