@@ -72,7 +72,7 @@ export function chunked_md5(my_content, callback) {
   loadNext();
 }
 
-export async function collectAndTransform({ applyRules = true, applyOptimization = true, loopsValue } = {}) {
+export async function collectAndTransform({ applyRules = true, applyOptimization = true, loopsValue, amsOverride = true } = {}) {
   const my_plates = state.playlist_ol.getElementsByTagName("li");
   const platesOnce = [];
   const coordsOnce = [];
@@ -128,7 +128,9 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
 
       console.log(`\n===== RULE PASS for plate ${i + 1}/${totalPlates} (mode=${state.CURRENT_MODE}) =====`);
       let out = applySwapRulesToGcode(src, (SWAP_RULES || []), ctx);
-      out = applyAmsOverridesToPlate(out, originIdxOnce[i]);
+      if (amsOverride) {
+        out = applyAmsOverridesToPlate(out, originIdxOnce[i]);
+      }
       return out;
     })
     : platesOnce.slice();

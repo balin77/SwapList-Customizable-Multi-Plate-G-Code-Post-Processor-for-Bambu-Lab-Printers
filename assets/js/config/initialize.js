@@ -10,6 +10,7 @@ import { handleFile } from "../io/read3mf.js";
 import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
 import { toggle_settings, custom_file_name, adj_field_length } from "../ui/settings.js";
+import { compareProjectSettingsFiles } from "../utils/utils.js";
 
 import {
   deriveGlobalSlotColorsFromPlates,
@@ -17,9 +18,8 @@ import {
   installFilamentTotalsAutoFix,
   syncPlateFilamentSwatches,
   openSlotDropdown,
-  getSlotColor,
-  setGlobalSlotColor,
-  repaintPlateFromStats
+  repaintPlateFromStats,
+  openStatsSlotDialog,
 } from "../ui/filamentColors.js";
 
 export function initialize_page() {
@@ -29,6 +29,30 @@ export function initialize_page() {
   document.getElementById("export_gcode")?.addEventListener("click", export_gcode_txt);
   document.getElementById("reset")?.addEventListener("click", () => location.reload());
   document.getElementById("show_settings")?.addEventListener("change", e => toggle_settings(e.target.checked));
+
+  const btnCmp = document.getElementById("btn_compare_settings");
+  if (btnCmp) {
+    btnCmp.addEventListener("click", async () => {
+      const origLabel = btnCmp.textContent;
+      btnCmp.disabled = true;
+      btnCmp.textContent = "Comparing…";
+      try {
+        const result = await compareProjectSettingsFiles(); // loggt selbst in die Konsole
+        console.log("[compareProjectSettingsFiles] finished", result);
+        alert("Vergleich abgeschlossen. Details stehen in der Konsole.");
+      } catch (err) {
+        console.error("Fehler beim Vergleich:", err);
+        alert("Vergleich fehlgeschlagen: " + (err?.message || err));
+      } finally {
+        btnCmp.disabled = false;
+        btnCmp.textContent = origLabel;
+      }
+    });
+
+    // Optional: für manuelles Triggern über die DevTools
+    window.compareProjectSettingsFiles = compareProjectSettingsFiles;
+  }
+
 
   // mode toggle listeners
   var mA1 = document.getElementById('mode_a1m');
@@ -87,12 +111,9 @@ export function initialize_page() {
   document.getElementById("filament_total")?.addEventListener("click", (e) => {
     const sw = e.target.closest(".f_color");
     if (!sw) return;
-    const idx = +(sw.dataset.slotIndex || 0);
-    const inp = document.createElement("input");
-    inp.type = "color";
-    inp.value = sw.dataset.f_color || getSlotColor(idx);
-    inp.onchange = () => setGlobalSlotColor(idx, inp.value);  // setzt Override + rendert neu
-    inp.click();
+
+    const idx = +(sw.dataset.slotIndex || 0); // 0..3
+    openStatsSlotDialog(idx);
   });
 
   document.getElementById("show_settings")?.addEventListener("change", e => {

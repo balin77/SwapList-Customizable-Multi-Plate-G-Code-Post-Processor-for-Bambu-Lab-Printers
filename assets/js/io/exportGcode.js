@@ -4,6 +4,8 @@ import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
 import { download } from "./ioUtils.js";
 import { collectAndTransform } from "./ioUtils.js";
+import { model_settings_xml } from "../config/xmlConfig.js";
+import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 
 export async function export_gcode_txt() {
   if (!validatePlateXCoords()) return;
@@ -11,7 +13,7 @@ export async function export_gcode_txt() {
     update_progress(5);
 
     const { empty, platesOnce, originalCombined, modifiedCombined } =
-      await collectAndTransform({ applyRules: true, applyOptimization: true });
+      await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
 
     if (empty) {
       alert("Keine aktiven Platten (Repeats=0).");
