@@ -15,6 +15,54 @@ import { update_statistics } from "../ui/statistics.js";
 import { export_3mf } from "./export3mf.js";
 import { err00, err01 } from "../constants/errorMessages.js";
 
+// Zeigt eine Fehlermeldung an, rollt den zuletzt gepushten File zurück
+// und setzt die UI zurück, falls noch keine Plate geladen wurde.
+function reject_file(message) {
+  const msg =
+    typeof message === "string"
+      ? message
+      : (message && (message.message || message.toString())) || "Unknown error";
+
+  console.warn("[read3mf] reject_file:", msg);
+
+  // Fehlerbox (falls vorhanden), sonst Fallback-Alert
+  const host = state.err || document.getElementById("err");
+  if (host) {
+    const div = document.createElement("div");
+    div.className = "alert alert-danger";
+    div.textContent = msg;
+    host.appendChild(div);
+  } else {
+    alert(msg);
+  }
+
+  // den zuletzt hinzugefügten File entfernen (wir haben ihn oben gepusht)
+  if (Array.isArray(state.my_files) && state.my_files.length) {
+    state.my_files.pop();
+  }
+
+  // Datei-Nameingabe zurücksetzen (optional)
+  const fileNameInput = document.getElementById("file_name");
+  if (fileNameInput) {
+    fileNameInput.value = "";
+    fileNameInput.placeholder = fileNameInput.placeholder || "output";
+    // falls die Helper-Funktion im Scope ist:
+    if (typeof adj_field_length === "function") {
+      adj_field_length(fileNameInput, 5, 26);
+    }
+  }
+
+  // Wenn noch keine Plate in der Liste ist → UI auf „leer“ zurücksetzen
+  const anyItem = document.querySelector("#playlist_ol li.list_item:not(.hidden)");
+  if (!anyItem) {
+    document.getElementById("drop_zones_wrapper")?.classList.remove("mini_drop_zone");
+    document.getElementById("action_buttons")?.classList.add("hidden");
+    document.getElementById("mode_switch")?.classList.add("hidden");
+    document.getElementById("statistics")?.classList.add("hidden");
+  }
+}
+
+
 function adj_field_length(trg, min, max) {
   if (trg.value == "")
     trg_val = trg.placeholder;
@@ -40,33 +88,76 @@ export function handleFile(f) {
   JSZip.loadAsync(f)
     .then(async function (zip) {
       const parser = new DOMParser();
-
-      var model_config_file = zip.file("Metadata/model_settings.config").async("text");
-      var model_config_xml = parser.parseFromString(await model_config_file, "text/xml");
-      const plateNode = model_config_xml.querySelector("[key='gcode_file']");
-
-      if (!plateNode) { reject_file(err01); return; }
-
-      const firstPlatePath = plateNode.getAttribute("value");
-      if (!firstPlatePath) { reject_file(err01); return; }
-
-      // Eine GCODE-Datei öffnen (reicht für Modelldetektion)
-      const firstPlateText = await zip.file(firstPlatePath).async("text");
-      const detectedMode = parsePrinterModelFromGcode(firstPlateText);
-
-      if (!ensureModeOrReject(detectedMode, f.name)) {
-        // Frühe Rückkehr: nichts wurde in Arrays/UI eingefügt
+      // model_settings laden
+      const model_config_file = zip.file("Metadata/model_settings.config")?.async("text");
+      if (!model_config_file) {
+        console.warn("[read3mf] model_settings.config fehlt.");
+        reject_file(err01);
         return;
       }
+      const model_config_xml = parser.parseFromString(await model_config_file, "text/xml");
 
-      var model_plates = model_config_xml.getElementsByTagName("plate");
-
-      if (model_plates.length == 0) {
+      // Platten finden
+      const model_plates = model_config_xml.getElementsByTagName("plate");
+      if (!model_plates || model_plates.length === 0) {
+        console.log("[read3mf] Keine <plate>-Knoten gefunden.");
         reject_file(err01);
         return;
       }
 
+      // gcode_file aus erster Plate holen – mit Varianten/Fallbacks
+      const gTag =
+        model_plates[0].querySelector("[key='gcode_file']") ||
+        model_config_xml.querySelector("[key='gcode_file']") ||
+        model_plates[0].querySelector("[key^='gcode_file']"); // manche Exporte nutzen gcode_file_0 etc.
+
+      let firstPlatePath = gTag?.getAttribute("value") || "";
+
+      // Fallback: nimm die erste .gcode-Datei im ZIP (bevorzugt unter Metadata/)
+      if (!firstPlatePath) {
+        const gFiles = zip.file(/\.gcode$/i) || [];
+        if (gFiles.length) {
+          const metaFirst = gFiles.find(f => /(^|\/)Metadata\//i.test(f.name));
+          firstPlatePath = (metaFirst || gFiles[0]).name;
+          console.warn("[read3mf] Kein gcode_file im model_settings gefunden. Fallback auf:", firstPlatePath);
+        }
+      }
+
+      // Immer noch nichts? -> sauber abbrechen + Debug-Infos
+      if (!firstPlatePath) {
+        console.log("[read3mf] firstPlatePath leer. Liste .gcode im ZIP:", (zip.file(/\.gcode$/i) || []).map(f => f.name));
+        reject_file(err01);
+        return;
+      }
+
+      // Prüfen, ob die gefundene Datei tatsächlich im ZIP existiert
+      const firstPlateEntry = zip.file(firstPlatePath);
+      if (!firstPlateEntry) {
+        console.log("[read3mf] gcode-Datei nicht im ZIP gefunden:", firstPlatePath,
+          "Kandidaten:", (zip.file(/\.gcode$/i) || []).map(f => f.name));
+        reject_file(err01);
+        return;
+      }
+
+      // Eine GCODE-Datei öffnen (reicht für Modelldetektion)
+      const firstPlateText = await firstPlateEntry.async("text");
+
+      // Printer-Modell erkennen
+      const detectedMode = parsePrinterModelFromGcode(firstPlateText);
+
+      // Nozzle-Durchmesser aus dem Header lesen, z.B. "; nozzle_diameter = 0.4"
+      const nozMatch = firstPlateText.match(/^\s*;\s*nozzle_diameter\s*=\s*([\d.]+)/mi);
+      state.NOZZLE_DIAMETER_MM = nozMatch ? parseFloat(nozMatch[1]) : null;
+      state.NOZZLE_IS_02 = !!(state.NOZZLE_DIAMETER_MM && Math.abs(state.NOZZLE_DIAMETER_MM - 0.2) < 1e-6);
+
+      // Mode prüfen (bricht selbst ab, wenn falsch)
+      if (!ensureModeOrReject(detectedMode, f.name)) {
+        return;
+      }
+
+
       if (model_plates[0].querySelectorAll("[key='gcode_file']").length == 0) {
+        console.log("model_plates[0].querySelectorAll([key='gcode_file']).length == 0")
         reject_file(err01);
         return;
       }

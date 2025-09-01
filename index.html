@@ -192,23 +192,22 @@
                 If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
                 A value of <b>1</b> means only a final push at Z=1.
               </p>
+            </details><label class="opt">
+              <input type="checkbox" id="opt_override_metadata" checked>
+              Override project &amp; filament settings
+            </label>
+            <details class="tool_info" id="opt_override_metadata_help">
+              <summary></summary>
+              <p>
+                When <b>on</b>, the app regenerates
+                the filament entries and material/printer settings. This is essential if you use new
+                AMS slot assignments that weren’t present in the original G-code. When <b>off</b>,
+                the original 3MF metadata is kept as-is; if you remap to AMS slots that weren’t
+                originally defined, the printer or Studio may report a mismatch.
+              </p>
             </details>
-
           </div>
-
         </div>
-        <br><br><br>
-        <details>
-          <summary>Log</summary>
-          <p>V1</p>
-          <ul id="logv1">
-            <li>Initial commit</li>
-          </ul>
-          <p>V1.1</p>
-          <ul id="logv1.1">
-            <li>Added two new features: option for advanced cooldown settings and secure push-off sequence</li>
-          </ul>
-        </details>
       </div>
     </div>
   </div>
