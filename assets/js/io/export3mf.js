@@ -41,11 +41,14 @@ export async function export_3mf() {
     const projZip = await JSZip.loadAsync(state.my_files[state.ams_max_file_id]);
     let projSettingsText = await projZip.file("Metadata/project_settings.config").async("text");
 
-    // NEU: aus Template + aktuellen Statistik-Slots/Farben fertiges JSON bauen
-    const newProjSettings = buildProjectSettingsForUsedSlots(projSettingsText);
+    // NUR wenn Override aktiv: neues JSON erzeugen
+    let finalProjSettingsText = projSettingsText;
+    if (state.OVERRIDE_METADATA) {
+      finalProjSettingsText = buildProjectSettingsForUsedSlots(projSettingsText);
+    }
 
     // in die 3MF packen
-    baseZip.file("Metadata/project_settings.config", newProjSettings);
+    baseZip.file("Metadata/project_settings.config", finalProjSettingsText);
 
     // model_settings + slice_info
     baseZip.file("Metadata/model_settings.config", model_settings_xml);
@@ -61,43 +64,47 @@ export async function export_3mf() {
     const indexNode = platesXML[0].querySelector("[key='index']");
     if (indexNode) indexNode.setAttribute("value", "1");
 
-    // Alte Filament-Knoten leeren
-    let filamentNodes = platesXML[0].getElementsByTagName("filament");
-    while (filamentNodes.length > 0) filamentNodes[filamentNodes.length - 1].remove();
+    // --- Filament-Override nur, wenn aktiviert ---
+    if (state.OVERRIDE_METADATA) {
+      // Alte Filament-Knoten leeren
+      let filamentNodes = platesXML[0].getElementsByTagName("filament");
+      while (filamentNodes.length > 0) filamentNodes[filamentNodes.length - 1].remove();
 
-    // Nur direkte Slot-Divs nehmen (keine Textnodes) und nur verwendete Slots exportieren
-    const slotDivs = document
-      .getElementById("filament_total")
-      ?.querySelectorAll(":scope > div[title]") || [];
+      // Stats-Quelle
+      const slotDivs = document
+        .getElementById("filament_total")
+        ?.querySelectorAll(":scope > div[title]") || [];
 
-    for (let i = 0; i < slotDivs.length; i++) {
-      const div = slotDivs[i];
+      for (let i = 0; i < slotDivs.length; i++) {
+        const div = slotDivs[i];
 
-      // Verbrauch lesen (falls 0/leer -> Slot überspringen)
-      const usedM = parseFloat(div.dataset.used_m || "0") || 0;
-      const usedG = parseFloat(div.dataset.used_g || "0") || 0;
-      if (usedM <= 0 && usedG <= 0) continue;
+        // Verbrauch lesen
+        const usedM = parseFloat(div.dataset.used_m || "0") || 0;
+        const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+        if (usedM <= 0 && usedG <= 0) continue;
 
-      // Slot-ID aus title (1..4)
-      const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
+        // Slot-ID (1..4)
+        const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
 
-      // Farbe bevorzugt vom Swatch holen
-      const sw = div.querySelector(":scope > .f_color");
-      let colorRaw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
-      const hex = colorToHex(colorRaw || "#cccccc");
+        // Farbe vom Swatch
+        const sw = div.querySelector(":scope > .f_color");
+        const colorRaw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
+        const hex = colorToHex(colorRaw || "#cccccc");
 
-      // Typ vorerst immer PLA (Producer/Settings folgen in project_settings.config später)
-      const type = "PLA";
+        // Typ (aktuell hart: PLA – du passt das später an)
+        const type = "PLA";
 
-      // Filament-Node schreiben
-      const filament_tag = slicer_config_xml.createElement("filament");
-      filament_tag.id = String(slotId);
-      filament_tag.setAttribute("type", type);
-      filament_tag.setAttribute("color", hex);
-      filament_tag.setAttribute("used_m", String(usedM));
-      filament_tag.setAttribute("used_g", String(usedG));
+        // Filament-Node schreiben
+        const filament_tag = slicer_config_xml.createElement("filament");
+        filament_tag.id = String(slotId);
+        filament_tag.setAttribute("type", type);
+        filament_tag.setAttribute("color", hex);
+        filament_tag.setAttribute("used_m", String(usedM));
+        filament_tag.setAttribute("used_g", String(usedG));
 
-      platesXML[0].appendChild(filament_tag);
+        platesXML[0].appendChild(filament_tag);
+      }
+      // Wenn Override AUS ist, belassen wir die originalen Filament-Einträge unverändert.
     }
 
     const s = new XMLSerializer();

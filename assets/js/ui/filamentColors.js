@@ -1,6 +1,7 @@
 // /src/ui/filamentColors.js
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js"; 
+import { PRESET_INDEX } from "../config/filamentConfig/index.js";
 
 // ===== Defaults ===================================================
 // nicht belegte Slots → grau
@@ -14,6 +15,30 @@ export function repaintPlateRowBySlot(row){
   const idx = Math.max(0, Math.min(3, slot1-1));
   sw.style.background = getSlotColor(idx);    // <- Farbe aus Statistik
   sw.dataset.slotIndex = String(idx);
+}
+
+function modeMatchesPrinter(printerToken) {
+  const m = state.CURRENT_MODE;
+  const t = String(printerToken || "").toUpperCase();
+  if (m === "X1") return t.startsWith("X1"); // X1, X1C, X1E...
+  if (m === "P1") return t.startsWith("P1"); // P1P, P1S...
+  if (m === "A1M") return t.startsWith("A1"); // A1, A1M
+  return false;
+}
+
+function catalogForCurrentPrinterAndNozzle() {
+  const want02 = !!state.NOZZLE_IS_02;
+  const candidates = (PRESET_INDEX || []).filter(e =>
+    modeMatchesPrinter(e.printer) && (!!e.nozzle02 === want02)
+  );
+
+  const vendorsByMaterial = new Map();
+  for (const e of candidates) {
+    if (!vendorsByMaterial.has(e.material)) vendorsByMaterial.set(e.material, new Set());
+    vendorsByMaterial.get(e.material).add(e.vendor);
+  }
+  const materials = Array.from(vendorsByMaterial.keys()).sort((a,b)=>a.localeCompare(b));
+  return { candidates, vendorsByMaterial, materials };
 }
 
 // Neu: ganze Plate neu bemalen
@@ -344,12 +369,25 @@ export function recolorAllPlateSwatchesFromGlobal() {
 
 /** Öffnet den Dialog für Statistics-Slot */
 export function openStatsSlotDialog(slotIndex){
-  // aktuelle Werte
   const curColor  = getSlotColor(slotIndex);
   const dev = ensureP0();
   const sl  = dev.slots[slotIndex] || {};
   const curType   = sl.meta?.type || "PLA";
   const curVendor = sl.meta?.vendor || "Generic";
+
+  const { candidates, vendorsByMaterial, materials } = catalogForCurrentPrinterAndNozzle();
+  const fallbackMaterials = ["PLA","PETG","ABS","ASA","TPU","PC","PA","PVA","Other"];
+  const fallbackVendors   = ["Bambu","Polymaker","eSun","Generic","Other"];
+
+  const matList = materials.length ? materials : fallbackMaterials;
+  const getVendorsFor = (mat) => {
+    const s = vendorsByMaterial.get(mat);
+    return (s && s.size) ? Array.from(s).sort((a,b)=>a.localeCompare(b)) : fallbackVendors;
+  };
+
+  const initialMaterial = materials.includes(curType) ? curType : (matList[0] || "PLA");
+  const initialVendors = getVendorsFor(initialMaterial);
+  const initialVendor  = initialVendors.includes(curVendor) ? curVendor : (initialVendors[0] || "Generic");
 
   const backdrop = document.createElement("div");
   backdrop.className = "slot-modal-backdrop";
@@ -358,22 +396,16 @@ export function openStatsSlotDialog(slotIndex){
   modal.innerHTML = `
     <h4>Slot ${slotIndex+1}</h4>
     <div class="row">
-      <label>Farbe:</label>
+      <label>Color:</label>
       <input type="color" id="slotColor" value="${curColor}">
     </div>
     <div class="row">
       <label>Material:</label>
-      <select id="slotType">
-        ${["PLA","PETG","ABS","ASA","TPU","PC","PA","PVA","Other"].map(x =>
-          `<option value="${x}" ${x===curType?"selected":""}>${x}</option>`).join("")}
-      </select>
+      <select id="slotType"></select>
     </div>
     <div class="row">
       <label>Producer:</label>
-      <select id="slotVendor">
-        ${["Polymaker","Bambu Lab","eSun","Generic","Other"].map(x =>
-          `<option value="${x}" ${x===curVendor?"selected":""}>${x}</option>`).join("")}
-      </select>
+      <select id="slotVendor"></select>
     </div>
     <div class="actions">
       <button id="slotCancel">Cancel</button>
@@ -384,23 +416,49 @@ export function openStatsSlotDialog(slotIndex){
   document.body.appendChild(backdrop);
 
   const $ = sel => modal.querySelector(sel);
+  const typeSel = $("#slotType");
+  const vendSel = $("#slotVendor");
+
+  function fill(sel, values, selected) {
+    sel.innerHTML = values.map(v => `<option value="${v}" ${v===selected?"selected":""}>${v}</option>`).join("");
+  }
+  fill(typeSel, matList, initialMaterial);
+  fill(vendSel, getVendorsFor(initialMaterial), initialVendor);
+
+  typeSel.addEventListener("change", () => {
+    const mat = typeSel.value;
+    const allowed = getVendorsFor(mat);
+    const keep = allowed.includes(vendSel.value) ? vendSel.value : allowed[0];
+    fill(vendSel, allowed, keep);
+  });
+
   $("#slotCancel").onclick = () => backdrop.remove();
   $("#slotSave").onclick = () => {
     const color  = $("#slotColor").value;
-    const type   = $("#slotType").value;
-    const vendor = $("#slotVendor").value;
+    const type   = typeSel.value;
+    const vendor = vendSel.value;
 
+    // passendes PRESET zur aktuellen Auswahl finden
+    const entry = candidates.find(e => e.material === type && e.vendor === vendor) || null;
+
+    // Slot-Meta setzen (Preset-Referenz merken!)
     setGlobalSlotMeta(slotIndex, { color, type, vendor });
+    const slot = ensureP0().slots[slotIndex];
+    slot.meta = slot.meta || {};
+    slot.meta.presetFile = entry?.file || null; // <- für Export verwenden
+    // (Optional) du kannst hier auch entry.data speichern, wenn du’s sofort brauchst:
+    // slot.meta.presetData = entry?.data || null;
 
-    // zusätzlich die aktuell sichtbare Statistics-Zeile aktualisieren,
-    // damit export_3mf die Daten direkt aus dem DOM lesen kann:
+    // DOM-Daten für Export aktualisieren
     const box = document.querySelector(`#filament_total > div[title="${slotIndex+1}"]`);
     if (box) {
-      box.dataset.f_color = toHexAny(color);
-      box.dataset.f_type  = type;
+      box.dataset.f_color  = toHexAny(color);
+      box.dataset.f_type   = type;
       box.dataset.f_vendor = vendor;
+      if (entry?.file) box.dataset.preset_file = entry.file;
     }
 
     backdrop.remove();
   };
 }
+

@@ -21,6 +21,9 @@ export const state = {
   enable_md5: true,
   open_in_bbs: false,
 
+  // steuert project_settings + slice_info Filament-Override
+  OVERRIDE_METADATA: true,
+
   // AMS global state
   GLOBAL_AMS: {
     devices: [],                 // [{id, slots:[...]}]

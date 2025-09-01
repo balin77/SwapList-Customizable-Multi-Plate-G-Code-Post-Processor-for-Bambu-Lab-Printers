@@ -102,6 +102,16 @@ export function initialize_page() {
     resizeHandler();
   }
 
+  // Override-Checkbox
+  const chkOverride = document.getElementById("opt_override_metadata");
+  if (chkOverride) {
+    state.OVERRIDE_METADATA = !!chkOverride.checked;
+    chkOverride.addEventListener("change", () => {
+      state.OVERRIDE_METADATA = !!chkOverride.checked;
+      console.log("OVERRIDE_METADATA:", state.OVERRIDE_METADATA);
+    });
+  }
+
   // Farben im „Filament usage statistics“-Block initial rendern
   renderTotalsColors();
   installFilamentTotalsAutoFix();
