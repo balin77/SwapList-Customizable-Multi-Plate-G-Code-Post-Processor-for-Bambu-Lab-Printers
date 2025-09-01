@@ -61,20 +61,18 @@ export function update_filament_usage() {
 
   const my_fil_data = list.getElementsByClassName("p_filament");
 
-  const used_m = [];             // [slot] → m
-  const used_g = [];             // [slot] → g
-  const slot_type_candidates = [];// [slot] → Array originaler Typen
-  const slot_color_lastSeen = []; // optional: letzte Plate-Farbe (nur informativ)
+  const used_m = [];               // [slot] → m
+  const used_g = [];               // [slot] → g
+  const slot_type_candidates = []; // [slot] → Array originaler Typen
 
   let ams_max = -1;
 
   for (let i = 0; i < my_fil_data.length; i++) {
     const row = my_fil_data[i];
 
-    // aktuell ausgewählter Slot (nach evtl. manueller Umbelegung)
     const slotIdx1 = parseInt(row.getElementsByClassName("f_slot")[0]?.innerText, 10);
     if (!Number.isFinite(slotIdx1)) continue;
-    const slot = slotIdx1 - 1;
+    const slot = slotIdx1 - 1; // 0..3
 
     if (!used_m[slot]) used_m[slot] = 0;
     if (!used_g[slot]) used_g[slot] = 0;
@@ -89,16 +87,11 @@ export function update_filament_usage() {
     used_m[slot] += r * mVal;
     used_g[slot] += r * gVal;
 
-    // ORIGINALER Typ (vom Einlesen) bevorzugt
-    const tEl = row.getElementsByClassName("f_type")[0];
+    const tEl   = row.getElementsByClassName("f_type")[0];
     const tOrig = tEl?.dataset?.origType || "";
     const tShow = tEl?.innerText || "";
-    const t = tOrig || tShow || "";
+    const t     = tOrig || tShow || "";
     if (t) slot_type_candidates[slot].push(t);
-
-    // letzte gesehene (Plate-)Farbe merken – rein informativ
-    const color = row.getElementsByClassName("f_color")[0]?.dataset?.f_color || "";
-    if (color) slot_color_lastSeen[slot] = color;
 
     if (slot > ams_max && r > 0) {
       ams_max = slot;
@@ -110,30 +103,59 @@ export function update_filament_usage() {
   const loopsEl = document.getElementById("loops");
   const loops = parseFloat(loopsEl?.value) || 1;
 
-  const used_m_scaled = used_m.map(m => (m || 0) * loops);
-  const used_g_scaled = used_g.map(g => (g || 0) * loops);
+  const used_m_scaled = Array.from({ length: 4 }, (_, s) => (used_m[s] || 0) * loops);
+  const used_g_scaled = Array.from({ length: 4 }, (_, s) => (used_g[s] || 0) * loops);
 
-  // UI ausgeben – nur Slots mit Nutzung anzeigen (m>0 oder g>0)
-  fil_stat.innerHTML = "";
-  for (let s = 0; s < Math.max(used_m_scaled.length, used_g_scaled.length); s++) {
+  // ⛔ NICHT mehr: fil_stat.innerHTML = "";
+  // ✅ Stelle sicher, dass 4 Slots existieren – in fester Reihenfolge.
+  ensureFourSlotDivs(fil_stat);
+
+  for (let s = 0; s < 4; s++) {
     const m = used_m_scaled[s] || 0;
     const g = used_g_scaled[s] || 0;
-    if (m === 0 && g === 0) continue;
 
-    const div = document.createElement("div");
+    const div = fil_stat.querySelector(`:scope > div[title="${s + 1}"]`);
+    if (!div) continue;
+
+    // Swatch (falls vorhanden) vor dem Überschreiben sichern
+    const sw = div.querySelector(":scope > .f_color");
+
     const mRounded = Math.round(m * 100) / 100;
     const gRounded = Math.round(g * 100) / 100;
+
+    // Inhalt neu schreiben
     div.innerHTML = `Slot ${s + 1}: <br>${mRounded}m <br> ${gRounded}g`;
 
-    // ————— Daten für Export/Picker —————
-    div.dataset.used_m   = String(mRounded);
-    div.dataset.used_g   = String(gRounded);
-    // Typ: erste brauchbare Kandidatur
-    const typeFirst = (slot_type_candidates[s] || []).find(x => !!x) || "";
-    div.dataset.f_type   = typeFirst;           // ← wichtig für slice_info
-    // Farbe setzt später renderTotalsColors() (globaler Slot-Farbwert)
-    div.title = String(s + 1);
+    // Swatch wieder ganz oben einsetzen (falls vorhanden)
+    if (sw) {
+      div.insertBefore(sw, div.firstChild);
+      div.insertBefore(document.createElement("br"), sw.nextSibling);
+    }
 
-    fil_stat.appendChild(div);
+    // Datensätze für Export/Picker
+    div.dataset.used_m = String(mRounded);
+    div.dataset.used_g = String(gRounded);
+    const typeFirst = (slot_type_candidates[s] || []).find(Boolean) || div.dataset.f_type || "";
+    div.dataset.f_type = typeFirst;
+
+    // Optional: Slots ohne Nutzung optisch dimmen statt zu verstecken
+    div.style.opacity = (m === 0 && g === 0) ? "0.7" : "1";
+  }
+}
+
+function ensureFourSlotDivs(host) {
+  // Wenn Struktur unsauber ist, baue sie einmal sauber komplett neu.
+  const needRebuild =
+    host.children.length !== 4 ||
+    ![1,2,3,4].every((n, i) => host.children[i]?.getAttribute?.("title") === String(n));
+
+  if (needRebuild) {
+    host.innerHTML = "";
+    for (let i = 1; i <= 4; i++) {
+      const div = document.createElement("div");
+      div.setAttribute("title", String(i));
+      div.innerHTML = `Slot ${i}: <br> 0.00m <br> 0.00g`;
+      host.appendChild(div);
+    }
   }
 }
