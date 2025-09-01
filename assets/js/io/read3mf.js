@@ -62,6 +62,30 @@ function reject_file(message) {
   }
 }
 
+// Hilfsfunktion: Slot aus <filament id>, sonst aus model_settings 'filament_maps'
+function resolveSlotForRow(model_plates, plateIndex, filIndex, filamentNode) {
+  // 1) Versuche: <filament id="...">
+  const slotAttr = filamentNode?.getAttribute?.("id");
+  let slot = parseInt(slotAttr, 10);
+  if (Number.isFinite(slot) && slot >= 1 && slot <= 4) return slot;
+
+  // 2) Fallback: Plate-Metadaten 'filament_maps'
+  try {
+    const plate = model_plates[plateIndex];
+    const meta = plate?.querySelector?.("[key='filament_maps']");
+    const raw = meta?.getAttribute?.("value") || "";
+    // "1 4 2" -> [1,4,2]
+    const parts = raw.split(/\s+/).map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
+    if (parts[filIndex] && parts[filIndex] >= 1 && parts[filIndex] <= 4) {
+      return parts[filIndex];
+    }
+  } catch (e) {
+    console.debug("[resolveSlotForRow] filament_maps parse failed:", e);
+  }
+
+  // 3) Letzter Fallback: Reihenindex + 1
+  return filIndex + 1;
+}
 
 function adj_field_length(trg, min, max) {
   if (trg.value == "")
@@ -240,10 +264,7 @@ export function handleFile(f) {
             const usedG = parseFloat(cfg.getAttribute("used_g") || "0") || 0;
 
             // Slot 1..4 aus dem Attribut "id" holen (Fallback = Index+1)
-            const slotAttr = cfg.getAttribute("id");
-            let slotNum = parseInt(slotAttr, 10);
-            if (!Number.isFinite(slotNum)) slotNum = filament_id + 1;   // Fallback
-            slotNum = Math.max(1, Math.min(4, slotNum));                // clamp 1..4
+            const slotNum = resolveSlotForRow(model_plates, i, filament_id, cfg);
 
             // Zeile klonen + anhängen
             const my_fl = p_filament_prototype.cloneNode(true);
