@@ -39,12 +39,12 @@ function replicateTemplateArrays(template, n) {
  * Baut ein neues project_settings.config JSON (String),
  * basierend auf originalText + PLAPolyTerra + den verwendeten Slots/Farben.
  */
-export function buildProjectSettingsForUsedSlots(originalText, template = PLAPolyTerra) {
+export function buildProjectSettingsForUsedSlots(originalText, templates = [PLAPolyTerra]) {
   let original;
   try { original = JSON.parse(originalText); }
   catch (e) { console.warn("project_settings original parse failed, fallback to {}:", e); original = {}; }
 
-  const colors = readUsedSlotsAndColors();         // ["#RRGGBB", ...] nur verwendete Slots
+  const colors = readUsedSlotsAndColors();
   const n = colors.length;
   if (n === 0) {
     // nichts benutzt → gib Original zurück
@@ -54,22 +54,26 @@ export function buildProjectSettingsForUsedSlots(originalText, template = PLAPol
   // 1) Basis: Original klonen
   const out = structuredClone ? structuredClone(original) : JSON.parse(JSON.stringify(original));
 
-  // 2) Template replizieren (alle Array-Felder)
-  const replicated = replicateTemplateArrays(template, n);
-  Object.assign(out, replicated);
+  // NEU: Für jedes Feld, das ein Array ist, die Werte aus dem jeweiligen Template übernehmen
+  for (const key of Object.keys(templates[0] || {})) {
+    // Array-Feld: pro Slot aus dem jeweiligen Template übernehmen
+    if (Array.isArray(templates[0][key])) {
+      out[key] = Array(n).fill("").map((_, i) => {
+        const tpl = templates[i] || templates[0];
+        return tpl[key]?.[0] ?? "";
+      });
+    } else {
+      // Skalar: Wert aus erstem Template übernehmen
+      out[key] = templates[0][key];
+    }
+  }
 
-  // 3) Spezielle Felder überschreiben
-  out["filament_colour"]       = colors.slice(); // 1:1 Farben
+  // Farben und Spezialfelder wie gehabt
+  out["filament_colour"]       = colors.slice();
   out["filament_multi_colour"] = colors.slice();
   out["filament_self_index"]   = Array.from({length: n}, (_, i) => String(i+1));
-
-  // Flush-Daten
-  const matrix = buildFlushVolumesMatrixFromColors(colors, { maxFlush: 850, minFlush: 0 });
-  out["flush_volumes_matrix"]  = matrix.map(v => String(v));
+  out["flush_volumes_matrix"]  = buildFlushVolumesMatrixFromColors(colors, { maxFlush: 850, minFlush: 0 }).map(v => String(v));
   out["flush_volumes_vector"]  = buildFlushVolumesVector(n, 140); // 2× pro Filament
-
-  // (Optional) Falls diese Felder im Original als Strings statt Arrays erwartet werden,
-  // bitte anpassen – Bambu Studio erwartet hier Arrays von Strings.
 
   return JSON.stringify(out, null, 2);
 }

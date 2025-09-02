@@ -13,7 +13,6 @@ export const state = {
   playlist_ol: null,
   err: null,
   p_scale: null,
-  instant_processing: false,
   last_file: false,
   ams_max_file_id: -1,
 

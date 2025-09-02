@@ -1,5 +1,6 @@
 // /src/config/initialize.js
 
+import { DEV_MODE } from "../index.js";
 import { state } from "./state.js";
 import { getSecurePushOffEnabled } from "../ui/settings.js";
 import { removePlate, duplicatePlate } from "../ui/plates.js";
@@ -9,17 +10,17 @@ import { dragOutHandler, dragOverHandler, dropHandler } from "../ui/dropzone.js"
 import { handleFile } from "../io/read3mf.js";
 import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
-import { toggle_settings, custom_file_name, adj_field_length } from "../ui/settings.js";
+import { toggle_settings, custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
 import { compareProjectSettingsFiles } from "../utils/utils.js";
 
 import {
-  deriveGlobalSlotColorsFromPlates,
+  wirePlateSwatches,
+  updateAllPlateSwatchColors,
+  openSlotDropdown,
   renderTotalsColors,
   installFilamentTotalsAutoFix,
-  syncPlateFilamentSwatches,
-  openSlotDropdown,
-  repaintPlateFromStats,
-  openStatsSlotDialog,
+  deriveGlobalSlotColorsFromPlates,
+  openStatsSlotDialog
 } from "../ui/filamentColors.js";
 
 export function initialize_page() {
@@ -28,29 +29,60 @@ export function initialize_page() {
   document.getElementById("export")?.addEventListener("click", export_3mf);
   document.getElementById("export_gcode")?.addEventListener("click", export_gcode_txt);
   document.getElementById("reset")?.addEventListener("click", () => location.reload());
-  document.getElementById("show_settings")?.addEventListener("change", e => toggle_settings(e.target.checked));
 
+  // Dev Mode: Show/Hide compare buttons based on DEV_MODE
   const btnCmp = document.getElementById("btn_compare_settings");
+  const btnCmpGcode = document.getElementById("btn_compare_gcode");
+  const compareGcodeHelp = document.getElementById("compare_gcode_help");
+  
   if (btnCmp) {
-    btnCmp.addEventListener("click", async () => {
-      const origLabel = btnCmp.textContent;
-      btnCmp.disabled = true;
-      btnCmp.textContent = "Comparing…";
-      try {
-        const result = await compareProjectSettingsFiles(); // loggt selbst in die Konsole
-        console.log("[compareProjectSettingsFiles] finished", result);
-        alert("Vergleich abgeschlossen. Details stehen in der Konsole.");
-      } catch (err) {
-        console.error("Fehler beim Vergleich:", err);
-        alert("Vergleich fehlgeschlagen: " + (err?.message || err));
-      } finally {
-        btnCmp.disabled = false;
-        btnCmp.textContent = origLabel;
-      }
-    });
+    if (DEV_MODE) {
+      btnCmp.style.display = "block";
+      btnCmp.classList.remove("hidden");
+      
+      btnCmp.addEventListener("click", async () => {
+        const origLabel = btnCmp.textContent;
+        btnCmp.disabled = true;
+        btnCmp.textContent = "Comparing…";
+        try {
+          const result = await compareProjectSettingsFiles(); // loggt selbst in die Konsole
+          console.log("[compareProjectSettingsFiles] finished", result);
+          alert("Vergleich abgeschlossen. Details stehen in der Konsole.");
+        } catch (err) {
+          console.error("Fehler beim Vergleich:", err);
+          alert("Vergleich fehlgeschlagen: " + (err?.message || err));
+        } finally {
+          btnCmp.disabled = false;
+          btnCmp.textContent = origLabel;
+        }
+      });
 
-    // Optional: für manuelles Triggern über die DevTools
-    window.compareProjectSettingsFiles = compareProjectSettingsFiles;
+      // Optional: für manuelles Triggern über die DevTools
+      window.compareProjectSettingsFiles = compareProjectSettingsFiles;
+    } else {
+      btnCmp.style.display = "none";
+      btnCmp.classList.add("hidden");
+    }
+  }
+  
+  if (btnCmpGcode) {
+    if (DEV_MODE) {
+      btnCmpGcode.style.display = "block";
+      btnCmpGcode.classList.remove("hidden");
+    } else {
+      btnCmpGcode.style.display = "none";
+      btnCmpGcode.classList.add("hidden");
+    }
+  }
+  
+  if (compareGcodeHelp) {
+    if (DEV_MODE) {
+      compareGcodeHelp.style.display = "block";
+      compareGcodeHelp.classList.remove("hidden");
+    } else {
+      compareGcodeHelp.style.display = "none";
+      compareGcodeHelp.classList.add("hidden");
+    }
   }
 
 
@@ -126,11 +158,6 @@ export function initialize_page() {
     openStatsSlotDialog(idx);
   });
 
-  document.getElementById("show_settings")?.addEventListener("change", e => {
-    toggle_settings(e.target.checked);
-    // falls das Panel erst jetzt sichtbar wird → sicherheitshalber rendern
-    renderTotalsColors();
-  });
 
   // Delegation: Klick auf Plate-Swatch → Slot zyklisch durchschalten (1..4)
   document.body.addEventListener("click", e => {
@@ -146,9 +173,10 @@ export function initialize_page() {
       for (const m of muts) {
         m.addedNodes?.forEach(n => {
           if (n.nodeType === 1 && n.matches?.("li.list_item")) {
-            syncPlateFilamentSwatches(n);
+            wirePlateSwatches(n);
             deriveGlobalSlotColorsFromPlates(); // Stats-Farben aktualisieren
-            repaintPlateFromStats(n);             // dann Plate-Swatches aus Statistikfarbe malen
+            updateAllPlateSwatchColors(n);             // dann Plate-Swatches aus Statistikfarbe malen
+            show_settings_when_plates_loaded(); // Settings anzeigen wenn Plates geladen sind
           }
         });
       }
@@ -167,6 +195,7 @@ export function initialize_page() {
     if (e.target.classList.contains("plate-remove")) {
       removePlate(e.target);
       deriveGlobalSlotColorsFromPlates();
+      show_settings_when_plates_loaded(); // Settings verstecken wenn keine Plates mehr da sind
     }
   });
 
@@ -216,11 +245,9 @@ export function initialize_page() {
   const app_body = document.body;
 
   const drop_zone = document.getElementById("drop_zone");
-  const drop_zone_instant = document.getElementById("drop_zone_instant");
 
   ['dragend', 'dragleave', 'drop'].forEach(evt => {
     drop_zone.addEventListener(evt, dragOutHandler);
-    drop_zone_instant.addEventListener(evt, dragOutHandler);
   });
 
   drop_zone.addEventListener("dragover", (e) => dragOverHandler(e, e.target));
@@ -228,25 +255,11 @@ export function initialize_page() {
     child.addEventListener("dragover", (e) => dragOverHandler(e, e.target.parentElement));
   });
 
-  drop_zone_instant.addEventListener("dragover", (e) => dragOverHandler(e, e.target));
-  [...drop_zone_instant.children].forEach(child => {
-    child.addEventListener("dragover", (e) => dragOverHandler(e, e.target.parentElement));
-  });
-
-  drop_zone_instant.addEventListener("drop", (e) => dropHandler(e, true));
   drop_zone.addEventListener("drop", (e) => dropHandler(e, false));
 
   drop_zone.addEventListener("click", () => {
     state.fileInput.click();
-    state.instant_processing = false;
   });
-
-
-  /*
-  drop_zone_instant.addEventListener("click", () => {
-    state.fileInput.click();
-    instant_processing=true;});
-  */
 
   state.fileInput.addEventListener("change", function (evt) {
     var files = evt.target.files;

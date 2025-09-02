@@ -7,9 +7,9 @@ import { parsePrinterModelFromGcode } from "../gcode/readGcode.js";
 import { ensureModeOrReject } from "../config/mode.js";
 import { initPlateX1P1UI, makeListSortable, installPlateButtons } from "../ui/plates.js";
 import {
-  syncPlateFilamentSwatches,
-  deriveGlobalSlotColorsFromPlates,
-  repaintPlateFromStats
+  wirePlateSwatches,
+  updateAllPlateSwatchColors,
+  deriveGlobalSlotColorsFromPlates  // Add this import
 } from "../ui/filamentColors.js";
 import { update_statistics } from "../ui/statistics.js";
 import { export_3mf } from "./export3mf.js";
@@ -292,11 +292,11 @@ export function handleFile(f) {
 
 
           // Plate-Swatches (Filamentfarben) mit Slot-Texten verknüpfen
-          syncPlateFilamentSwatches(li);
+          wirePlateSwatches(li);
           // Globale Slotfarben aus allen Platten ableiten → Statistik einfärben
           deriveGlobalSlotColorsFromPlates();
           // Danach die Plate mit den aktuellen Statistikfarben bemalen
-          repaintPlateFromStats(li);
+          updateAllPlateSwatchColors();
 
           relativePath.async("string").then(async function (content) {
 
@@ -341,8 +341,6 @@ export function handleFile(f) {
 
       if (state.last_file) {
         makeListSortable(state.playlist_ol);
-        if (state.instant_processing)
-          export_3mf();
       }
     }, function (e) {
       var errorDiv = document.createElement("div");
