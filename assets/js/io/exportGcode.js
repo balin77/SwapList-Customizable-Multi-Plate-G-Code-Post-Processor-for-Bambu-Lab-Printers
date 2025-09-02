@@ -4,8 +4,13 @@ import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
 import { download } from "./ioUtils.js";
 import { collectAndTransform } from "./ioUtils.js";
-import { model_settings_xml } from "../config/xmlConfig.js";
+import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
+
+// Hilfsfunktion: Finde das Filament-Objekt anhand setting_id
+function findFilamentBySettingId(settingId) {
+  return PRESET_INDEX.find(f => f.settings?.setting_id === settingId);
+}
 
 export async function export_gcode_txt() {
   if (!validatePlateXCoords()) return;
@@ -43,6 +48,20 @@ export async function export_gcode_txt() {
       platesFolder.file(`plate_${idx}_original.txt`, platesOnce[i]);
       // modifiedPerPlate könntest du auf Wunsch zusätzlich aus collectAndTransform zurückgeben und hier ablegen
     }
+
+    // --- NEU: Hole die Slot-Metas (z.B. aus state.P0.slots)
+    const slotMetas = (state.P0?.slots || []).map(slot => slot.meta || {});
+
+    // --- NEU: Erstelle ein Array mit den Filament-Settings für die verwendeten Slots
+    const templates = slotMetas.map(meta => {
+      const filament = findFilamentBySettingId(meta.setting_id);
+      return filament ? filament.settings : null;
+    });
+
+    // --- NEU: Übergebe die Templates an die Exportfunktion
+    // buildProjectSettingsForUsedSlots muss ggf. angepasst werden, um ein Array von Templates zu akzeptieren!
+    const out = buildProjectSettingsForUsedSlots(originalCombined, templates);
+    root.file(`${base}_${modeTag}${purgeTag}_project_settings.txt`, out);
 
     update_progress(60);
     const zipBlob = await zip.generateAsync(

@@ -1,118 +1,85 @@
 // /src/ui/filamentColors.js
 import { state } from "../config/state.js";
-import { update_statistics } from "../ui/statistics.js"; 
-import { PRESET_INDEX } from "../config/filamentConfig/index.js";
+import { update_statistics } from "../ui/statistics.js";
+import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
+
+// Add this helper function
+function ensureP0() {
+  if (!state.P0) state.P0 = {};
+  if (!state.P0.slots) state.P0.slots = [{}, {}, {}, {}];
+  return state.P0;
+}
+
+// Also add missing toHexAny helper
+function toHexAny(color) {
+  if (!color) return "#cccccc";
+  if (color.startsWith("#")) return color;
+  const m = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (!m) return "#cccccc";
+  return "#" + m.slice(1).map(x => (+x).toString(16).padStart(2, "0")).join("");
+}
+
+// Add this helper function after toHexAny()
+function getSwatchHex(swatch) {
+  if (!swatch) return null;
+  // First try to get original color from dataset
+  if (swatch.dataset.f_color) return swatch.dataset.f_color;
+  // Otherwise try to get from style
+  return toHexAny(swatch.style.backgroundColor);
+}
 
 // ===== Defaults ===================================================
 // nicht belegte Slots → grau
 const DEFAULT_SLOT_COLORS = ["#cccccc", "#cccccc", "#cccccc", "#cccccc"];
 
-// Neu: eine Zeile nach Statistikfarbe neu bemalen
-export function repaintPlateRowBySlot(row){
-  const sw   = row.querySelector(".f_color");
-  const span = row.querySelector(".f_slot");
-  const slot1 = parseInt(span?.textContent?.trim() || "1", 10) || 1;
-  const idx = Math.max(0, Math.min(3, slot1-1));
-  sw.style.background = getSlotColor(idx);    // <- Farbe aus Statistik
-  sw.dataset.slotIndex = String(idx);
-}
+// Alte Funktionen entfernen:
+// - repaintPlateRowBySlot
+// - repaintPlateFromStats
+// - recolorAllPlateSwatchesFromGlobal
 
-function modeMatchesPrinter(printerToken) {
-  const m = state.CURRENT_MODE;
-  const t = String(printerToken || "").toUpperCase();
-  if (m === "X1") return t.startsWith("X1"); // X1, X1C, X1E...
-  if (m === "P1") return t.startsWith("P1"); // P1P, P1S...
-  if (m === "A1M") return t.startsWith("A1"); // A1, A1M
-  return false;
-}
+// Diese eine zentrale Update-Funktion für Plate-Swatches
+export function updateAllPlateSwatchColors() {
+  const list = document.getElementById("playlist_ol");
+  if (!list) return;
 
-function catalogForCurrentPrinterAndNozzle() {
-  const want02 = !!state.NOZZLE_IS_02;
-  const candidates = (PRESET_INDEX || []).filter(e =>
-    modeMatchesPrinter(e.printer) && (!!e.nozzle02 === want02)
-  );
+  list.querySelectorAll("li.list_item .p_filaments .p_filament").forEach(row => {
+    const sw = row.querySelector(".f_color");
+    const slotSpan = row.querySelector(".f_slot");
+    if (!sw || !slotSpan) return;
 
-  const vendorsByMaterial = new Map();
-  for (const e of candidates) {
-    if (!vendorsByMaterial.has(e.material)) vendorsByMaterial.set(e.material, new Set());
-    vendorsByMaterial.get(e.material).add(e.vendor);
-  }
-  const materials = Array.from(vendorsByMaterial.keys()).sort((a,b)=>a.localeCompare(b));
-  return { candidates, vendorsByMaterial, materials };
-}
+    const slot1 = parseInt(slotSpan.textContent?.trim() || "1", 10) || 1;
+    const idx = Math.max(0, Math.min(3, slot1 - 1));
 
-// Neu: ganze Plate neu bemalen
-export function repaintPlateFromStats(li){
-  li.querySelectorAll(".p_filaments .p_filament").forEach(repaintPlateRowBySlot);
-}
-
-// Neu: alle Plates neu bemalen
-export function repaintAllPlateSwatchesFromStats(){
-  document.querySelectorAll("li.list_item").forEach(repaintPlateFromStats);
-}
-
-function ensureP0() {
-    const GA = state.GLOBAL_AMS;
-    if (!GA.devices) GA.devices = [];
-    if (!GA.devices[0]) {
-        GA.devices[0] = {
-            id: 0,
-            slots: [0, 1, 2, 3].map(i => ({ key: `P0S${i}`, color: null, conflict: false, manual: false }))
-        };
-    } else {
-        // forward-compat: fehlende Flags nachziehen
-        GA.devices[0].slots.forEach(sl => { if (sl.manual == null) sl.manual = false; });
+    // Originalfarbe im Dataset speichern falls noch nicht vorhanden
+    if (!sw.dataset.f_color && sw.style.backgroundColor) {
+      sw.dataset.f_color = toHexAny(sw.style.backgroundColor);
     }
-    return GA.devices[0];
+
+    // Slot-Index und aktuelle Farbe setzen
+    sw.dataset.slotIndex = String(idx);
+    const currentColor = getSlotColor(idx);
+    sw.style.backgroundColor = currentColor;
+    sw.style.background = currentColor;
+  });
 }
 
-
-function toHexAny(c) {
-    if (!c) return "";
-    // bereits hex?
-    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return c;
-    // rgb/rgba -> hex
-    const m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(c);
-    if (m) {
-        const [r, g, b] = m.slice(1).map(n => (+n).toString(16).padStart(2, "0"));
-        return `#${r}${g}${b}`;
-    }
-    // Fallback über Canvas normalisieren
-    const ctx = document.createElement("canvas").getContext("2d");
-    ctx.fillStyle = "#000"; ctx.fillStyle = c;
-    const std = ctx.fillStyle;
-    if (/^#/.test(std)) return std;
-    const m2 = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(std);
-    if (m2) {
-        const [r, g, b] = m2.slice(1).map(n => (+n).toString(16).padStart(2, "0"));
-        return `#${r}${g}${b}`;
-    }
-    return ""; // unbekannt
-}
-
-function getSwatchHex(el) {
-    let c = el?.dataset?.f_color || el?.style?.backgroundColor || "";
-    if (!c && el) c = getComputedStyle(el).backgroundColor;
-    return toHexAny(c);
-}
-
-
-// --- AKTUALISIERT: globale Farbe setzen + beides nachziehen
+// Diese Funktion anpassen
 export function setGlobalSlotColor(sIndex, hex) {
-  const dev = ensureP0();
-  const sl = dev.slots[sIndex];
-  if (!sl) return;
-  sl.color = toHexAny(hex);
-  sl.manual = true;
-  renderTotalsColors();                 // Statistics einfärben
-  updateAllPlateSwatchColors();         // Plates nachziehen (nur background)
-}
+  if (sIndex < 0 || sIndex >= 4) return;
+  const p0 = ensureP0();
+  if (!p0.slots) p0.slots = [];
+  if (!p0.slots[sIndex]) p0.slots[sIndex] = {};
+  p0.slots[sIndex].color = hex;
 
+  // UI aktualisieren - wichtig: beide Aufrufe!
+  renderTotalsColors();
+  updateAllPlateSwatchColors();
+}
 
 // ===== Globale Slotfarben lesen ===================================
 export function getSlotColor(sIndex) {
-    const sl = ensureP0().slots[sIndex];
-    return (sl && sl.color) || DEFAULT_SLOT_COLORS[sIndex] || "#cccccc";
+  const sl = ensureP0().slots[sIndex];
+  return (sl && sl.color) || DEFAULT_SLOT_COLORS[sIndex] || "#cccccc";
 }
 
 // ===== Ableitung: Farben AUS den Plates ===========================
@@ -151,41 +118,6 @@ export function deriveGlobalSlotColorsFromPlates() {
   renderTotalsColors();
 }
 
-
-
-// ===== Plate-Swatches (Anzeige der SLOT-FARBE) ====================
-// Ab jetzt zeigen die Plate-Swatches die Slotfarbe (global) – und NICHT mehr die reine Filamentfarbe.
-// Bestehende Funktion: jetzt beim Sync direkt aus Statistik bemalen
-export function syncPlateFilamentSwatches(li) {
-  li.querySelectorAll(".p_filament").forEach(row => {
-    const sw = row.querySelector(".f_color");
-    const slotSpan = row.querySelector(".f_slot");
-    if (!sw || !slotSpan) return;
-    const slot1 = parseInt(slotSpan.textContent?.trim() || "1", 10) || 1;
-    sw.dataset.slotIndex = String(Math.max(0, Math.min(3, slot1 - 1)));
-  });
-}
-
-
-
-export function syncPlateFilamentSwatchesAlt(li){
-  li.querySelectorAll(".p_filaments .p_filament").forEach(row => {
-    const sw = row.querySelector(".f_color");
-    const slotSpan = row.querySelector(".f_slot");
-    const slot1 = parseInt(slotSpan?.textContent?.trim() || "1", 10) || 1;
-    const idx = Math.max(0, Math.min(3, slot1-1));
-
-    // WICHTIG: Original-Filamentfarbe merken, damit deriveGlobalSlotColorsFromPlates()
-    // weiterhin von den eingelesenen Farben ableitet (nicht von der gepainteten Slotfarbe)
-    if (!sw.dataset.f_color && sw.style.backgroundColor){
-      sw.dataset.f_color = toHexAny(sw.style.backgroundColor);
-    }
-
-    sw.dataset.slotIndex = String(idx);
-    sw.style.background  = getSlotColor(idx); // <- Sofort mit Statistikfarbe malen
-  });
-}
-
 // Slot-Auswahl auf der Plate: nur Zahl updaten + diese Zeile neu bemalen.
 export function applySlotSelectionToPlate(anchorEl, newIndex) {
   const row = anchorEl.closest(".p_filament");
@@ -211,133 +143,119 @@ let _openMenu = null;
 let _openAnchor = null;
 let _justClosed = false;
 function closeMenu() {
-    if (_openMenu) { _openMenu.remove(); _openMenu = null; _openAnchor = null; }
-    _justClosed = true;
-    setTimeout(() => { _justClosed = false; }, 0); // swallow immediate re-open in same click
+  if (_openMenu) { _openMenu.remove(); _openMenu = null; _openAnchor = null; }
+  _justClosed = true;
+  setTimeout(() => { _justClosed = false; }, 0); // swallow immediate re-open in same click
 }
 
 export function openSlotDropdown(anchorEl) {
-    if (_justClosed) return; // ignore click that just closed the menu
-    // Toggle: klick auf dasselbe Swatch schließt wieder
-    if (_openMenu && _openAnchor === anchorEl) { closeMenu(); return; }
-    closeMenu(); _openAnchor = anchorEl;
+  if (_justClosed) return; // ignore click that just closed the menu
+  // Toggle: klick auf dasselbe Swatch schließt wieder
+  if (_openMenu && _openAnchor === anchorEl) { closeMenu(); return; }
+  closeMenu(); _openAnchor = anchorEl;
 
-    const cur = +(anchorEl.dataset.slotIndex || 0);
-    const menu = document.createElement("div");
-    menu.className = "slot-dropdown";
-    menu.setAttribute("data-role", "slot-dropdown");
+  const cur = +(anchorEl.dataset.slotIndex || 0);
+  const menu = document.createElement("div");
+  menu.className = "slot-dropdown";
+  menu.setAttribute("data-role", "slot-dropdown");
 
-    for (let i = 0; i < 4; i++) {
-        const item = document.createElement("div");
-        item.className = "slot-dropdown-item";
-        item.dataset.slotIndex = String(i);
+  for (let i = 0; i < 4; i++) {
+    const item = document.createElement("div");
+    item.className = "slot-dropdown-item";
+    item.dataset.slotIndex = String(i);
 
-        const dot = document.createElement("span");
-        dot.className = "dot";
-        dot.style.background = getSlotColor(i); // Slotfarbe (aus Plates abgeleitet)
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = getSlotColor(i); // Slotfarbe (aus Plates abgeleitet)
 
-        const lab = document.createElement("span");
-        lab.textContent = `Slot ${i + 1}`;
+    const lab = document.createElement("span");
+    lab.textContent = `Slot ${i + 1}`;
 
-        if (i === cur) item.classList.add("current");
-        item.append(dot, lab);
-        item.addEventListener("click", () => { applySlotSelectionToPlate(anchorEl, i); closeMenu(); });
-        menu.appendChild(item);
-    }
+    if (i === cur) item.classList.add("current");
+    item.append(dot, lab);
+    item.addEventListener("click", () => { applySlotSelectionToPlate(anchorEl, i); closeMenu(); });
+    menu.appendChild(item);
+  }
 
-    // KEIN "Edit slot color…" – entfernt.
+  // KEIN "Edit slot color…" – entfernt.
 
-    document.body.appendChild(menu);
-    const r = anchorEl.getBoundingClientRect();
-    menu.style.left = `${window.scrollX + r.left}px`;
-    menu.style.top = `${window.scrollY + r.bottom + 6}px`;
+  document.body.appendChild(menu);
+  const r = anchorEl.getBoundingClientRect();
+  menu.style.left = `${window.scrollX + r.left}px`;
+  menu.style.top = `${window.scrollY + r.bottom + 6}px`;
 
-    setTimeout(() => {
-        document.addEventListener("mousedown", (ev) => {
-            if (!_openMenu) return;
-            if (!_openMenu.contains(ev.target)) closeMenu();
-        }, { once: true });
-    }, 0);
+  setTimeout(() => {
+    document.addEventListener("mousedown", (ev) => {
+      if (!_openMenu) return;
+      if (!_openMenu.contains(ev.target)) closeMenu();
+    }, { once: true });
+  }, 0);
 
-    _openMenu = menu;
-}
-
-// ===== Alle Plate-Swatches anhand der Slotfarben einfärben =========
-export function updateAllPlateSwatchColors() {
-    const list = document.getElementById("playlist_ol");
-    if (!list) return;
-    list.querySelectorAll("li.list_item .p_filaments .p_filament").forEach(row => {
-        const slotSpan = row.querySelector(".f_slot");
-        const sw = row.querySelector(".f_color");
-        if (!slotSpan || !sw) return;
-        const slot1 = parseInt(slotSpan.textContent?.trim() || "1", 10) || 1;
-        const idx = Math.max(0, Math.min(3, slot1 - 1));
-        const hex = getSlotColor(idx);
-        // Wichtig: NUR die Anzeige (background) ändern – dataset.f_color bleibt die Filamentfarbe!
-        sw.style.background = hex;
-    });
+  _openMenu = menu;
 }
 
 // ===== Statistik: vier Slots erzwingen + Swatch oben ============
 function ensureFourSlotDivs(host) {
-    for (let i = 1; i <= 4; i++) {
-        let div = host.querySelector(`:scope > div[title="${i}"]`) || host.querySelector(`:scope > div[data-slot="${i}"]`);
-        if (!div) {
-            div = document.createElement("div");
-            div.setAttribute("title", String(i));
-            div.innerHTML = `Slot ${i}: <br> 0.00m <br> 0.00g`;
-            host.appendChild(div);
-        }
+  for (let i = 1; i <= 4; i++) {
+    let div = host.querySelector(`:scope > div[title="${i}"]`) || host.querySelector(`:scope > div[data-slot="${i}"]`);
+    if (!div) {
+      div = document.createElement("div");
+      div.setAttribute("title", String(i));
+      div.innerHTML = `Slot ${i}: <br> 0.00m <br> 0.00g`;
+      host.appendChild(div);
     }
+  }
 }
 
 export function renderTotalsColors() {
-    const host = document.getElementById("filament_total"); if (!host) return;
-    ensureFourSlotDivs(host);
+  const host = document.getElementById("filament_total"); if (!host) return;
+  ensureFourSlotDivs(host);
 
-    host.querySelectorAll(":scope > div[title]").forEach(div => {
-        const slot1 = +(div.getAttribute("title") || "0"); if (!slot1) return;
-        let sw = div.querySelector(":scope > .f_color");
-        if (!sw) {
-            sw = document.createElement("div");
-            sw.className = "f_color";
-            div.insertBefore(sw, div.firstChild);           // ganz oben
-            div.insertBefore(document.createElement("br"), sw.nextSibling);
-        }
-        const idx = slot1 - 1;
-        const hex = getSlotColor(idx);
-        sw.dataset.slotIndex = String(idx);
-        sw.dataset.f_color = hex;
-        sw.style.background = hex;
-    });
+  host.querySelectorAll(":scope > div[title]").forEach(div => {
+    const slot1 = +(div.getAttribute("title") || "0"); if (!slot1) return;
+    let sw = div.querySelector(":scope > .f_color");
+    if (!sw) {
+      sw = document.createElement("div");
+      sw.className = "f_color";
+      div.insertBefore(sw, div.firstChild);           // ganz oben
+      div.insertBefore(document.createElement("br"), sw.nextSibling);
+    }
+    const idx = slot1 - 1;
+    const hex = getSlotColor(idx);
+    sw.dataset.slotIndex = String(idx);
+    sw.dataset.f_color = hex;
+    sw.style.background = hex;
+  });
 }
 
 // ===== Auto-Fix: wenn update_statistics() DOM neu schreibt =======
 export function installFilamentTotalsAutoFix() {
-    const host = document.getElementById("filament_total"); if (!host) return;
-    let pending = false;
-    const obs = new MutationObserver(() => {
-        if (pending) return;
-        pending = true;
-        requestAnimationFrame(() => {
-            pending = false;
-            deriveGlobalSlotColorsFromPlates(); // zuerst aus Plates ableiten
-            renderTotalsColors();               // dann oben neu setzen
-            updateAllPlateSwatchColors();       // und schließlich die Plates einfärben
-        });
+  const host = document.getElementById("filament_total");
+  if (!host) return;
+
+  let pending = false;
+  const obs = new MutationObserver(() => {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(() => {
+      pending = false;
+      deriveGlobalSlotColorsFromPlates(); // zuerst aus Plates ableiten
+      renderTotalsColors();               // dann oben neu setzen
+      updateAllPlateSwatchColors();       // und Plates einfärben
     });
-    obs.observe(host, { childList: true, subtree: true });
+  });
+  obs.observe(host, { childList: true, subtree: true });
 }
 
 // … oben: ensureP0(), toHexAny(), getSlotColor(), setGlobalSlotColor(), …
 
-function setGlobalSlotMeta(sIndex, meta){
+function setGlobalSlotMeta(sIndex, meta) {
   const dev = ensureP0();
   const sl = dev.slots[sIndex];
   if (!sl) return;
   sl.meta = sl.meta || {};
-  if (meta.color != null)  sl.color = toHexAny(meta.color);
-  if (meta.type != null)   sl.meta.type = meta.type;
+  if (meta.color != null) sl.color = toHexAny(meta.color);
+  if (meta.type != null) sl.meta.type = meta.type;
   if (meta.vendor != null) sl.meta.vendor = meta.vendor;
   sl.manual = true;
   renderTotalsColors();
@@ -356,56 +274,100 @@ export function wirePlateSwatches(li) {
   });
 }
 
-// --- NEU: alle Plate-Swatches anhand der globalen Slotfarben neu einfärben
-export function recolorAllPlateSwatchesFromGlobal() {
-  document.querySelectorAll(".p_filaments .f_color").forEach(sw => {
-    const idx = +(sw.dataset.slotIndex || 0);
-    const hex = getSlotColor(idx);
-    if (!hex) return;
-    sw.style.background = hex;
-    // NICHT: sw.dataset.f_color = hex;
+function getVendorMaterialMap(presetIndex) {
+  const map = {};
+  presetIndex.forEach(item => {
+    if (!map[item.vendor]) {
+      map[item.vendor] = new Set();
+    }
+    map[item.vendor].add(item.material);
   });
+  // Sets zu Arrays konvertieren
+  Object.keys(map).forEach(vendor => {
+    map[vendor] = Array.from(map[vendor]);
+  });
+  return map;
 }
 
+function printerAliasesForMode(mode) {
+  // Dateinamen enthalten z.B. "X1C", "P1S", "A1M"
+  switch ((mode || "").toUpperCase()) {
+    case "X1": return new Set(["X1", "X1C", "X1E"]);
+    case "P1": return new Set(["P1", "P1S", "P1P"]);
+    case "A1M": return new Set(["A1M", "A1"]);
+    default: return new Set(); // falls unbekannt: keine Treffer
+  }
+}
+
+/** Liefert die passenden Presets für das aktuelle Setup. */
+export function catalogForCurrentPrinterAndNozzle() {
+  const mode = state.CURRENT_MODE;                // "X1" | "P1" | "A1M"
+  const allow = printerAliasesForMode(mode);
+  const want02 = !!state.NOZZLE_IS_02;            // true, wenn 0.2mm
+
+  // Kandidaten: nur Dateien mit passendem Drucker und ggf. 0.2-Nozzle
+  const candidates = (PRESET_INDEX || []).filter(e => {
+    const p = (e.printer || "").toUpperCase();
+    if (!allow.has(p)) return false;
+    if (want02 && !e.nozzle02) return false;
+    return true;
+  });
+
+  // Mapping Vendor -> [Materials] aus den Kandidaten
+  const vendorsByMaterial = {};
+  for (const e of candidates) {
+    const v = e.vendor || "Unknown";
+    const m = e.material || "Unknown";
+    (vendorsByMaterial[v] ||= new Set()).add(m);
+  }
+  // Sets in Arrays verwandeln
+  for (const v of Object.keys(vendorsByMaterial)) {
+    vendorsByMaterial[v] = Array.from(vendorsByMaterial[v]).sort();
+  }
+
+  return { candidates, vendorsByMaterial };
+}
+
+
 /** Öffnet den Dialog für Statistics-Slot */
-export function openStatsSlotDialog(slotIndex){
+export function openStatsSlotDialog(slotIndex) {
   const curColor  = getSlotColor(slotIndex);
-  const dev = ensureP0();
-  const sl  = dev.slots[slotIndex] || {};
-  const curType   = sl.meta?.type || "PLA";
+  const sl        = (ensureP0().slots[slotIndex] || {});
+  const curType   = sl.meta?.type   || "PLA";
   const curVendor = sl.meta?.vendor || "Generic";
 
-  const { candidates, vendorsByMaterial, materials } = catalogForCurrentPrinterAndNozzle();
+  // Gefilterter Katalog passend zu Mode + 0.2er Nozzle
+  const { candidates, vendorsByMaterial } = catalogForCurrentPrinterAndNozzle();
+
   const fallbackMaterials = ["PLA","PETG","ABS","ASA","TPU","PC","PA","PVA","Other"];
   const fallbackVendors   = ["Bambu","Polymaker","eSun","Generic","Other"];
 
-  const matList = materials.length ? materials : fallbackMaterials;
-  const getVendorsFor = (mat) => {
-    const s = vendorsByMaterial.get(mat);
-    return (s && s.size) ? Array.from(s).sort((a,b)=>a.localeCompare(b)) : fallbackVendors;
-  };
+  // Vendor- und Materiallisten aus den Kandidaten ableiten
+  const vendorList = Object.keys(vendorsByMaterial);
+  const vendors    = vendorList.length ? vendorList.sort() : fallbackVendors;
 
-  const initialMaterial = materials.includes(curType) ? curType : (matList[0] || "PLA");
-  const initialVendors = getVendorsFor(initialMaterial);
-  const initialVendor  = initialVendors.includes(curVendor) ? curVendor : (initialVendors[0] || "Generic");
+  const initialVendor   = vendors.includes(curVendor) ? curVendor : vendors[0];
+  const materialsForV   = vendorsByMaterial[initialVendor] || fallbackMaterials;
+  const initialMaterial = materialsForV.includes(curType) ? curType : materialsForV[0];
 
+  // Modal bauen
   const backdrop = document.createElement("div");
   backdrop.className = "slot-modal-backdrop";
   const modal = document.createElement("div");
   modal.className = "slot-modal";
   modal.innerHTML = `
-    <h4>Slot ${slotIndex+1}</h4>
+    <h4>Slot ${slotIndex + 1}</h4>
     <div class="row">
       <label>Color:</label>
       <input type="color" id="slotColor" value="${curColor}">
     </div>
     <div class="row">
-      <label>Material:</label>
-      <select id="slotType"></select>
-    </div>
-    <div class="row">
       <label>Producer:</label>
       <select id="slotVendor"></select>
+    </div>
+    <div class="row">
+      <label>Material:</label>
+      <select id="slotType"></select>
     </div>
     <div class="actions">
       <button id="slotCancel">Cancel</button>
@@ -415,42 +377,49 @@ export function openStatsSlotDialog(slotIndex){
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
 
-  const $ = sel => modal.querySelector(sel);
-  const typeSel = $("#slotType");
+  const $       = sel => modal.querySelector(sel);
   const vendSel = $("#slotVendor");
+  const typeSel = $("#slotType");
 
-  function fill(sel, values, selected) {
-    sel.innerHTML = values.map(v => `<option value="${v}" ${v===selected?"selected":""}>${v}</option>`).join("");
+  // Helper zum Befüllen
+  function fillSelect(sel, values, selected) {
+    sel.innerHTML = values
+      .map(v => `<option value="${v}" ${v === selected ? "selected" : ""}>${v}</option>`)
+      .join("");
   }
-  fill(typeSel, matList, initialMaterial);
-  fill(vendSel, getVendorsFor(initialMaterial), initialVendor);
 
-  typeSel.addEventListener("change", () => {
-    const mat = typeSel.value;
-    const allowed = getVendorsFor(mat);
-    const keep = allowed.includes(vendSel.value) ? vendSel.value : allowed[0];
-    fill(vendSel, allowed, keep);
+  // Initiale Befüllung
+  fillSelect(vendSel, vendors,        initialVendor);
+  fillSelect(typeSel, materialsForV,  initialMaterial);
+
+  // Wenn Vendor wechselt → Materials neu filtern
+  vendSel.addEventListener("change", () => {
+    const mats = vendorsByMaterial[vendSel.value] || fallbackMaterials;
+    const keep = mats.includes(typeSel.value) ? typeSel.value : mats[0];
+    fillSelect(typeSel, mats, keep);
   });
 
+  // Buttons
   $("#slotCancel").onclick = () => backdrop.remove();
   $("#slotSave").onclick = () => {
     const color  = $("#slotColor").value;
     const type   = typeSel.value;
     const vendor = vendSel.value;
 
-    // passendes PRESET zur aktuellen Auswahl finden
+    // passenden Preset-Eintrag suchen (falls vorhanden)
     const entry = candidates.find(e => e.material === type && e.vendor === vendor) || null;
 
-    // Slot-Meta setzen (Preset-Referenz merken!)
+    // globale Slot-Metadaten setzen
     setGlobalSlotMeta(slotIndex, { color, type, vendor });
+
+    // presetFile / setting_id am Slot für Export hinterlegen
     const slot = ensureP0().slots[slotIndex];
     slot.meta = slot.meta || {};
-    slot.meta.presetFile = entry?.file || null; // <- für Export verwenden
-    // (Optional) du kannst hier auch entry.data speichern, wenn du’s sofort brauchst:
-    // slot.meta.presetData = entry?.data || null;
+    slot.meta.presetFile = entry?.file || null;
+    slot.meta.setting_id = entry?.settings?.setting_id ?? entry?.data?.setting_id ?? null;
 
-    // DOM-Daten für Export aktualisieren
-    const box = document.querySelector(`#filament_total > div[title="${slotIndex+1}"]`);
+    // Statistics-Zeile aktualisieren (Export liest das später aus)
+    const box = document.querySelector(`#filament_total > div[title="${slotIndex + 1}"]`);
     if (box) {
       box.dataset.f_color  = toHexAny(color);
       box.dataset.f_type   = type;
@@ -458,7 +427,13 @@ export function openStatsSlotDialog(slotIndex){
       if (entry?.file) box.dataset.preset_file = entry.file;
     }
 
+    // Anzeige auffrischen
+    if (typeof updateAllPlateSwatchColors === "function") {
+      updateAllPlateSwatchColors();
+    }
+
     backdrop.remove();
   };
 }
+
 

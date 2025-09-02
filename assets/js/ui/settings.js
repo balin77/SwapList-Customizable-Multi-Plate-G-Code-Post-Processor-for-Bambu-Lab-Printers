@@ -1,7 +1,22 @@
 // /src/ui/settings.js
 
 export function toggle_settings(state) {
-  document.getElementById("settings_wrapper").style.display = state ? "table-cell" : "none";
+  const settingsPanel = document.getElementById("settings_panel");
+  if (settingsPanel) {
+    settingsPanel.classList.toggle("hidden", !state);
+  }
+  
+  // Legacy support - remove old settings wrapper if it exists
+  const settingsWrapper = document.getElementById("settings_wrapper");
+  if (settingsWrapper) {
+    settingsWrapper.style.display = "none";
+  }
+}
+
+export function show_settings_when_plates_loaded() {
+  const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+  const hasPlates = plates.length > 0;
+  toggle_settings(hasPlates);
 }
 
 export function custom_file_name(trg) {

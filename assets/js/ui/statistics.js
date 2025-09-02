@@ -141,6 +141,11 @@ export function update_filament_usage() {
     // Optional: Slots ohne Nutzung optisch dimmen statt zu verstecken
     div.style.opacity = (m === 0 && g === 0) ? "0.7" : "1";
   }
+
+  // ⬇️ NEU: Plate-Swatches nachziehen
+  if (typeof repaintAllPlateSwatchesFromStats === "function") {
+    repaintAllPlateSwatchesFromStats();
+  }
 }
 
 function ensureFourSlotDivs(host) {

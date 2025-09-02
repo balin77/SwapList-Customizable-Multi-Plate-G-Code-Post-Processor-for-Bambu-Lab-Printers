@@ -1,6 +1,6 @@
 // src/utils/utils.js
-import { project_settings_modified } from "../config/project_settings_modified"; 
-import { project_settings_original } from "../config/project_settings_original";
+import { project_settings_modified } from "../testfiles/project_settings_modified"; 
+import { project_settings_original } from "../testfiles/project_settings_original";
 
 /** interner Helper: nimmt Objekt ODER Pfad/URL und liefert ein Objekt */
 async function resolveSettingsInput(input) {

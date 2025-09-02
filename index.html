@@ -48,7 +48,7 @@
       </div>
       <div>
         <div id="action_buttons" class="hidden">
-          <!-- 1) Mode-Toggle: erscheint zusammen mit action_buttons -->
+          <!-- Mode-Toggle: rechts neben den Statistics -->
           <div id="mode_switch" class="mode-toggle hidden">
             <input type="radio" id="mode_a1m" name="mode" value="A1M" checked>
             <label for="mode_a1m">A1&nbsp;Mini</label>
@@ -59,12 +59,11 @@
             <input type="radio" id="mode_p1" name="mode" value="P1">
             <label for="mode_p1">P1</label>
           </div>
-
-          <!-- 2) Generate + Progressbar -->
+          <!-- Generate + Export Buttons -->
           <button id="export">Generate SWAP file</button>
 
           <button id="export_gcode">Export GCODE</button>
-          <!-- 3) Reset ganz unten -->
+          <!-- Reset Button -->
           <button id="reset">Reset</button>
           <div id="progress_bar" style="opacity: 0; width: 100%;">
             <div id="progress_scale" style="width: 0%; display: flex;"> </div>
@@ -74,9 +73,17 @@
             title="Vergleicht original vs. modifiziertes project_settings und loggt Unterschiede in die Konsole">
             Compare project_settings
           </button>
+          <label class="opt block">
+            <button id="btn_compare_gcode" type="button">Compare GCODE test files</button>
+          </label>
+          <details class="tool_info" id="compare_gcode_help">
+            <summary></summary>
+            <p>
+              Compares <code>src/testfiles/gcode1.gcode</code> and <code>src/testfiles/gcode2.gcode</code> line by line
+              and logs all differences to the console.
+            </p>
+          </details>
 
-          <input autocomplete="off" type="checkbox" id="show_settings" name="show_settings">
-          <label for="show_settings"> Show settings </label>
         </div>
       </div>
     </div>
@@ -87,128 +94,147 @@
           <div id="drop_zone" class="">
             <p>DROP YOUR FILE(S) HERE</p><i>...or click to select</i>
           </div>
-          <div id="spacer_cell"> </div>
-          <div id="drop_zone_instant" class="">
-            <p class="">DROP HERE FOR <br><i>EXPRESS CONVERSION </i></p>
-          </div>
         </div>
         <ol id="playlist_ol"></ol>
       </div>
-
-      <div id="settings_wrapper">
-        <div>
-          <label for="file_name">Custom file name:</label> <br>
-          <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name">
-          <span> .swap.3mf</span>
-          <br><br>
-          <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
-          <label for="loops">Loop repeats</label>
-          <details class="tool_info">
-            <summary></summary>
-            <p>This number defines how many times the entire
-              queue will be reprinted.</p>
-            <p> Example: Plate "A"
-              is set to 3 repeats, plate "B" is set to 1
-              repeat and the "Loop repeats" is set to 2.
-              This will result in following printing order: </p>
-            <p> A A A B A A A B .</p>
-          </details>
-          <!-- Extra Settings für X1/P1 -->
-
-          <div id="x1p1-settings" class="hidden">
-            <label>
-              <input type="checkbox" id="opt_filament_purge_off">
-              Turn off filament purge
+      
+      <!-- Settings Section: Below plates when loaded -->
+      <div id="settings_panel" class="hidden">
+        <div id="settings_content">
+          <h3>Settings</h3>
+          
+          <div class="settings-row">
+            <div class="settings-col">
+              <label for="file_name">Custom file name:</label>
+              <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name">
+              <span> .swap.3mf</span>
+            </div>
+            
+            <div class="settings-col">
+              <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
+              <label for="loops">Loop repeats</label>
               <details class="tool_info">
                 <summary></summary>
-                <p>Disable the filament purge sequence after the first plate.
-                  This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
-              </details>
-            </label>
-            <label>
-              <input type="checkbox" id="opt_purge" autocomplete="off" checked />
-              Hide nozzle load line in model
-              <details class="tool_info">
-                <summary></summary>
-                <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
-                  deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
-              </details>
-            </label>
-            <label>
-              <input type="checkbox" id="opt_bedlevel_cooling">
-              Raise Bed Level for cooling
-              <details class="tool_info">
-                <summary></summary>
-                <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
-                  prints the printer cover must be removed to avoid collision.</p>
-              </details>
-            </label>
-            <div id="advanced-cooldown-settings">
-              <label for="raisebed_offset_mm">Bed raise offset before push-out (mm)</label>
-              <input id="raisebed_offset_mm" type="number" step="1" min="5" max="200" value="30">
-              <details class="tool_info">
-                <summary></summary>
-                <p>Defines how much the bed is raised before performing the push-out sequence.</p>
-              </details>
-
-              <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
-              <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
-              <details class="tool_info">
-                <summary></summary>
-                <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
-              </details>
-              <label for="cooldown_max_time">Max cooldown time (min)</label>
-              <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
-              <details class="tool_info">
-                <summary></summary>
-                <p>
-                  Defines the maximum cooldown duration in minutes.
-                  The app will insert repeated <code>M190</code> commands to wait for the bed
-                  until this total time is reached. Default is 40 minutes.
-                </p>
+                <p>This number defines how many times the entire
+                  queue will be reprinted.</p>
+                <p> Example: Plate "A"
+                  is set to 3 repeats, plate "B" is set to 1
+                  repeat and the "Loop repeats" is set to 2.
+                  This will result in following printing order: </p>
+                <p> A A A B A A A B .</p>
               </details>
             </div>
-            <label>
-              <input type="checkbox" id="opt_secure_pushoff" checked>
-              Secure push‑off sequence
-              <details class="tool_info">
-                <summary></summary>
-                <p>
-                  When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
-                  before the final push at Z=1. This helps avoid collisions and smooths the ejection.
-                </p>
-              </details>
-            </label>
+          </div>
 
-            <label for="extra_pushoff_levels" id="extra_pushoff_levels_label">
-              Additional push‑off levels
-            </label>
-            <input id="extra_pushoff_levels" type="number" step="1" min="1" max="10" value="2">
-            <details class="tool_info" id="extra_pushoff_levels_help">
-              <summary></summary>
-              <p>
-                Defines how the maximum Z height is divided. Example: if max Z is 10&nbsp;mm
-                and you enter <b>2</b>, push‑offs occur around Z≈5 and the final one at Z=1.
-                If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
-                A value of <b>1</b> means only a final push at Z=1.
-              </p>
-            </details><label class="opt">
-              <input type="checkbox" id="opt_override_metadata" checked>
-              Override project &amp; filament settings
-            </label>
-            <details class="tool_info" id="opt_override_metadata_help">
-              <summary></summary>
-              <p>
-                When <b>on</b>, the app regenerates
-                the filament entries and material/printer settings. This is essential if you use new
-                AMS slot assignments that weren’t present in the original G-code. When <b>off</b>,
-                the original 3MF metadata is kept as-is; if you remap to AMS slots that weren’t
-                originally defined, the printer or Studio may report a mismatch.
-              </p>
-            </details>
+          <!-- Extra Settings für X1/P1 -->
+          <div id="x1p1-settings" class="hidden">
+            <div class="settings-row">
+              <div class="settings-col">
+                <label>
+                  <input type="checkbox" id="opt_filament_purge_off">
+                  Turn off filament purge
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>Disable the filament purge sequence after the first plate.
+                      This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
+                  </details>
+                </label>
+                
+                <label>
+                  <input type="checkbox" id="opt_purge" autocomplete="off" checked />
+                  Hide nozzle load line in model
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
+                      deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
+                  </details>
+                </label>
+                
+                <label>
+                  <input type="checkbox" id="opt_bedlevel_cooling">
+                  Raise Bed Level for cooling
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
+                      prints the printer cover must be removed to avoid collision.</p>
+                  </details>
+                </label>
+                
+                <label>
+                  <input type="checkbox" id="opt_secure_pushoff" checked>
+                  Secure push‑off sequence
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>
+                      When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
+                      before the final push at Z=1. This helps avoid collisions and smooths the ejection.
+                    </p>
+                  </details>
+                </label>
+                
+                <label class="opt">
+                  <input type="checkbox" id="opt_override_metadata" checked>
+                  Override project &amp; filament settings
+                </label>
+                <details class="tool_info" id="opt_override_metadata_help">
+                  <summary></summary>
+                  <p>
+                    When <b>on</b>, the app regenerates
+                    the filament entries and material/printer settings. This is essential if you use new
+                    AMS slot assignments that weren't present in the original G-code. When <b>off</b>,
+                    the original 3MF metadata is kept as-is; if you remap to AMS slots that weren't
+                    originally defined, the printer or Studio may report a mismatch.
+                  </p>
+                </details>
+              </div>
+              
+              <div class="settings-col">
+                <div id="advanced-cooldown-settings">
+                  <label for="raisebed_offset_mm">Bed raise offset before push-out (mm)</label>
+                  <input id="raisebed_offset_mm" type="number" step="1" min="5" max="200" value="30">
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>Defines how much the bed is raised before performing the push-out sequence.</p>
+                  </details>
+
+                  <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
+                  <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
+                  </details>
+                  
+                  <label for="cooldown_max_time">Max cooldown time (min)</label>
+                  <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>
+                      Defines the maximum cooldown duration in minutes.
+                      The app will insert repeated <code>M190</code> commands to wait for the bed
+                      until this total time is reached. Default is 40 minutes.
+                    </p>
+                  </details>
+                  
+                  <label for="extra_pushoff_levels" id="extra_pushoff_levels_label">
+                    Additional push‑off levels
+                  </label>
+                  <input id="extra_pushoff_levels" type="number" step="1" min="1" max="10" value="2">
+                  <details class="tool_info" id="extra_pushoff_levels_help">
+                    <summary></summary>
+                    <p>
+                      Defines how the maximum Z height is divided. Example: if max Z is 10&nbsp;mm
+                      and you enter <b>2</b>, push‑offs occur around Z≈5 and the final one at Z=1.
+                      If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
+                      A value of <b>1</b> means only a final push at Z=1.
+                    </p>
+                  </details>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -259,35 +285,95 @@
   <div id="site-info">
     <div id="err"> </div>
 
-    <p>Multiprinter Version V1.1</p>
-    <p>Based on V00-24</p>
+    <details id="app-info-container">
+      <summary>App Information & Resources</summary>
+      <div id="app-info-content">
+        <div class="version-info">
+          <p><strong>Multiprinter Version V1.2</strong></p>
+          <p>Based on V00-24</p>
+        </div>
 
-    <details>
-      <summary> Download self-test 3MF file </summary>
-      <br><a href="https://swaplist.app/dat/selftest_files/Selftes-BBS_SWAP-A1M_v02.3mf"><b>Bambu Studio </b> self-test
-        file </a>
-      <br><br><a href="https://swaplist.app/dat/selftest_files/Selftes-ORCA_SWAP-A1M_v02.3mf"><b>Orca Slicer </b>
-        self-test file </a>
-      <br>
-    </details>
-    <details>
-      <summary>Data security</summary>
-      <p>
-        This app uses your browser as an environment and runs locally on your computer.
-        This means none of your data is sent to our server or any third party cloud provider.
-        You can even save this app as a web page and use it completely offline.
-        This site also does not use cookies or store any personal information on your device.
-      </p>
-    </details>
+        <details open>
+          <summary>How to use this app</summary>
+          <div class="usage-guide">
+            <h3>Getting Started</h3>
+            <ol>
+              <li><strong>Load your files:</strong> Drag & drop your <code>.3mf</code> files (from Bambu Studio or Orca Slicer) or <code>.gcode</code> files into the drop zone above.</li>
+              <li><strong>Printer detection:</strong> The app automatically detects your printer model and shows the corresponding mode (A1 Mini, X1, or P1).</li>
+              <li><strong>Configure settings:</strong> Adjust options in the Settings panel that appears below your loaded plates.</li>
+              <li><strong>Export:</strong> Click "Generate SWAP file" or "Export GCODE" to create your processed files.</li>
+            </ol>
 
-    <details>
-      <summary>Information about site operator</summary>
-      <p>
-        Novibar GmbH<br>
-        Muehlenstr. 51<br>
-        59348 Luedinghausen<br>
-        Germany
-      </p>
+            <h3>Working with Plates</h3>
+            <ul>
+              <li><strong>Repeat count:</strong> Change the number next to each plate to print it multiple times</li>
+              <li><strong>Remove plates:</strong> Click the "×" button in the top-right corner of any plate</li>
+              <li><strong>Duplicate plates:</strong> Click the "+" button on the plate image to make a copy</li>
+              <li><strong>Reorder plates:</strong> Drag plates to change the printing order</li>
+            </ul>
+
+            <h3>Filament & AMS Slots</h3>
+            <ul>
+              <li><strong>Change slot assignment:</strong> Click any colored filament swatch on a plate to reassign it to a different AMS slot (1-4)</li>
+              <li><strong>Global slot colors:</strong> Click color swatches in "Filament usage statistics" to customize global slot colors</li>
+              <li><strong>Usage tracking:</strong> View total filament consumption per slot in the statistics area</li>
+            </ul>
+
+            <h3>Settings Panel Options</h3>
+            <h4>General Settings:</h4>
+            <ul>
+              <li><strong>Custom file name:</strong> Set your preferred output filename</li>
+              <li><strong>Loop repeats:</strong> Number of times to repeat the entire print queue</li>
+            </ul>
+
+            <h4>X1/P1 Advanced Options:</h4>
+            <ul>
+              <li><strong>"Turn off filament purge"</strong> - Skips purge sequence after first plate (faster multi-plate jobs). Only enable if there are no filament changes between plates.</li>
+              <li><strong>"Hide nozzle load line in model"</strong> - Extrudes extra material at print start to compensate for the removed load line. Prevents under-extrusion on the object's bottom layer, but may be visible if print start is at the object's edge.</li>
+              <li><strong>"Raise Bed Level for cooling"</strong> - Moves bed to fan height for faster cooling. For tall objects, remove the printer's top glass cover to prevent collisions.</li>
+              <li><strong>"Secure push‑off sequence"</strong> - Uses controlled push-offs at multiple heights to guarantee safe ejection of finished objects from the printer</li>
+              <li><strong>"Override project & filament settings"</strong> - Regenerates metadata for new slot assignments. This option becomes necessary when AMS slots are redefined.</li>
+            </ul>
+
+            <h4>Advanced Cooldown Settings:</h4>
+            <ul>
+              <li><strong>Bed raise offset:</strong> Height to raise bed before push-out (default: 30mm)</li>
+              <li><strong>Target bed temperature:</strong> Cool down to this temperature before push-out (default: 23°C)</li>
+              <li><strong>Max cooldown time:</strong> Maximum time to wait for cooling (default: 40 minutes)</li>
+              <li><strong>Additional push‑off levels:</strong> Number of controlled push-off attempts (default: 2)</li>
+            </ul>
+
+            <h3>Per-Plate Object Coordinates (X1/P1 only)</h3>
+            <ul>
+              <li><strong>Number of objects:</strong> Select how many objects are on each plate (1-5)</li>
+              <li><strong>X coordinates:</strong> Enter X position for each object (required for proper plate handling)</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Download self-test 3MF file</summary>
+          <p>
+            <a href="https://swaplist.app/dat/selftest_files/Selftes-BBS_SWAP-A1M_v02.3mf">
+              <strong>Bambu Studio</strong> self-test file
+            </a>
+            <br><br>
+            <a href="https://swaplist.app/dat/selftest_files/Selftes-ORCA_SWAP-A1M_v02.3mf">
+              <strong>Orca Slicer</strong> self-test file
+            </a>
+          </p>
+        </details>
+        
+        <details>
+          <summary>Data security</summary>
+          <p>
+            This app uses your browser as an environment and runs locally on your computer.
+            This means none of your data is sent to our server or any third party cloud provider.
+            You can even save this app as a web page and use it completely offline.
+            This site also does not use cookies or store any personal information on your device.
+          </p>
+        </details>
+      </div>
     </details>
   </div>
   </div>
