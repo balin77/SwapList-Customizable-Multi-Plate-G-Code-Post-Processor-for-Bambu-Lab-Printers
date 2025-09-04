@@ -622,7 +622,7 @@ details.tool_info summary::before{ content:'( ? )'; }
 
 /* ---------- Utility ---------- */
 
-.hidden{ display:none; }
+.hidden{ display:none !important; }
 
 /* Optional: visuelle Andeutung für X1/P1 (falls globaler state so gesetzt würde)
 body[data-mode="X1P1"] #export { background-color:#d9f7ff; }

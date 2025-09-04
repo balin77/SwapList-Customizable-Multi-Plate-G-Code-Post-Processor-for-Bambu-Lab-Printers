@@ -6,6 +6,7 @@ import { download } from "./ioUtils.js";
 import { collectAndTransform } from "./ioUtils.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
+import { DEV_MODE } from "../index.js";
 
 // Hilfsfunktion: Finde das Filament-Objekt anhand setting_id
 function findFilamentBySettingId(settingId) {
@@ -17,7 +18,7 @@ export async function export_gcode_txt() {
   try {
     update_progress(5);
 
-    const { empty, platesOnce, originalCombined, modifiedCombined } =
+    const { empty, platesOnce, modifiedPerPlate, originalCombined, modifiedCombined } =
       await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
 
     if (empty) {
@@ -34,49 +35,79 @@ export async function export_gcode_txt() {
     const purgeTag = (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')
       ? (state.USE_PURGE_START ? "_purge" : "_standard")
       : "";
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 
-    const zip = new JSZip();
-    const root = zip.folder(`${base}_gcode_exports_${modeTag}${purgeTag}_${stamp}`);
-
-    root.file(`${base}_${modeTag}${purgeTag}_original_combined.txt`, originalCombined);
-    root.file(`${base}_${modeTag}${purgeTag}_modified_combined.txt`, modifiedCombined);
-
-    const platesFolder = root.folder("per_plate_preloop");
-    for (let i = 0; i < platesOnce.length; i++) {
-      const idx = String(i + 1).padStart(2, "0");
-      platesFolder.file(`plate_${idx}_original.txt`, platesOnce[i]);
-      // modifiedPerPlate könntest du auf Wunsch zusätzlich aus collectAndTransform zurückgeben und hier ablegen
+    if (DEV_MODE) {
+      // DEV MODE: Exportiere vollständige ZIP-Struktur mit detaillierten Namen
+      await exportDevMode(base, modeTag, purgeTag, {
+        platesOnce,
+        modifiedPerPlate,
+        originalCombined,
+        modifiedCombined
+      });
+    } else {
+      // NORMAL MODE: Exportiere nur modifizierten kombinierten GCODE mit einfachem Namen
+      await exportNormalMode(base, modeTag, modifiedCombined);
     }
-
-    // --- NEU: Hole die Slot-Metas (z.B. aus state.P0.slots)
-    const slotMetas = (state.P0?.slots || []).map(slot => slot.meta || {});
-
-    // --- NEU: Erstelle ein Array mit den Filament-Settings für die verwendeten Slots
-    const templates = slotMetas.map(meta => {
-      const filament = findFilamentBySettingId(meta.setting_id);
-      return filament ? filament.settings : null;
-    });
-
-    // --- NEU: Übergebe die Templates an die Exportfunktion
-    // buildProjectSettingsForUsedSlots muss ggf. angepasst werden, um ein Array von Templates zu akzeptieren!
-    const out = buildProjectSettingsForUsedSlots(originalCombined, templates);
-    root.file(`${base}_${modeTag}${purgeTag}_project_settings.txt`, out);
-
-    update_progress(60);
-    const zipBlob = await zip.generateAsync(
-      { type: "blob", compression: "DEFLATE", compressionOptions: { level: 3 } },
-      (meta) => { update_progress(60 + Math.floor(35 * (meta.percent || 0) / 100)); }
-    );
-
-    const zipUrl = URL.createObjectURL(zipBlob);
-    download(`${base}_${modeTag}${purgeTag}_gcode_exports.zip`, zipUrl);
 
     update_progress(100);
     setTimeout(() => update_progress(-1), 500);
   } catch (err) {
-    console.error("GCODE txt export failed:", err);
-    alert("TXT-Export fehlgeschlagen: " + (err.message || err));
+    console.error("GCODE export failed:", err);
+    alert("GCODE-Export fehlgeschlagen: " + (err.message || err));
     update_progress(-1);
   }
+}
+
+async function exportDevMode(base, modeTag, purgeTag, data) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const zip = new JSZip();
+  const root = zip.folder(`${base}_gcode_exports_${modeTag}${purgeTag}_${stamp}`);
+
+  // Combined files
+  root.file(`${base}_${modeTag}${purgeTag}_original_combined.txt`, data.originalCombined);
+  root.file(`${base}_${modeTag}${purgeTag}_modified_combined.txt`, data.modifiedCombined);
+
+  // Per-plate original files
+  const originalFolder = root.folder("per_plate_original");
+  for (let i = 0; i < data.platesOnce.length; i++) {
+    const idx = String(i + 1).padStart(2, "0");
+    originalFolder.file(`plate_${idx}_original.txt`, data.platesOnce[i]);
+  }
+
+  // Per-plate modified files
+  const modifiedFolder = root.folder("per_plate_modified");
+  for (let i = 0; i < data.modifiedPerPlate.length; i++) {
+    const idx = String(i + 1).padStart(2, "0");
+    modifiedFolder.file(`plate_${idx}_modified.txt`, data.modifiedPerPlate[i]);
+  }
+
+  // Project settings
+  const slotMetas = (state.P0?.slots || []).map(slot => slot.meta || {});
+  const templates = slotMetas.map(meta => {
+    const filament = findFilamentBySettingId(meta.setting_id);
+    return filament ? filament.settings : null;
+  });
+  const projectSettings = buildProjectSettingsForUsedSlots(data.originalCombined, templates);
+  root.file(`${base}_${modeTag}${purgeTag}_project_settings.txt`, projectSettings);
+
+  update_progress(60);
+  const zipBlob = await zip.generateAsync(
+    { type: "blob", compression: "DEFLATE", compressionOptions: { level: 3 } },
+    (meta) => { update_progress(60 + Math.floor(35 * (meta.percent || 0) / 100)); }
+  );
+
+  const zipUrl = URL.createObjectURL(zipBlob);
+  download(`${base}_${modeTag}${purgeTag}_gcode_exports.zip`, zipUrl);
+}
+
+async function exportNormalMode(base, modeTag, modifiedCombined) {
+  update_progress(60);
+  
+  // Create simple GCODE file
+  const gcodeBlob = new Blob([modifiedCombined], { type: "text/x-gcode" });
+  const gcodeUrl = URL.createObjectURL(gcodeBlob);
+  
+  // Simple filename: base_mode.gcode (no purge tags for normal users)
+  const filename = `${base}_${modeTag}.gcode`;
+  download(filename, gcodeUrl);
 }

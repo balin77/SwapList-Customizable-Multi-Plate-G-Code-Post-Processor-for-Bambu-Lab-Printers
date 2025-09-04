@@ -11,5 +11,8 @@ esbuild.build({
   target: ['es2020'],
   sourcemap: true,
   minify: !watch,
-  loader: { '.json': 'json' },      // ← wichtig: JSON als Module laden
+  loader: { 
+    '.json': 'json',      // ← wichtig: JSON als Module laden
+    '.gcode': 'text'      // GCODE-Dateien als Text laden
+  },
 }).catch(() => process.exit(1));

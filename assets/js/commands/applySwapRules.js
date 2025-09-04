@@ -69,6 +69,37 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
           out = bumpFirstExtrusionToE3(out, ctx.plateIndex ?? -1);
           break;
         }
+        case "remove_header_block": {
+          // Remove header from HEADER_BLOCK_START to CONFIG_BLOCK_END, then add plate marker after EXECUTABLE_BLOCK_START
+          const headerStart = out.indexOf('; HEADER_BLOCK_START');
+          const configEnd = out.indexOf('; CONFIG_BLOCK_END');
+          if (headerStart !== -1 && configEnd !== -1) {
+            const afterConfigEnd = configEnd + '; CONFIG_BLOCK_END'.length;
+            let nextNewline = out.indexOf('\n', afterConfigEnd);
+            if (nextNewline === -1) nextNewline = afterConfigEnd;
+            
+            // Remove header first
+            out = out.substring(nextNewline);
+            
+            // Find EXECUTABLE_BLOCK_START and add plate marker after it
+            const execStart = out.indexOf('; EXECUTABLE_BLOCK_START');
+            if (execStart !== -1) {
+              const afterExecStart = execStart + '; EXECUTABLE_BLOCK_START'.length;
+              let execNewline = out.indexOf('\n', afterExecStart);
+              if (execNewline === -1) execNewline = afterExecStart;
+              out = out.substring(0, execNewline) + `\n; start printing plate ${ctx.plateIndex + 1}` + out.substring(execNewline);
+            } else {
+              // Fallback: add at the beginning if EXECUTABLE_BLOCK_START not found
+              out = `; start printing plate ${ctx.plateIndex + 1}\n${out}`;
+            }
+            
+            extra.headerRemoved = true;
+          } else {
+            extra.headerRemoved = false;
+            extra.reason = `header markers not found (start=${headerStart}, end=${configEnd})`;
+          }
+          break;
+        }
         case "disable_between": {
           const r = _findRange(out, rule.start, rule.end, !!rule.useRegex);
           extra.rangeFound = r.found;

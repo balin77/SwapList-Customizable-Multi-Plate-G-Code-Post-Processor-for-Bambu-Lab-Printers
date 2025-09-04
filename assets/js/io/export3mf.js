@@ -7,6 +7,158 @@ import { model_settings_xml } from "../config/xmlConfig.js";
 import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 
+// Generate combined plate_1.json data from all plates
+async function generatePlateJsonData() {
+  const slotDivs = document
+    .getElementById("filament_total")
+    ?.querySelectorAll(":scope > div[title]") || [];
+
+  const filament_colors = [];
+  const filament_ids = [];
+
+  // Collect filament data from statistics
+  for (let i = 0; i < slotDivs.length; i++) {
+    const div = slotDivs[i];
+
+    // Check if this slot is actually used
+    const usedM = parseFloat(div.dataset.used_m || "0") || 0;
+    const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+    if (usedM <= 0 && usedG <= 0) continue;
+
+    // Get slot ID (1..4) and convert to 0-based index
+    const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
+    const slotIndex = slotId - 1; // Convert to 0-based for filament_ids
+
+    // Get color from swatch
+    const sw = div.querySelector(":scope > .f_color");
+    const colorRaw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
+    const hex = colorToHex(colorRaw || "#cccccc");
+
+    filament_colors.push(hex);
+    filament_ids.push(slotIndex);
+  }
+
+  // Collect bbox objects from all active UI plates (considering repetitions)
+  let allBboxObjects = [];
+  let usedIds = new Set();
+  let firstExtruder = 0;
+  let bedType = "textured_plate";
+  let isSeqPrint = false;
+  let nozzleDiameter = state.NOZZLE_DIAMETER_MM || 0.4;
+  let version = 2;
+
+  // Helper function to find next available ID
+  const getNextAvailableId = (startId = 1) => {
+    let id = startId;
+    while (usedIds.has(id)) {
+      id++;
+    }
+    return id;
+  };
+
+  // Process UI plates similar to collectAndTransform, considering repetitions
+  const my_plates = state.playlist_ol.getElementsByTagName("li");
+  console.log('Processing', my_plates.length, 'UI plates for bbox objects');
+  
+  for (let i = 0; i < my_plates.length; i++) {
+    const li = my_plates[i];
+    const c_f_id = li.getElementsByClassName("f_id")[0].title;
+    const c_pname = li.getElementsByClassName("p_name")[0].title;
+    const p_rep = li.getElementsByClassName("p_rep")[0].value * 1;
+
+    console.log(`Plate ${i}: file_id=${c_f_id}, plate_name=${c_pname}, repetitions=${p_rep}`);
+
+    if (p_rep > 0) {
+      try {
+        const zip = await JSZip.loadAsync(state.my_files[c_f_id]);
+        
+        // Extract plate name and find corresponding JSON file
+        const plateJsonName = c_pname.replace('.gcode', '.json');
+        console.log(`Looking for JSON file: ${plateJsonName}`);
+        const plateJsonFile = zip.file(plateJsonName);
+        
+        if (plateJsonFile) {
+          console.log(`Found JSON file for plate ${c_pname}`);
+          const plateJsonText = await plateJsonFile.async("text");
+          const plateData = JSON.parse(plateJsonText);
+          
+          // Use values from first valid plate for metadata
+          if (plateData.first_extruder !== undefined) firstExtruder = plateData.first_extruder;
+          if (plateData.bed_type) bedType = plateData.bed_type;
+          if (plateData.is_seq_print !== undefined) isSeqPrint = plateData.is_seq_print;
+          if (plateData.nozzle_diameter) nozzleDiameter = plateData.nozzle_diameter;
+          if (plateData.version) version = plateData.version;
+          
+          // Add bbox_objects for each repetition of this plate
+          if (plateData.bbox_objects && Array.isArray(plateData.bbox_objects)) {
+            console.log(`Found ${plateData.bbox_objects.length} bbox objects in plate ${c_pname}`);
+            for (let rep = 0; rep < p_rep; rep++) {
+              for (const originalBboxObj of plateData.bbox_objects) {
+                // Create a copy of the bbox object
+                const bboxObj = JSON.parse(JSON.stringify(originalBboxObj));
+                
+                // Check if ID already exists
+                if (usedIds.has(bboxObj.id)) {
+                  // Generate new unique ID
+                  const newId = getNextAvailableId(bboxObj.id + 1);
+                  console.log(`ID collision detected: object "${bboxObj.name}" ID ${bboxObj.id} changed to ${newId} (repetition ${rep + 1})`);
+                  bboxObj.id = newId;
+                }
+                
+                usedIds.add(bboxObj.id);
+                allBboxObjects.push(bboxObj);
+              }
+            }
+          } else {
+            console.log(`No bbox_objects found in plate ${c_pname}:`, plateData.bbox_objects);
+          }
+        } else {
+          console.log(`JSON file not found: ${plateJsonName}`);
+          // List all files in Metadata to debug
+          const metadataFiles = zip.file(/^Metadata\//);
+          console.log('Available Metadata files:', metadataFiles.map(f => f.name));
+        }
+      } catch (e) {
+        console.warn(`Failed to process plate ${c_pname} from file ${c_f_id}:`, e);
+      }
+    }
+  }
+
+  console.log('Total bbox objects collected:', allBboxObjects.length);
+
+  // Calculate overall bounding box from all objects
+  let bbox_all = null;
+  if (allBboxObjects.length > 0) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    for (const obj of allBboxObjects) {
+      if (obj.bbox && Array.isArray(obj.bbox) && obj.bbox.length >= 4) {
+        const [x1, y1, x2, y2] = obj.bbox;
+        minX = Math.min(minX, x1);
+        minY = Math.min(minY, y1);
+        maxX = Math.max(maxX, x2);
+        maxY = Math.max(maxY, y2);
+      }
+    }
+    
+    if (minX !== Infinity) {
+      bbox_all = [minX, minY, maxX, maxY];
+    }
+  }
+
+  return {
+    bbox_all: bbox_all,
+    bbox_objects: allBboxObjects,
+    bed_type: bedType,
+    filament_colors: filament_colors,
+    filament_ids: filament_ids,
+    first_extruder: firstExtruder,
+    is_seq_print: isSeqPrint,
+    nozzle_diameter: nozzleDiameter,
+    version: version
+  };
+}
+
 
 export async function export_3mf() {
   try {
@@ -113,6 +265,12 @@ export async function export_3mf() {
 
     // neue Platte
     baseZip.file("Metadata/plate_1.gcode", finalGcodeBlob);
+
+    // Generate plate_1.json with filament data
+    if (state.OVERRIDE_METADATA) {
+      const plateJsonData = await generatePlateJsonData();
+      baseZip.file("Metadata/plate_1.json", JSON.stringify(plateJsonData, null, 2));
+    }
 
     // MD5 & packen
     let hash = "";

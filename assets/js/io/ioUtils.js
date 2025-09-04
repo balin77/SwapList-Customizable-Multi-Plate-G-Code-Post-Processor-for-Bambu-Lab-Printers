@@ -77,6 +77,7 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
   const platesOnce = [];
   const coordsOnce = [];
   const originIdxOnce = [];
+  const uiIdxOnce = [];  // Track which UI plate index this processed plate corresponds to
 
   for (let i = 0; i < my_plates.length; i++) {
     const li = my_plates[i];
@@ -93,6 +94,7 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
         platesOnce.push(plateText);
         coordsOnce.push(xsDesc);
         originIdxOnce.push(i);
+        uiIdxOnce.push(i);  // Each repetition uses the same UI plate index
       }
     }
   }
@@ -106,13 +108,21 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
   const lis = state.playlist_ol.getElementsByTagName("li");
   // Map leeren und neu füllen
   state.GLOBAL_AMS.overridesPerPlate.clear();
+  console.log(`Processing ${lis.length} UI plates for AMS overrides`);
+  
   for (let i = 0; i < lis.length; i++) {
     const repEl = lis[i].getElementsByClassName("p_rep")[0];
     const p_rep = parseFloat(repEl?.value) || 0;
+    console.log(`Plate ${i}: repetitions=${p_rep}`);
     if (p_rep <= 0) continue; // inaktiv -> ignorieren
+    
     const ov = _computeOverridesForLi(lis[i]);
+    console.log(`Plate ${i}: computed overrides =`, ov);
     if (Object.keys(ov).length) {
       state.GLOBAL_AMS.overridesPerPlate.set(i, ov);
+      console.log(`Plate ${i}: overrides stored in map`);
+    } else {
+      console.log(`Plate ${i}: no overrides to store`);
     }
   }
 
@@ -128,8 +138,11 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
 
       console.log(`\n===== RULE PASS for plate ${i + 1}/${totalPlates} (mode=${state.CURRENT_MODE}) =====`);
       let out = applySwapRulesToGcode(src, (SWAP_RULES || []), ctx);
+      
+      // Plate marker is now added by swap rules
+      
       if (amsOverride) {
-        out = applyAmsOverridesToPlate(out, originIdxOnce[i]);
+        out = applyAmsOverridesToPlate(out, uiIdxOnce[i]);  // Use UI index instead of origin index
       }
       return out;
     })
@@ -141,6 +154,7 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
   let modifiedLooped = Array(loops).fill(modifiedPerPlate).flat();
   if (applyOptimization) modifiedLooped = optimizeAMSBlocks(modifiedLooped);
 
+  // Header removal is handled by the remove_header_non_first_plates swap rule
   const modifiedCombined = modifiedLooped.join("\n");
   return {
     empty: false,

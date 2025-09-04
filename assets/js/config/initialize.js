@@ -69,6 +69,56 @@ export function initialize_page() {
     if (DEV_MODE) {
       btnCmpGcode.style.display = "block";
       btnCmpGcode.classList.remove("hidden");
+      
+      btnCmpGcode.addEventListener("click", async () => {
+        const origLabel = btnCmpGcode.textContent;
+        btnCmpGcode.disabled = true;
+        btnCmpGcode.textContent = "Comparing…";
+        try {
+          // Import GCODE test files directly as modules
+          const gcode1Module = await import('../testfiles/gcode1.gcode');
+          const gcode2Module = await import('../testfiles/gcode2.gcode');
+          
+          const file1Content = gcode1Module.default;
+          const file2Content = gcode2Module.default;
+          
+          console.log("[GCODE Compare] File 1 size:", file1Content.length, "chars");
+          console.log("[GCODE Compare] File 2 size:", file2Content.length, "chars");
+          
+          // Simple line-by-line comparison
+          const lines1 = file1Content.split('\n');
+          const lines2 = file2Content.split('\n');
+          
+          let differences = 0;
+          const maxLines = Math.max(lines1.length, lines2.length);
+          
+          console.log("[GCODE Compare] Lines in file 1:", lines1.length);
+          console.log("[GCODE Compare] Lines in file 2:", lines2.length);
+          
+          for (let i = 0; i < maxLines; i++) {
+            const line1 = lines1[i] || '';
+            const line2 = lines2[i] || '';
+            
+            if (line1 !== line2) {
+              differences++;
+              if (differences <= 300) { // Only log first 300 differences
+                console.log(`[GCODE Compare] Diff at line ${i+1}:`);
+                console.log(`  File 1: "${line1}"`);
+                console.log(`  File 2: "${line2}"`);
+              }
+            }
+          }
+          
+          console.log(`[GCODE Compare] Total differences: ${differences}`);
+          alert(`GCODE comparison complete. Found ${differences} differences. Check console for details.`);
+        } catch (err) {
+          console.error("Error comparing GCODE files:", err);
+          alert("GCODE comparison failed: " + (err?.message || err));
+        } finally {
+          btnCmpGcode.disabled = false;
+          btnCmpGcode.textContent = origLabel;
+        }
+      });
     } else {
       btnCmpGcode.style.display = "none";
       btnCmpGcode.classList.add("hidden");

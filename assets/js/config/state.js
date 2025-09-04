@@ -21,7 +21,7 @@ export const state = {
   open_in_bbs: false,
 
   // steuert project_settings + slice_info Filament-Override
-  OVERRIDE_METADATA: true,
+  OVERRIDE_METADATA: false,
 
   // AMS global state
   GLOBAL_AMS: {
