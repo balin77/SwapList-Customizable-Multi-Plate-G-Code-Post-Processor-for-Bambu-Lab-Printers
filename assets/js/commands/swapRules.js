@@ -316,6 +316,31 @@ export const SWAP_RULES = [
     action: "bump_first_extrusion_to_e3"   // nutzt deine bestehende Logik als Helper
   },
   {
+    id: "remove_header_non_first_plates",
+    description: "Remove header from all plates except the first one",
+    enabled: true,
+    order: 5, // Early order to run before other rules
+    action: "remove_header_block",
+    scope: "all",
+    when: { modes: ["X1", "P1", "A1M"], requireTrue: [], requireFalse: [] },
+    onlyIf: { plateIndexGreaterThan: 0 }
+  },
+  {
+    id: "add_plate_marker_first_plate",
+    description: "Add plate marker after EXECUTABLE_BLOCK_START on first plate",
+    enabled: true,
+    order: 6,
+    action: "insert_after",
+    scope: "all",
+    useRegex: true,
+    occurrence: "first",
+    anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_START[ \\t]*(\\n|$)",
+    when: { modes: ["X1", "P1", "A1M"], requireTrue: [], requireFalse: [] },
+    onlyIf: { plateIndexEquals: 0 },
+    payload: "; start printing plate 1\n",
+    wrapWithMarkers: false
+  },
+  {
     id: "a1m_prepend_startseg",
     description: "Insert A1M start segment AFTER ; EXECUTABLE_BLOCK_START on first plate",
     enabled: true,

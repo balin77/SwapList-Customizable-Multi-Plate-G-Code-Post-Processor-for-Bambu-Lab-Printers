@@ -171,8 +171,27 @@ export function handleFile(f) {
 
       // Nozzle-Durchmesser aus dem Header lesen, z.B. "; nozzle_diameter = 0.4"
       const nozMatch = firstPlateText.match(/^\s*;\s*nozzle_diameter\s*=\s*([\d.]+)/mi);
-      state.NOZZLE_DIAMETER_MM = nozMatch ? parseFloat(nozMatch[1]) : null;
-      state.NOZZLE_IS_02 = !!(state.NOZZLE_DIAMETER_MM && Math.abs(state.NOZZLE_DIAMETER_MM - 0.2) < 1e-6);
+      const currentNozzleDiameter = nozMatch ? parseFloat(nozMatch[1]) : null;
+      
+      // Bei der ersten Datei: Nozzle-Durchmesser setzen
+      if (current_file_id === 0) {
+        state.NOZZLE_DIAMETER_MM = currentNozzleDiameter;
+        state.NOZZLE_IS_02 = !!(state.NOZZLE_DIAMETER_MM && Math.abs(state.NOZZLE_DIAMETER_MM - 0.2) < 1e-6);
+      } else {
+        // Bei weiteren Dateien: Nozzle-Durchmesser validieren
+        if (state.NOZZLE_DIAMETER_MM !== null && currentNozzleDiameter !== null) {
+          // Toleranz von 0.001mm für Rundungsfehler
+          if (Math.abs(state.NOZZLE_DIAMETER_MM - currentNozzleDiameter) > 0.001) {
+            console.warn(`[read3mf] Nozzle diameter mismatch: ${state.NOZZLE_DIAMETER_MM}mm vs ${currentNozzleDiameter}mm`);
+            reject_file(`Nozzle diameter mismatch: First plate uses ${state.NOZZLE_DIAMETER_MM}mm, but "${f.name}" uses ${currentNozzleDiameter}mm. All plates must use the same nozzle diameter.`);
+            return;
+          }
+        } else if (state.NOZZLE_DIAMETER_MM === null && currentNozzleDiameter !== null) {
+          // Falls erste Datei keine Nozzle-Info hatte, aber diese schon
+          state.NOZZLE_DIAMETER_MM = currentNozzleDiameter;
+          state.NOZZLE_IS_02 = !!(state.NOZZLE_DIAMETER_MM && Math.abs(state.NOZZLE_DIAMETER_MM - 0.2) < 1e-6);
+        }
+      }
 
       // Mode prüfen (bricht selbst ab, wenn falsch)
       if (!ensureModeOrReject(detectedMode, f.name)) {

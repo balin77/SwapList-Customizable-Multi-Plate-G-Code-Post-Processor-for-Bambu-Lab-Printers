@@ -284,9 +284,23 @@ function _alreadyInserted(gcode, guardId) {
 
 // Ersetzung beim Export: pro Platte
 export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
+  console.log('=== applyAmsOverridesToPlate CALLED ===');
+  console.log('plateOriginIndex:', plateOriginIndex);
+  console.log('OVERRIDE_METADATA:', state.OVERRIDE_METADATA);
+  
+  // Nur ausführen, wenn "Override project & filament settings" aktiviert ist
+  if (!state.OVERRIDE_METADATA) {
+    console.log('OVERRIDE_METADATA is false, returning original gcode');
+    return gcode;
+  }
+  
   // UI speichert Overrides hier: Map<number, { fromKey: toKey }>
   const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
-  if (!map || Object.keys(map).length === 0) return gcode;
+  console.log('AMS overrides for plate:', plateOriginIndex, map);
+  if (!map || Object.keys(map).length === 0) {
+    console.log('No overrides for this plate, returning original gcode');
+    return gcode;
+  }
 
   function rewrite(cmd, blob) {
     // Original-Form erfassen (kompaktes S…A? P vorhanden?)
@@ -339,5 +353,97 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
     /^\s*(M621)(?!\.)\b([^\n\r]*)$/gmi,
     (_, cmd, rest) => rewrite(cmd, rest)
   );
+
+  // T commands zwischen M620/M621 Paaren auch anpassen - nur im Body, nicht im Header
+  console.log('Starting T-Command search and replace...');
+  
+  // Split GCode into header and body (header ends at CONFIG_BLOCK_END)
+  const headerEndIndex = out.indexOf('; CONFIG_BLOCK_END');
+  let headerPart = '';
+  let bodyPart = out;
+  
+  if (headerEndIndex !== -1) {
+    const headerEndPos = headerEndIndex + '; CONFIG_BLOCK_END'.length;
+    headerPart = out.substring(0, headerEndPos);
+    bodyPart = out.substring(headerEndPos);
+    console.log('Found CONFIG_BLOCK_END, processing only body part for T-Commands');
+    console.log('Header length:', headerPart.length);
+    console.log('Body sample:', bodyPart.substring(0, 500));
+  } else {
+    console.log('No CONFIG_BLOCK_END found, processing entire GCode');
+    console.log('GCode sample:', bodyPart.substring(0, 500));
+  }
+  
+  // Apply T-Command remapping only to body part
+  const modifiedBody = bodyPart.replace(
+    /(M620\s+[^\n\r]*S(\d+)[\s\S]*?)(\bT)(\d+)\b([\s\S]*?M621\s+[^\n\r]*S\2)/gmi,
+    (match, beforeT, originalSlot, tCmd, tSlot, afterT) => {
+      console.log('T-Command RegEx Match found!');
+      console.log('Full match:', match);
+      console.log('beforeT:', beforeT);
+      console.log('originalSlot:', originalSlot);
+      console.log('tCmd:', tCmd);
+      console.log('tSlot:', tSlot);
+      console.log('afterT:', afterT);
+      
+      // Das T-Command sollte basierend auf dem M620 S-Parameter gemappt werden, nicht dem aktuellen T-Wert
+      // Denn der Slicer generiert oft falsche T-Commands (immer T0)
+      // M620 S0A sollte mit T0 verwendet werden
+      // M620 S1A sollte mit T1 verwendet werden
+      // etc.
+      const correctTSlot = parseInt(originalSlot);  // S-Parameter von M620
+      const uiSlot = correctTSlot + 1;  // Slot zu UI-Slot konvertieren (S0 -> Slot 1)
+      const fromKey = `P0S${uiSlot}`;
+      const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
+      const toKey = map[fromKey];
+      
+      console.log(`T-Command Debug: M620 S${originalSlot} should use T${correctTSlot}, plateOriginIndex=${plateOriginIndex}, fromKey=${fromKey}, map=`, map, `toKey=${toKey}`);
+      
+      if (!toKey) {
+        // Auch wenn kein Mapping vorhanden ist, sollten wir den T-Command korrigieren
+        if (correctTSlot !== parseInt(tSlot)) {
+          console.log(`T-Command: Correcting ${tCmd}${tSlot} to ${tCmd}${correctTSlot} (no mapping, but fixing slicer error)`);
+          return beforeT + tCmd + correctTSlot + afterT;
+        }
+        return match; // nichts zu tun
+      }
+      
+      const m = /^P(\d+)S(\d+)$/.exec(toKey);
+      if (!m) return match;
+      const newUiSlot = +m[2];
+      const newTCommand = newUiSlot - 1;  // UI-Slot zurück zu T-Command konvertieren
+      
+      console.log(`T-Command: Changing ${tCmd}${tSlot} to ${tCmd}${newTCommand} (M620 S${originalSlot} -> S${newTCommand}, UI-Slot ${uiSlot} -> ${newUiSlot})`);
+      return beforeT + tCmd + newTCommand + afterT;
+    }
+  );
+
+  // Combine header and modified body back together
+  out = headerPart + modifiedBody;
+
+  // Filament header line aktualisieren ("; filament: 1,2,3" -> neue Slots)
+  out = out.replace(
+    /^(;\s*filament:\s*)([\d,\s]+)$/mi,
+    (match, prefix, slotList) => {
+      // Parse original slots
+      const originalSlots = slotList.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      
+      // Map each slot through the override system
+      const newSlots = originalSlots.map(slot => {
+        const fromKey = `P0S${slot}`;
+        const toKey = map[fromKey];
+        if (!toKey) return slot; // keine Änderung
+        
+        const m = /^P(\d+)S(\d+)$/.exec(toKey);
+        return m ? +m[2] : slot; // neuer Slot oder original falls Parse-Fehler
+      });
+      
+      // Remove duplicates and sort
+      const uniqueSlots = [...new Set(newSlots)].sort((a, b) => a - b);
+      
+      return prefix + uniqueSlots.join(',');
+    }
+  );
+
   return out;
 }

@@ -2,6 +2,7 @@
 
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
+import { checkAutoToggleOverrideMetadata } from "./filamentColors.js";
 
 export function readPlateXCoordsSorted(li) {
   const inputs = li.querySelectorAll(
@@ -48,6 +49,9 @@ export function removePlate(btn) {
 
   // Stats neu berechnen
   if (typeof update_statistics === "function") update_statistics();
+  
+  // Auto-disable Override metadata wenn keine modified plates mehr vorhanden
+  checkAutoToggleOverrideMetadata();
 
   // Wenn keine Platten mehr vorhanden → volle Rücksetzung
   const remaining = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)").length;

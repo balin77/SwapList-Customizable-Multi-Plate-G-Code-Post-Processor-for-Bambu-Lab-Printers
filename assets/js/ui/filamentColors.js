@@ -118,6 +118,83 @@ export function deriveGlobalSlotColorsFromPlates() {
   renderTotalsColors();
 }
 
+// ===== Auto-enable/disable Override Metadata =========================
+export function autoEnableOverrideMetadata() {
+  import('../config/state.js').then(({ state }) => {
+    if (!state.OVERRIDE_METADATA) {
+      state.OVERRIDE_METADATA = true;
+      const checkbox = document.getElementById("opt_override_metadata");
+      if (checkbox) checkbox.checked = true;
+      console.log("Auto-enabled OVERRIDE_METADATA due to slot change");
+    }
+  });
+}
+
+export function checkAutoDisableOverrideMetadata() {
+  import('../config/state.js').then(({ state }) => {
+    // Prüfen ob es noch modified plates gibt
+    const hasModifiedPlates = state.GLOBAL_AMS.overridesPerPlate.size > 0;
+    
+    if (!hasModifiedPlates && state.OVERRIDE_METADATA) {
+      state.OVERRIDE_METADATA = false;
+      const checkbox = document.getElementById("opt_override_metadata");
+      if (checkbox) checkbox.checked = false;
+      console.log("Auto-disabled OVERRIDE_METADATA - no modified plates remaining");
+    }
+  });
+}
+
+export function checkAutoToggleOverrideMetadata() {
+  // Prüfen ob aktuell irgendwelche Slots von ihren Originalwerten abweichen
+  const hasAnyModifiedSlots = hasModifiedSlotsInAnyPlate();
+  console.log('checkAutoToggleOverrideMetadata: hasModifiedSlots =', hasAnyModifiedSlots);
+  
+  import('../config/state.js').then(({ state }) => {
+    console.log('Current OVERRIDE_METADATA state:', state.OVERRIDE_METADATA);
+    if (hasAnyModifiedSlots && !state.OVERRIDE_METADATA) {
+      // Enable wenn modifizierte Slots gefunden
+      state.OVERRIDE_METADATA = true;
+      const checkbox = document.getElementById("opt_override_metadata");
+      if (checkbox) checkbox.checked = true;
+      console.log("Auto-enabled OVERRIDE_METADATA due to slot change");
+    } else if (!hasAnyModifiedSlots && state.OVERRIDE_METADATA) {
+      // Disable wenn keine modifizierten Slots mehr vorhanden
+      state.OVERRIDE_METADATA = false;
+      const checkbox = document.getElementById("opt_override_metadata");
+      if (checkbox) checkbox.checked = false;
+      console.log("Auto-disabled OVERRIDE_METADATA - all slots reset to original values");
+    } else {
+      console.log('No OVERRIDE_METADATA change needed');
+    }
+  });
+}
+
+function hasModifiedSlotsInAnyPlate() {
+  const plates = document.querySelectorAll("#playlist_ol li.list_item");
+  console.log('Checking', plates.length, 'plates for modified slots');
+  
+  for (const plate of plates) {
+    // Nur aktive plates prüfen (Repeats > 0)
+    const repInput = plate.querySelector(".p_rep");
+    const reps = parseFloat(repInput?.value || "0");
+    if (reps <= 0) continue;
+    
+    // Slots in dieser plate prüfen
+    const slots = plate.querySelectorAll(".p_filament .f_slot");
+    for (const slot of slots) {
+      const originalSlot = parseInt(slot.dataset.origSlot || "0", 10);
+      const currentSlot = parseInt((slot.textContent || "").trim() || "0", 10);
+      
+      // Wenn Original-Slot existiert und sich vom aktuellen unterscheidet
+      if (originalSlot > 0 && currentSlot > 0 && originalSlot !== currentSlot) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
 // Slot-Auswahl auf der Plate: nur Zahl updaten + diese Zeile neu bemalen.
 export function applySlotSelectionToPlate(anchorEl, newIndex) {
   const row = anchorEl.closest(".p_filament");
@@ -136,6 +213,9 @@ export function applySlotSelectionToPlate(anchorEl, newIndex) {
 
   // m/g in den Statistics auf den neuen Slot umbuchen
   update_statistics();
+  
+  // Auto-enable/disable Override metadata basierend auf Slot-Änderungen
+  checkAutoToggleOverrideMetadata();
 }
 
 // ===== Dropdown am Plate-Swatch ==================================
