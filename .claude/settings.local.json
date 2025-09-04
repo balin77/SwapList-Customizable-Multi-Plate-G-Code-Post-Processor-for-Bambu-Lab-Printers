@@ -5,16 +5,13 @@
       "Bash(grep:*)",
       "Bash(cat:*)",
       "Bash(node:*)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\commands/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\io/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\commands/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\io/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\commands/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\commands/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\commands/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\gcode/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\gcode/**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\assets\\js\\testfiles/**)"
+      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
+      "Edit(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
+      "Write(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
+      "MultiEdit(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
+      "Glob(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
+      "Grep(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
+      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website/**)"
     ],
     "deny": [],
     "ask": []

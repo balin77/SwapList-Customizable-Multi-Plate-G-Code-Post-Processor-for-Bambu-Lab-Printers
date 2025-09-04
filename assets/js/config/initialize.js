@@ -268,15 +268,13 @@ export function initialize_page() {
 
   // Secure push-off UI wiring
   const chkSec = document.getElementById("opt_secure_pushoff");
-  const lvlInp = document.getElementById("extra_pushoff_levels");
-  const lvlLbl = document.getElementById("extra_pushoff_levels_label");
-  const lvlHelp = document.getElementById("extra_pushoff_levels_help");
+  const extraPushoffContainer = document.getElementById("extra_pushoff_container");
 
   function reflectSecureUI() {
     const on = getSecurePushOffEnabled();
-    if (lvlInp) lvlInp.disabled = !on;
-    if (lvlLbl) lvlLbl.style.opacity = on ? "1" : "0.5";
-    if (lvlHelp) lvlHelp.style.display = on ? "" : "none";
+    if (extraPushoffContainer) {
+      extraPushoffContainer.style.display = on ? "block" : "none";
+    }
   }
   if (chkSec) {
     chkSec.addEventListener("change", reflectSecureUI);

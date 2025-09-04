@@ -128,82 +128,55 @@
 
           <!-- Extra Settings für X1/P1 -->
           <div id="x1p1-settings" class="hidden">
-            <div class="settings-row">
-              <div class="settings-col">
-                <label>
-                  <input type="checkbox" id="opt_filament_purge_off">
-                  Turn off filament purge
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>Disable the filament purge sequence after the first plate.
-                      This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
-                  </details>
-                </label>
-                
-                <label>
-                  <input type="checkbox" id="opt_purge" autocomplete="off" checked />
-                  Hide nozzle load line in model
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
-                      deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
-                  </details>
-                </label>
-                
-                <label>
-                  <input type="checkbox" id="opt_bedlevel_cooling">
-                  Raise Bed Level for cooling
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
-                      prints the printer cover must be removed to avoid collision.</p>
-                  </details>
-                </label>
-                
-                <label>
-                  <input type="checkbox" id="opt_secure_pushoff" checked>
-                  Secure push‑off sequence
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>
-                      When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
-                      before the final push at Z=1. This helps avoid collisions and smooths the ejection.
-                    </p>
-                  </details>
-                </label>
-                
-                <label class="opt">
-                  <input type="checkbox" id="opt_override_metadata">
-                  Override project &amp; filament settings
-                </label>
-                <details class="tool_info" id="opt_override_metadata_help">
+            
+            <!-- Nozzle and Filament Settings -->
+            <div class="settings-group">
+              <h4>Nozzle & Filament</h4>
+              <label>
+                <input type="checkbox" id="opt_purge" autocomplete="off" checked />
+                Hide nozzle load line in model
+                <details class="tool_info">
                   <summary></summary>
-                  <p>
-                    When <b>on</b>, the app regenerates
-                    the filament entries and material/printer settings. This is essential if you use new
-                    AMS slot assignments that weren't present in the original G-code. When <b>off</b>,
-                    the original 3MF metadata is kept as-is; if you remap to AMS slots that weren't
-                    originally defined, the printer or Studio may report a mismatch.
-                  </p>
+                  <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
+                    deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
                 </details>
-              </div>
+              </label>
               
-              <div class="settings-col">
-                <div id="advanced-cooldown-settings">
-                  <label for="raisebed_offset_mm">Bed raise offset before push-out (mm)</label>
-                  <input id="raisebed_offset_mm" type="number" step="1" min="5" max="200" value="30">
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>Defines how much the bed is raised before performing the push-out sequence.</p>
-                  </details>
+              <label>
+                <input type="checkbox" id="opt_filament_purge_off">
+                Turn off filament purge
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>Disable the filament purge sequence after the first plate.
+                    This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
+                </details>
+              </label>
+            </div>
 
+            <!-- Cooling Settings -->
+            <div class="settings-group">
+              <h4>Cooling & Bed Temperature</h4>
+              <label>
+                <input type="checkbox" id="opt_bedlevel_cooling">
+                Raise Bed Level for cooling
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
+                    prints the printer cover must be removed to avoid collision.</p>
+                </details>
+              </label>
+              
+              <div class="settings-row">
+                <div class="settings-col">
                   <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
                   <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
                   <details class="tool_info">
                     <summary></summary>
                     <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
                   </details>
-                  
+                </div>
+                
+                <div class="settings-col">
                   <label for="cooldown_max_time">Max cooldown time (min)</label>
                   <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
                   <details class="tool_info">
@@ -214,23 +187,68 @@
                       until this total time is reached. Default is 40 minutes.
                     </p>
                   </details>
-                  
-                  <label for="extra_pushoff_levels" id="extra_pushoff_levels_label">
-                    Additional push‑off levels
-                  </label>
-                  <input id="extra_pushoff_levels" type="number" step="1" min="1" max="10" value="2">
-                  <details class="tool_info" id="extra_pushoff_levels_help">
-                    <summary></summary>
-                    <p>
-                      Defines how the maximum Z height is divided. Example: if max Z is 10&nbsp;mm
-                      and you enter <b>2</b>, push‑offs occur around Z≈5 and the final one at Z=1.
-                      If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
-                      A value of <b>1</b> means only a final push at Z=1.
-                    </p>
-                  </details>
                 </div>
               </div>
             </div>
+
+            <!-- Push-off Settings -->
+            <div class="settings-group">
+              <h4>Push-off & Ejection</h4>
+              <label for="raisebed_offset_mm">Bed raise offset before push-out (mm)</label>
+              <input id="raisebed_offset_mm" type="number" step="1" min="5" max="200" value="30">
+              <details class="tool_info">
+                <summary></summary>
+                <p>Defines how much the bed is raised before performing the push-out sequence.</p>
+              </details>
+              
+              <label>
+                <input type="checkbox" id="opt_secure_pushoff" checked>
+                Secure push‑off sequence
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>
+                    When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
+                    before the final push at Z=1. This helps avoid collisions and smooths the ejection.
+                  </p>
+                </details>
+              </label>
+              
+              <div id="extra_pushoff_container">
+                <label for="extra_pushoff_levels" id="extra_pushoff_levels_label">
+                  Additional push‑off levels
+                </label>
+                <input id="extra_pushoff_levels" type="number" step="1" min="1" max="10" value="2">
+                <details class="tool_info" id="extra_pushoff_levels_help">
+                  <summary></summary>
+                  <p>
+                    Defines how the maximum Z height is divided. Example: if max Z is 10&nbsp;mm
+                    and you enter <b>2</b>, push‑offs occur around Z≈5 and the final one at Z=1.
+                    If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
+                    A value of <b>1</b> means only a final push at Z=1.
+                  </p>
+                </details>
+              </div>
+            </div>
+
+            <!-- Override Settings -->
+            <div class="settings-group">
+              <h4>Project Settings</h4>
+              <label class="opt">
+                <input type="checkbox" id="opt_override_metadata">
+                Override project &amp; filament settings
+                <details class="tool_info" id="opt_override_metadata_help">
+                  <summary></summary>
+                  <p>
+                    When <b>on</b>, the app regenerates
+                    the filament entries and material/printer settings. This is essential if you use new
+                    AMS slot assignments that weren't present in the original G-code. When <b>off</b>,
+                    the original 3MF metadata is kept as-is; if you remap to AMS slots that weren't
+                    originally defined, the printer or Studio may report a mismatch.
+                  </p>
+                </details>
+              </label>
+            </div>
+            
           </div>
         </div>
       </div>
