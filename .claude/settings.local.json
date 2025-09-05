@@ -11,7 +11,8 @@
       "MultiEdit(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
       "Glob(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
       "Grep(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
-      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website/**)"
+      "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website/**)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

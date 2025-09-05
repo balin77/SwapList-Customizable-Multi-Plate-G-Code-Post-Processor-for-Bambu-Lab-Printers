@@ -137,17 +137,19 @@ export function initialize_page() {
 
 
   // mode toggle listeners
-  var mA1 = document.getElementById('mode_a1m');
+  var mA1M = document.getElementById('mode_a1m');
+  var mA1 = document.getElementById('mode_a1');
   var mX1 = document.getElementById('mode_x1');
   var mP1 = document.getElementById('mode_p1');
-  if (mA1 && mX1 && mP1) {
+  if (mA1M && mA1 && mX1 && mP1) {
     // Deaktivieren: nur noch per detect → setMode()
+    mA1M.disabled = true;
     mA1.disabled = true;
     mX1.disabled = true;
     mP1.disabled = true;
 
     // Optional: Tooltip
-    mA1.title = mX1.title = mP1.title = "Printer mode is set automatically from the loaded file(s).";
+    mA1M.title = mA1.title = mX1.title = mP1.title = "Printer mode is set automatically from the loaded file(s).";
 
   }
   // Purge-Checkbox
@@ -191,6 +193,97 @@ export function initialize_page() {
     chkOverride.addEventListener("change", () => {
       state.OVERRIDE_METADATA = !!chkOverride.checked;
       console.log("OVERRIDE_METADATA:", state.OVERRIDE_METADATA);
+    });
+  }
+
+  // App Mode Toggle (Swap Mode / Push Off Mode)
+  const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox");
+  const swapLogo = document.getElementById("logo");
+  const pushOffLogo = document.getElementById("logo_pushoff");
+
+  function updateAppModeDisplay(isPushOffMode) {
+    if (swapLogo && pushOffLogo) {
+      if (isPushOffMode) {
+        swapLogo.classList.add("hidden");
+        pushOffLogo.classList.remove("hidden");
+        document.body.classList.add("pushoff-mode");
+      } else {
+        swapLogo.classList.remove("hidden");
+        pushOffLogo.classList.add("hidden");
+        document.body.classList.remove("pushoff-mode");
+      }
+    }
+    
+    // Update available printer modes
+    updatePrinterModeAvailability(isPushOffMode);
+  }
+
+  // Make function globally available for setMode() in mode.js
+  window.updateAppModeDisplay = updateAppModeDisplay;
+
+  function updatePrinterModeAvailability(isPushOffMode) {
+    const a1mRadio = document.getElementById("mode_a1m");
+    const a1mLabel = document.querySelector("label[for='mode_a1m']");
+    const a1Radio = document.getElementById("mode_a1");
+    const a1Label = document.querySelector("label[for='mode_a1']");
+    const x1Radio = document.getElementById("mode_x1");
+    const x1Label = document.querySelector("label[for='mode_x1']");
+    const p1Radio = document.getElementById("mode_p1");
+    const p1Label = document.querySelector("label[for='mode_p1']");
+
+    if (isPushOffMode) {
+      // Push Off Mode: Show A1M, A1, X1, P1
+      [a1mRadio, a1mLabel, a1Radio, a1Label, x1Radio, x1Label, p1Radio, p1Label].forEach(el => {
+        if (el) el.style.display = "";
+      });
+      
+      // Label zurück zur Kurzform im Push Off Mode
+      if (a1mLabel) {
+        a1mLabel.textContent = "A1M";
+      }
+      
+      // Default to A1M in push off mode if A1M was selected in swap mode
+      if (a1mRadio && a1mRadio.checked) {
+        a1mRadio.checked = true;
+      }
+    } else {
+      // Swap Mode: Show only A1M (A1 Mini), hide others
+      if (a1mRadio && a1mLabel) {
+        a1mRadio.style.display = "";
+        a1mLabel.style.display = "";
+        a1mLabel.textContent = "A1 Mini"; // Ausgeschrieben im SWAP Mode
+        a1mRadio.checked = true; // Force A1M selection in swap mode
+      }
+      
+      // Hide A1, X1, P1 in swap mode
+      [a1Radio, a1Label, x1Radio, x1Label, p1Radio, p1Label].forEach(el => {
+        if (el) el.style.display = "none";
+      });
+    }
+  }
+
+  if (modeToggleCheckbox) {
+    // Initial state - default to push off mode
+    state.APP_MODE = "pushoff";
+    modeToggleCheckbox.checked = true; // Push Off Mode aktivieren
+    updateAppModeDisplay(true);
+    
+    modeToggleCheckbox.addEventListener("change", () => {
+      const isPushOffMode = modeToggleCheckbox.checked;
+      
+      // Prüfen ob SWAP Mode für aktuellen Drucker erlaubt ist
+      if (!isPushOffMode && state.CURRENT_MODE && state.CURRENT_MODE !== 'A1M') {
+        // SWAP Mode nur für A1M erlaubt - Toggle zurücksetzen und Fehlermeldung
+        modeToggleCheckbox.checked = true; // Zurück zu Push Off Mode
+        alert("SWAP Mode is only available for the A1 Mini.\nFor other printers, please use Push Off Mode.");
+        return;
+      }
+      
+      state.APP_MODE = isPushOffMode ? "pushoff" : "swap";
+      updateAppModeDisplay(isPushOffMode);
+      console.log("APP_MODE changed to:", state.APP_MODE);
+      console.log("Body classes:", document.body.className);
+      console.log("Push off mode active:", isPushOffMode);
     });
   }
 

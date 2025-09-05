@@ -48,6 +48,7 @@ export function _ruleActiveWhy(rule, ctx) {
   // Nur fürs Loggen: warum inaktiv?
   const w = rule.when || {};
   if (w.modes && w.modes.length && !w.modes.includes(ctx.mode)) return "mode_mismatch";
+  if (w.appModes && w.appModes.length && !w.appModes.includes(ctx.appMode)) return "appMode_mismatch";
   for (const id of (w.requireTrue || [])) { const el = document.getElementById(id); if (!el || !el.checked) return `requireTrue_missing:${id}`; }
   for (const id of (w.requireFalse || [])) { const el = document.getElementById(id); if (el && el.checked) return `requireFalse_blocked:${id}`; }
   const onlyIf = rule.onlyIf || {};

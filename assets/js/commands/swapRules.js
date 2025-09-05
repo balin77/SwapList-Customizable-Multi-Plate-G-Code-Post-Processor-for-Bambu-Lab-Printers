@@ -58,6 +58,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1", "P1"],
+      appModes: ["pushoff"],
       requireTrue: [],            // keine Checkbox
       requireFalse: []
     },
@@ -76,6 +77,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1", "P1"],                // nur X1/P1 relevant
+      appModes: ["pushoff"],
       requireTrue: ["opt_filament_purge_off"], // nur wenn Checkbox an
       requireFalse: []
     },
@@ -93,6 +95,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für diese Modi
+      appModes: ["pushoff"],
       requireTrue: [],     // keine Checkbox notwendig
       requireFalse: []      // keine Ausschluss-Checkbox
     },
@@ -108,6 +111,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für diese Modi
+      appModes: ["pushoff"],
       requireTrue: [],     // keine Checkbox notwendig
       requireFalse: []      // keine Ausschluss-Checkbox
     },
@@ -123,6 +127,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1", "P1"],   // nur für diese Modi
+      appModes: ["pushoff"],
       requireTrue: [],     // keine Checkbox notwendig
       requireFalse: []      // keine Ausschluss-Checkbox
     },
@@ -145,6 +150,7 @@ export const SWAP_RULES = [
 
     when: {
       modes: ["X1", "P1"],
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -160,6 +166,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für diese Modi anwenden
+      appModes: ["pushoff"],
       requireTrue: [],     // keine Checkbox-Bedingung
       requireFalse: []      // keine Ausschluss-Bedingung
     },
@@ -175,6 +182,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur für X1 und P1
+      appModes: ["pushoff"],
       requireTrue: [],     // keine zusätzlichen Bedingungen
       requireFalse: []      // keine Ausschlussbedingungen
     },
@@ -190,6 +198,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["X1"],   // nur in X1/P1
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -209,6 +218,7 @@ export const SWAP_RULES = [
     scope: "endseq",
     when: {
       modes: ["X1", "P1"],   // nur für diese Modi
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -227,6 +237,7 @@ export const SWAP_RULES = [
     wrapWithMarkers: true,
     when: {
       modes: ["X1", "P1"],
+      appModes: ["pushoff"],
       requireTrue: ["opt_bedlevel_cooling"],  // nur, wenn aktiv
       requireFalse: []
     },
@@ -249,7 +260,7 @@ export const SWAP_RULES = [
     useRegex: true,           // ← WICHTIG!
     scope: "endseq",
     wrapWithMarkers: true,
-    when: { modes: ["X1", "P1"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1"], appModes: ["pushoff"], requireTrue: [], requireFalse: [] },
     payloadFnId: "cooldownFansWait"
   },
   {
@@ -266,6 +277,7 @@ export const SWAP_RULES = [
     wrapWithMarkers: true,             // idempotent
     when: {
       modes: ["X1", "P1"],
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -285,6 +297,7 @@ export const SWAP_RULES = [
     wrapWithMarkers: true,
     when: {
       modes: ["X1", "P1"],
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -302,7 +315,7 @@ export const SWAP_RULES = [
     // globaler Regex, keine äußeren Marker nötig:
     pattern: "^\\s*M73\\s+P100\\s+R0[^\n]*$",
     patternFlags: "gmi",
-    when: { modes: ["X1", "P1"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1"], appModes: ["pushoff"], requireTrue: [], requireFalse: [] },
     onlyIf: { isLastPlate: false }
   },
   /* 3) Erste Extrusion pro Platte auf E3 anheben */
@@ -312,7 +325,7 @@ export const SWAP_RULES = [
     enabled: true,
     scope: "body",
     order: 80,
-    when: { modes: ["X1", "P1"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1"], appModes: ["pushoff"], requireTrue: [], requireFalse: [] },
     action: "bump_first_extrusion_to_e3"   // nutzt deine bestehende Logik als Helper
   },
   {
@@ -322,7 +335,7 @@ export const SWAP_RULES = [
     order: 5, // Early order to run before other rules
     action: "remove_header_block",
     scope: "all",
-    when: { modes: ["X1", "P1", "A1M"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1", "A1M", "A1"], appModes: ["pushoff", "swap"], requireTrue: [], requireFalse: [] },
     onlyIf: { plateIndexGreaterThan: 0 }
   },
   {
@@ -335,14 +348,14 @@ export const SWAP_RULES = [
     useRegex: true,
     occurrence: "first",
     anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_START[ \\t]*(\\n|$)",
-    when: { modes: ["X1", "P1", "A1M"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["X1", "P1", "A1M", "A1"], appModes: ["pushoff", "swap"], requireTrue: [], requireFalse: [] },
     onlyIf: { plateIndexEquals: 0 },
     payload: "; start printing plate 1\n",
     wrapWithMarkers: false
   },
   {
     id: "a1m_prepend_startseg",
-    description: "Insert A1M start segment AFTER ; EXECUTABLE_BLOCK_START on first plate",
+    description: "Insert A1M start segment AFTER ; EXECUTABLE_BLOCK_START on first plate (SWAP mode only)",
     enabled: true,
     order: 10,
     action: "insert_after",
@@ -350,14 +363,14 @@ export const SWAP_RULES = [
     useRegex: true,
     occurrence: "first",
     anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_START[ \\t]*(\\n|$)",
-    when: { modes: ["A1M"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["A1M"], appModes: ["swap"], requireTrue: [], requireFalse: [] },
     onlyIf: { plateIndexEquals: 0 },
     payload: SWAP_START_A1M,
     wrapWithMarkers: true
   },
   {
     id: "a1m_append_endseg",
-    description: "Insert A1M end segment BEFORE ; EXECUTABLE_BLOCK_END on every plate",
+    description: "Insert A1M end segment BEFORE ; EXECUTABLE_BLOCK_END on every plate (SWAP mode only)",
     enabled: true,
     order: 90,
     action: "insert_before",
@@ -365,9 +378,9 @@ export const SWAP_RULES = [
     useRegex: true,
     occurrence: "last",
     anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_END[ \\t]*(\\n|$)",
-    when: { modes: ["A1M"], requireTrue: [], requireFalse: [] },
+    when: { modes: ["A1M"], appModes: ["swap"], requireTrue: [], requireFalse: [] },
     payload: SWAP_END_A1M,
     wrapWithMarkers: true
-  }
+  },
 ];
 

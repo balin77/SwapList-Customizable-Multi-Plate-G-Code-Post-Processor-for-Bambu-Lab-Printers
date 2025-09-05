@@ -21,6 +21,28 @@ export function setMode(mode) {
   state.CURRENT_MODE = mode;
   document.body.setAttribute("data-mode", mode);
 
+  // App-Mode automatisch basierend auf Drucker setzen
+  const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox");
+  if (mode === 'A1M') {
+    // A1M → SWAP Mode
+    state.APP_MODE = "swap";
+    if (modeToggleCheckbox) {
+      modeToggleCheckbox.checked = false;
+    }
+  } else {
+    // X1, P1, A1 → Push Off Mode
+    state.APP_MODE = "pushoff";
+    if (modeToggleCheckbox) {
+      modeToggleCheckbox.checked = true;
+    }
+  }
+
+  // UI basierend auf App-Mode aktualisieren
+  const updateAppModeDisplay = window.updateAppModeDisplay;
+  if (updateAppModeDisplay) {
+    updateAppModeDisplay(state.APP_MODE === "pushoff");
+  }
+
   const isX1P1 = (mode === 'X1' || mode === 'P1');
 
   const mo = document.getElementById('mode_options');
@@ -39,7 +61,7 @@ export function setMode(mode) {
     el.classList.toggle('hidden', !isX1P1);
   });
 
-  console.log("Mode switched to:", mode);
+  console.log("Mode switched to:", mode, "App mode:", state.APP_MODE);
 }
 
 export function ensureModeOrReject(detectedMode, fileName) {
@@ -51,7 +73,7 @@ export function ensureModeOrReject(detectedMode, fileName) {
   if (state.CURRENT_MODE == null) {
     setMode(detectedMode);
     // Radios visuell spiegeln (falls sichtbar)
-    const map = { A1M: 'mode_a1m', X1: 'mode_x1', P1: 'mode_p1' };
+    const map = { A1M: 'mode_a1m', A1: 'mode_a1', X1: 'mode_x1', P1: 'mode_p1' };
     const rb = document.getElementById(map[detectedMode]);
     if (rb) rb.checked = true;
     return true;
