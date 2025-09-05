@@ -15,6 +15,7 @@ import { SWAP_RULES } from "../commands/swapRules.js";
 function buildRuleContext(plateIndex, extra = {}) {
   return {
     mode: state.CURRENT_MODE,
+    appMode: state.APP_MODE,
     plateIndex,
     totalPlates: extra.totalPlates ?? 0,
     isLastPlate: (extra.totalPlates ? plateIndex === extra.totalPlates - 1 : false),

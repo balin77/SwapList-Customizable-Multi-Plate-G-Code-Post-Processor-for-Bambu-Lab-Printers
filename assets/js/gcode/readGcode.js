@@ -83,6 +83,7 @@ export function parsePrinterModelFromGcode(gtext) {
 
   if (/^Bambu Lab X1(?: Carbon|E)?$/i.test(raw)) return "X1";
   if (/^Bambu Lab A1 mini$/i.test(raw)) return "A1M";
+  if (/^Bambu Lab A1$/i.test(raw)) return "A1";
   if (/^Bambu Lab P1(?:S|P)$/i.test(raw)) return "P1";
   return "UNSUPPORTED"; // alles andere
 }

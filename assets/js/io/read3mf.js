@@ -208,7 +208,8 @@ export function handleFile(f) {
       //change UI layout
       document.getElementById("drop_zones_wrapper").classList.add("mini_drop_zone");
       document.getElementById("action_buttons").classList.remove("hidden");
-      document.getElementById("mode_switch").classList.remove("hidden");  // ← NEU
+      document.getElementById("printer_mode_switch").classList.remove("hidden");  // Printer mode selection
+      document.getElementById("app_mode_toggle").classList.remove("hidden");      // App mode toggle  
       document.getElementById("statistics").classList.remove("hidden");
 
       var slice_config_file = zip.file("Metadata/slice_info.config").async("text");

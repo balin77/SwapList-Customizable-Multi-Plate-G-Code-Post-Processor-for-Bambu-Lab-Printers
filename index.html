@@ -23,6 +23,7 @@
     <div id="app_header">
       <div>
         <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo">
+        <img id="logo_pushoff" src="assets/img/logo_clearbed_app.png" height="42" alt="clearbed logo" class="hidden">
         <div id="statistics" class="hidden">
           <div id="queue_statistics">
             <h3>Queue statistics:</h3>
@@ -46,19 +47,34 @@
           </div>
         </div>
       </div>
+      <div id="mode_column">
+        <!-- App Mode Toggle -->
+        <div id="app_mode_toggle" class="hidden">
+          <label class="mode-switch">
+            <input type="checkbox" id="mode_toggle_checkbox">
+            <span class="mode-slider">
+              <span class="mode-label mode-swap">SWAP Mode</span>
+              <span class="mode-label mode-pushoff">Push Off Mode</span>
+            </span>
+          </label>
+        </div>
+        <!-- Printer Mode Selection -->
+        <div id="printer_mode_switch" class="mode-toggle hidden">
+          <input type="radio" id="mode_a1m" name="mode" value="A1M" checked>
+          <label for="mode_a1m">A1M</label>
+
+          <input type="radio" id="mode_a1" name="mode" value="A1">
+          <label for="mode_a1">A1</label>
+
+          <input type="radio" id="mode_x1" name="mode" value="X1">
+          <label for="mode_x1">X1</label>
+
+          <input type="radio" id="mode_p1" name="mode" value="P1">
+          <label for="mode_p1">P1</label>
+        </div>
+      </div>
       <div>
         <div id="action_buttons" class="hidden">
-          <!-- Mode-Toggle: rechts neben den Statistics -->
-          <div id="mode_switch" class="mode-toggle hidden">
-            <input type="radio" id="mode_a1m" name="mode" value="A1M" checked>
-            <label for="mode_a1m">A1&nbsp;Mini</label>
-
-            <input type="radio" id="mode_x1" name="mode" value="X1">
-            <label for="mode_x1">X1</label>
-
-            <input type="radio" id="mode_p1" name="mode" value="P1">
-            <label for="mode_p1">P1</label>
-          </div>
           <!-- Generate + Export Buttons -->
           <button id="export">Generate SWAP file</button>
 

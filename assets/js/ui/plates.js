@@ -136,7 +136,7 @@ export function renderCoordInputs(count, targetDiv) {
     wrap.innerHTML = `
       <span class="coord-title">Object ${i}</span>
       <div class="coord-row">
-        <label>X <input type="number" id="obj${i}-x" step="1" value="0"></label>
+        <label>X <input type="number" id="obj${i}-x" step="1" value="0" min="0" max="255"></label>
       </div>
     `;
     targetDiv.appendChild(wrap);
@@ -154,7 +154,7 @@ export function renderPlateCoordInputs(li, count) {
     row.className = 'obj-coord-row';
     row.innerHTML = `
       <b>Object ${i}</b>
-      <label>X <input type="number" class="obj-x" step="1" value="0" data-obj="${i}"></label>
+      <label>X <input type="number" class="obj-x" step="1" value="0" min="0" max="255" data-obj="${i}"></label>
     `;
     coordsWrap.appendChild(row);
   }

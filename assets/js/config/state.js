@@ -5,6 +5,7 @@ export const state = {
   USE_PURGE_START: false,
   USE_BEDLEVEL_COOLING: false,
   CURRENT_MODE: null,            // "A1M" | "X1" | "P1" | null
+  APP_MODE: "pushoff",           // "swap" | "pushoff"
 
   // File Handling
   my_files: [],
