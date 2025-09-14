@@ -17,14 +17,18 @@
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 
-<body class="notranslate" translate="no">
+<body class="notranslate pushoff-mode compact-mode" translate="no">
   <input type="checkbox" class="hidden" id="debug_outline" />
   <div id="app_wrapper">
-    <div id="app_header">
+    <!-- Logo Section - Full Width -->
+    <div id="app_logo">
+      <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo" class="hidden">
+      <img id="logo_pushoff" src="assets/img/logo_clearbed_app.png" height="42" alt="clearbed logo">
+      <img id="logo_a1_swap" src="assets/img/3Print.png" height="42" alt="3print logo" class="hidden">
+    </div>
+
+    <div id="app_header" class="compact">
       <div>
-        <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo">
-        <img id="logo_pushoff" src="assets/img/logo_clearbed_app.png" height="42" alt="clearbed logo" class="hidden">
-        <img id="logo_a1_swap" src="assets/img/3Print.png" height="42" alt="3print logo" class="hidden">
         <div id="statistics" class="hidden">
           <div id="queue_statistics">
             <h3>Queue statistics:</h3>
@@ -117,14 +121,9 @@
       <div id="settings_panel" class="hidden">
         <div id="settings_content">
           <h3>Settings</h3>
-          
-          <div class="settings-row">
-            <div class="settings-col">
-              <label for="file_name">Custom file name:</label>
-              <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name">
-              <span> .swap.3mf</span>
-            </div>
-            
+
+          <!-- Loop Repeats - Top Level -->
+          <div id="loop_repeats_section">
             <div class="settings-col">
               <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
               <label for="loops">Loop repeats</label>
@@ -141,111 +140,22 @@
             </div>
           </div>
 
-          <!-- Extra Settings für X1/P1 -->
-          <div id="x1p1-settings" class="hidden">
-            
-            <!-- Nozzle and Filament Settings -->
-            <div class="settings-group">
-              <h4>Nozzle & Filament</h4>
-              <label>
-                <input type="checkbox" id="opt_purge" autocomplete="off" checked />
-                Hide nozzle load line in model
-                <details class="tool_info">
-                  <summary></summary>
-                  <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
-                    deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
-                </details>
-              </label>
-              
-              <label>
-                <input type="checkbox" id="opt_filament_purge_off">
-                Turn off filament purge
-                <details class="tool_info">
-                  <summary></summary>
-                  <p>Disable the filament purge sequence after the first plate.
-                    This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
-                </details>
-              </label>
-            </div>
+          <!-- Plate Settings -->
+          <div id="plate_settings_section">
+            <h4>Plate Settings</h4>
+            <p class="settings-instruction">Click on a plate above to configure its settings</p>
 
-            <!-- Cooling Settings -->
-            <div class="settings-group">
-              <h4>Cooling & Bed Temperature</h4>
-              <label id="bedlevel_cooling_container">
-                <input type="checkbox" id="opt_bedlevel_cooling">
-                Raise Bed Level for cooling
-                <details class="tool_info">
-                  <summary></summary>
-                  <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
-                    prints the printer cover must be removed to avoid collision.</p>
-                </details>
-              </label>
-              
-              <div class="settings-row">
-                <div class="settings-col">
-                  <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
-                  <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
-                  </details>
-                </div>
-                
-                <div class="settings-col">
-                  <label for="cooldown_max_time">Max cooldown time (min)</label>
-                  <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
-                  <details class="tool_info">
-                    <summary></summary>
-                    <p>
-                      Defines the maximum cooldown duration in minutes.
-                      The app will insert repeated <code>M190</code> commands to wait for the bed
-                      until this total time is reached. Default is 40 minutes.
-                    </p>
-                  </details>
-                </div>
-              </div>
+            <!-- Per-Plate Settings Container -->
+            <div id="plate_specific_settings" class="hidden">
+              <!-- Settings for selected plate will be shown here -->
             </div>
+          </div>
 
-            <!-- Push-off Settings -->
-            <div class="settings-group">
-              <h4>Push-off & Ejection</h4>
-              <label for="raisebed_offset_mm">Bed raise offset before push-out (mm)</label>
-              <input id="raisebed_offset_mm" type="number" step="1" min="5" max="200" value="30">
-              <details class="tool_info">
-                <summary></summary>
-                <p>Defines how much the bed is raised before performing the push-out sequence.</p>
-              </details>
-              
-              <label>
-                <input type="checkbox" id="opt_secure_pushoff" checked>
-                Secure push‑off sequence
-                <details class="tool_info">
-                  <summary></summary>
-                  <p>
-                    When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
-                    before the final push at Z=1. This helps avoid collisions and smooths the ejection.
-                  </p>
-                </details>
-              </label>
-              
-              <div id="extra_pushoff_container">
-                <label for="extra_pushoff_levels" id="extra_pushoff_levels_label">
-                  Additional push‑off levels
-                </label>
-                <input id="extra_pushoff_levels" type="number" step="1" min="1" max="10" value="2">
-                <details class="tool_info" id="extra_pushoff_levels_help">
-                  <summary></summary>
-                  <p>
-                    Defines how the maximum Z height is divided. Example: if max Z is 10&nbsp;mm
-                    and you enter <b>2</b>, push‑offs occur around Z≈5 and the final one at Z=1.
-                    If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
-                    A value of <b>1</b> means only a final push at Z=1.
-                  </p>
-                </details>
-              </div>
-            </div>
+          <!-- Global Settings -->
+          <div id="global_settings_section">
+            <h4>Global Settings</h4>
 
-            <!-- Override Settings -->
+            <!-- Override Settings (Global) -->
             <div class="settings-group">
               <h4>Project Settings</h4>
               <label class="opt">
@@ -263,11 +173,166 @@
                 </details>
               </label>
             </div>
-            
+
+            <!-- Cooling Settings (Global) -->
+            <div class="settings-group">
+              <h4>Cooling & Bed Temperature</h4>
+              <label id="bedlevel_cooling_container">
+                <input type="checkbox" id="opt_bedlevel_cooling">
+                Raise Bed Level for cooling
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
+                    prints the printer cover must be removed to avoid collision.</p>
+                </details>
+              </label>
+
+              <div class="settings-row">
+                <div class="settings-col">
+                  <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
+                  <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
+                  </details>
+                </div>
+
+                <div class="settings-col">
+                  <label for="cooldown_max_time">Max cooldown time (min)</label>
+                  <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
+                  <details class="tool_info">
+                    <summary></summary>
+                    <p>
+                      Defines the maximum cooldown duration in minutes.
+                      The app will insert repeated <code>M190</code> commands to wait for the bed
+                      until this total time is reached. Default is 40 minutes.
+                    </p>
+                  </details>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom File Name Settings (Global) -->
+            <div class="settings-group">
+              <h4>File Settings</h4>
+              <div class="settings-row">
+                <div class="settings-col">
+                  <label for="file_name">Custom file name:</label>
+                  <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name">
+                  <span> .swap.3mf</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
+      <!-- Templates for Per-Plate Settings -->
+      <template id="plate_settings_template">
+        <div class="plate-settings-content">
+          <!-- Objects Settings (from plate template) -->
+          <div class="settings-group">
+            <h5>Objects on this plate</h5>
+            <label class="obj-count-label">
+              <span>Number of objects:</span>
+              <select class="obj-count" autocomplete="off">
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+            <div class="obj-coords"></div>
+          </div>
+
+          <!-- Nozzle and Filament Settings (Per-Plate) -->
+          <div class="settings-group plate-nozzle-settings">
+            <h5>Nozzle & Filament</h5>
+            <label>
+              <input type="checkbox" class="opt_purge_plate" autocomplete="off" checked />
+              Hide nozzle load line in model
+              <details class="tool_info">
+                <summary></summary>
+                <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
+                  deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
+              </details>
+            </label>
+
+            <label class="purge-off-wrapper" style="display: none;">
+              <input type="checkbox" class="opt_filament_purge_off_plate">
+              Turn off filament purge
+              <details class="tool_info">
+                <summary></summary>
+                <p>Disable the filament purge sequence after the first plate.
+                  This can speed up multi-plate jobs but might cause issues with prints using different materials.</p>
+              </details>
+            </label>
+          </div>
+
+          <!-- Push-off Settings (Per-Plate) -->
+          <div class="settings-group plate-pushoff-settings">
+            <h5>Push-off & Ejection</h5>
+            <label>Bed raise offset before push-out (mm)
+              <input class="raisebed_offset_mm_plate" type="number" step="1" min="5" max="200" value="30">
+              <details class="tool_info">
+                <summary></summary>
+                <p>Defines how much the bed is raised before performing the push-out sequence.</p>
+              </details>
+            </label>
+
+            <div class="settings-separator"></div>
+
+            <label>
+              <input type="checkbox" class="opt_secure_pushoff_plate" checked>
+              Secure push‑off sequence
+              <details class="tool_info">
+                <summary></summary>
+                <p>
+                  When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
+                  before the final push at Z=1. This helps avoid collisions and smooths the ejection.
+                </p>
+              </details>
+            </label>
+
+            <div class="settings-separator"></div>
+
+            <div class="extra_pushoff_container_plate">
+              <label class="extra_pushoff_levels_label_plate">
+                Additional push‑off levels
+                <input class="extra_pushoff_levels_plate" type="number" step="1" min="1" max="10" value="2">
+              </label>
+              <details class="tool_info">
+                <summary></summary>
+                <p>
+                  Defines how the maximum Z height is divided. Example: if max Z is 100&nbsp;mm
+                  and you enter <b>2</b>, push‑offs occur around Z≈50 and the final one at Z=1.
+                  If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
+                  A value of <b>1</b> means only a final push at Z=1.
+                </p>
+              </details>
+            </div>
+          </div>
+
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 
@@ -296,37 +361,7 @@
           <span class="f_used_m"> </span> <span>m</span>
         </div>
       </div>
-      <div class="plate-x1p1-settings hidden">
-        <div class="plate-x1p1-header">Objects on this plate</div>
-
-        <label class="obj-count-label">
-          <span>Number of objects:</span>
-          <select class="obj-count" autocomplete="off">
-            <option value="1" selected>1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-            <option value="13">13</option>
-            <option value="14">14</option>
-            <option value="15">15</option>
-            <option value="16">16</option>
-            <option value="17">17</option>
-            <option value="18">18</option>
-            <option value="19">19</option>
-            <option value="20">20</option>
-          </select>
-        </label>
-
-        <div class="obj-coords"></div>
-      </div>
+      <!-- Plate settings moved to settings panel -->
     </li>
   </template>
 

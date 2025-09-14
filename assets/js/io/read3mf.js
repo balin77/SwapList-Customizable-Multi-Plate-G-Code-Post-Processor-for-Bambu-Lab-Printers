@@ -54,13 +54,15 @@ function reject_file(message) {
     }
   }
 
-  // Wenn noch keine Plate in der Liste ist → UI auf „leer“ zurücksetzen
+  // Wenn noch keine Plate in der Liste ist → UI auf „leer" zurücksetzen
   const anyItem = document.querySelector("#playlist_ol li.list_item:not(.hidden)");
   if (!anyItem) {
     document.getElementById("drop_zones_wrapper")?.classList.remove("mini_drop_zone");
     document.getElementById("action_buttons")?.classList.add("hidden");
     document.getElementById("printer_model_info")?.classList.add("hidden");
     document.getElementById("statistics")?.classList.add("hidden");
+    document.getElementById("app_header")?.classList.add("compact");
+    document.body.classList.add("compact-mode");
   }
 }
 
@@ -211,8 +213,10 @@ export function handleFile(f) {
       document.getElementById("drop_zones_wrapper").classList.add("mini_drop_zone");
       document.getElementById("action_buttons").classList.remove("hidden");
       document.getElementById("printer_model_info").classList.remove("hidden");   // Printer model info
-      document.getElementById("app_mode_toggle").classList.remove("hidden");      // App mode toggle  
+      document.getElementById("app_mode_toggle").classList.remove("hidden");      // App mode toggle
       document.getElementById("statistics").classList.remove("hidden");
+      document.getElementById("app_header")?.classList.remove("compact");
+      document.body.classList.remove("compact-mode");
 
       var slice_config_file = zip.file("Metadata/slice_info.config").async("text");
       var slicer_config_xml = parser.parseFromString(await slice_config_file, "text/xml");

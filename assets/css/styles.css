@@ -191,26 +191,32 @@ body{
 /* ---------- Playlist / Plates ---------- */
 
 #playlist_ol{
-  padding:0;
+  padding-top: 15px;
+  padding-left: 0px;
+  padding-right: 0px;
   counter-reset:list-number;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-flex-start;
+  gap: 10px;
 }
 
 #logo{ padding:0; }
 #logo_pushoff{ padding:0; }
 
 .list_item{
-  width:210px;
+  width: calc(100% / 5 - 8px);
   /* Höhe dynamisch, keine Scrollbars */
   height:auto !important;
   max-height:none !important;
   overflow:visible !important;
-
   background:#ccc;
   border:#999 1px solid;
   border-radius:8px;
   opacity:1;
   padding:5px;
-  margin:5px;
+  margin-top:5px;
+  margin-bottom:5px;
   display:inline-block;
 }
 
@@ -376,14 +382,43 @@ details.tool_info summary::before{ content:'( ? )'; }
 #debug_outline:checked ~ * *{ border:#00BBDC 1px solid; }
 #debug_outline:checked ~ * *:hover{ border:#f00 1px dotted; }
 
+/* Logo Section - Left Aligned */
+#app_logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+
+#app_logo img {
+  padding: 0;
+}
+
 #app_header {
   display: flex;                 /* Flexbox mit 3 Spalten */
   justify-content: space-between;/* Links, Mitte, Rechts trennen */
-  align-items: stretch;          /* Alle Spalten gleich hoch */
+  align-items: flex-start;       /* Alle Spalten oben beginnen */
   width: 100%;
-  border-bottom: #555 1px solid;
-  padding: 10px 0;               /* etwas Abstand */
+  padding: 0 0 10px 0;           /* nur unten Abstand */
   min-height: 120px;             /* Mindesthöhe für Statistics */
+}
+
+/* Unsichtbare Elemente sollen keinen Platz einnehmen */
+.hidden {
+  display: none !important;
+}
+
+/* Reduzierte Höhe wenn Inhalte versteckt sind */
+#app_header.compact {
+  min-height: 10px !important;
+}
+
+/* Logo auch kompakter wenn Inhalte versteckt sind */
+body.compact-mode #app_logo {
+  min-height: 10px;
+  padding: 5px 0;
 }
 
 /* Linker Block (Logo + Stats) */
@@ -399,9 +434,10 @@ details.tool_info summary::before{ content:'( ? )'; }
   display: flex;
   flex-direction: column; /* Mode Toggle + Printer Selection untereinander */
   align-items: center;    /* Mittig ausrichten */
-  justify-content: center; /* Vertikal mittig */
+  justify-content: flex-start; /* Oben beginnen für alignment */
   gap: 15px;
   min-width: 180px;       /* Breite für Toggle */
+  margin-top: 10px;    /* Etwas Abstand nach oben */
 }
 
 /* Rechter Block (Buttons + Show settings) */
@@ -409,7 +445,7 @@ details.tool_info summary::before{ content:'( ? )'; }
   display: flex;
   flex-direction: column; /* Buttons untereinander */
   align-items: flex-end;  /* Rechts ausrichten */
-  justify-content: flex-end; /* Buttons nach unten ausrichten */
+  justify-content: flex-start; /* Oben beginnen für alignment */
   gap: 10px;
 }
 
@@ -428,12 +464,10 @@ details.tool_info summary::before{ content:'( ? )'; }
 
 #statistics {
   padding: 3px 10px;
-  background: rgba(248, 250, 252, 0.5);
-  border-radius: 8px;
+  background: #f5f5f5;
+  border-radius: 10px;
   margin: 8px 0;
-}
-
-#statistics {
+  border: 1px solid #554;
   display: flex;
   gap: 50px;
   align-items: flex-start;
@@ -444,14 +478,17 @@ details.tool_info summary::before{ content:'( ? )'; }
   border-right:#777 1px solid;
   padding-right:40px !important;
   flex-shrink: 0;
+  width: 190px;
 }
 #filament_statistics{
   padding-left:25px;
   flex-shrink: 0;
+  width: 280px;
 }
 #filament_total>div{
-  margin-right:20px;
+  margin-right:10px;
   display:inline-block;
+  width: 55px;
 }
 
 /* More spacing in filament statistics */
@@ -467,10 +504,10 @@ details.tool_info summary::before{ content:'( ? )'; }
 
 /* More spacing for statistics content */
 #queue_statistics > div {
-  margin: 8px 0;
+  margin: 20px 0 0;
 }
 #filament_statistics > div {
-  margin: 8px 0;
+  margin: 20px 0 0;
 }
 
 /* ---------- Buttons / Actions ---------- */
@@ -672,7 +709,7 @@ details.tool_info summary::before{ content:'( ? )'; }
 
 #drop_zones_wrapper.mini_drop_zone{ height:50px; }
 #drop_zones_wrapper.mini_drop_zone p{ font-size:16pt; }
-#drop_zones_wrapper.mini_drop_zone #drop_zone{ padding:5px; width:calc(100% - 15px); }
+#drop_zones_wrapper.mini_drop_zone #drop_zone{ padding-bottom:5px; }
 
 #drop_zones_wrapper.focused{ height:500px; }
 
@@ -690,7 +727,6 @@ details.tool_info summary::before{ content:'( ? )'; }
 /* ---------- Layout: Settings / Plates ---------- */
 
 #app_content{
-  padding-top:20px;
   width:100%;
   max-width: 1110px;
   margin: 0 auto;
@@ -737,6 +773,8 @@ details.tool_info summary::before{ content:'( ? )'; }
 .settings-col {
   flex: 1;
   min-width: 300px;
+  display: flex;
+  align-items: baseline;
 }
 
 .settings-col label {
@@ -751,21 +789,6 @@ details.tool_info summary::before{ content:'( ? )'; }
   display: inline;
   margin: 0;
   vertical-align: middle;
-}
-
-.settings-col input[type="text"],
-.settings-col input[type="number"] {
-  padding: 2px 6px;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  background: #fff;
-  font-size: 14px;
-  height: 17px;
-  width: auto;
-  min-width: 80px;
-  vertical-align: middle;
-  margin-left: 8px;
-  margin-top: 2px;
 }
 
 
@@ -809,6 +832,7 @@ details.tool_info summary::before{ content:'( ? )'; }
   margin-left: 8px !important;
   margin-top: 0px !important;
   margin-bottom: 0 !important;
+  margin-right: 4px;
   width: 45px;
   height: 17px;
   padding: 2px 4px;
@@ -1145,7 +1169,7 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
 /* Site Info Container */
 #site-info {
   max-width: 1110px;
-  margin: 30px auto 20px;
+  margin: 0px auto 20px;
   padding: 0 20px;         
 }
 
@@ -1389,3 +1413,189 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
 .slot-modal h4{ margin: 0 0 10px; }
 .slot-modal .row{ display:flex; align-items:center; gap:8px; margin:8px 0; }
 .slot-modal .actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
+/* New Per-Plate Settings Styling */
+#plate_settings_section {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+}
+
+#plate_settings_section h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 8px;
+}
+
+#global_settings_section {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f5f5f5;
+}
+
+#global_settings_section h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 8px;
+}
+
+#plate_selector_wrapper {
+  margin-bottom: 16px;
+}
+
+#plate_selector {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+}
+
+#plate_specific_settings {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 16px;
+  background-color: white;
+}
+
+.plate-settings-content .settings-group {
+  margin-bottom: 20px;
+}
+
+.plate-settings-content h5 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+}
+
+.plate-nozzle-settings,
+.plate-pushoff-settings {
+  background-color: #fafafa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.obj-coord-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.obj-coord-row b {
+  min-width: 80px;
+  font-size: 14px;
+}
+
+.obj-coord-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.obj-coord-row input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.purge-off-wrapper {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* Settings separator lines */
+.settings-separator {
+  height: 1px;
+  background-color: #eee;
+  margin: 12px 0;
+}
+
+/* Object coordinates grid layout */
+.obj-coords-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 16px;
+  margin-top: 12px;
+}
+
+.obj-coord-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #fafafa;
+}
+
+.obj-coord-item b {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.obj-coord-item label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.obj-coord-item input {
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Clickable plates with theme-colored borders */
+.list_item {
+  transition: border 0.2s ease;
+}
+
+.list_item.plate-selected {
+  border: 3px solid var(--primary-color);
+}
+
+/* Theme-specific selected plate borders */
+body.pushoff-mode .list_item.plate-selected {
+  border-color: #E8A8A8;
+}
+
+body.a1-swap-mode .list_item.plate-selected {
+  border-color: var(--a1-swap-color);
+}
+
+/* Top-level loop repeats styling */
+#loop_repeats_section {
+  margin-bottom: 20px;
+}
+
+#loop_repeats_section .settings-col {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Settings instruction text */
+.settings-instruction {
+  color: #666;
+  font-style: italic;
+  margin: 0 0 16px 0;
+}

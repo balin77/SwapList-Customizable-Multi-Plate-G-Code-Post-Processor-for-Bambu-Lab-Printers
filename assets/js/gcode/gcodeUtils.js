@@ -49,8 +49,38 @@ export function _ruleActiveWhy(rule, ctx) {
   const w = rule.when || {};
   if (w.modes && w.modes.length && !w.modes.includes(ctx.mode)) return "mode_mismatch";
   if (w.appModes && w.appModes.length && !w.appModes.includes(ctx.appMode)) return "appMode_mismatch";
-  for (const id of (w.requireTrue || [])) { const el = document.getElementById(id); if (!el || !el.checked) return `requireTrue_missing:${id}`; }
-  for (const id of (w.requireFalse || [])) { const el = document.getElementById(id); if (el && el.checked) return `requireFalse_blocked:${id}`; }
+
+  // Check per-plate settings if available, otherwise fallback to DOM elements
+  for (const id of (w.requireTrue || [])) {
+    let checked = false;
+
+    // Try to get from per-plate settings first
+    if (ctx.plateIndex !== undefined && typeof getSettingForPlate === 'function') {
+      checked = getSettingForPlate(ctx.plateIndex, id);
+    } else {
+      // Fallback to DOM element check
+      const el = document.getElementById(id);
+      checked = el && el.checked;
+    }
+
+    if (!checked) return `requireTrue_missing:${id}`;
+  }
+
+  for (const id of (w.requireFalse || [])) {
+    let checked = false;
+
+    // Try to get from per-plate settings first
+    if (ctx.plateIndex !== undefined && typeof getSettingForPlate === 'function') {
+      checked = getSettingForPlate(ctx.plateIndex, id);
+    } else {
+      // Fallback to DOM element check
+      const el = document.getElementById(id);
+      checked = el && el.checked;
+    }
+
+    if (checked) return `requireFalse_blocked:${id}`;
+  }
+
   const onlyIf = rule.onlyIf || {};
   if (Number.isFinite(onlyIf.plateIndexGreaterThan) && !(ctx.plateIndex > onlyIf.plateIndexGreaterThan)) return "plateIndexGreaterThan_false";
   if (Number.isFinite(onlyIf.plateIndexEquals) && !(ctx.plateIndex === onlyIf.plateIndexEquals)) return "plateIndexEquals_false";
