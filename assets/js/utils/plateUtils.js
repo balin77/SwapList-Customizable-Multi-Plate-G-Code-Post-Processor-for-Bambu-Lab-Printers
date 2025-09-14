@@ -104,13 +104,22 @@ export async function calculateObjectCoordinatesFromBbox(li) {
  * @param {HTMLElement} li - The plate list item element
  */
 export async function autoPopulatePlateCoordinates(li) {
-  // Only for X1/P1 modes
+  console.log('autoPopulatePlateCoordinates called, mode:', state.CURRENT_MODE);
+
+  // Only for X1/P1 modes (X-coordinates are irrelevant for A1/A1M in push-off mode)
   if (!(state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')) {
+    console.log('Skipping auto-populate - X-coordinates not needed for', state.CURRENT_MODE, 'mode');
     return;
   }
 
+  // Get the plate name for debugging
+  const plateNameElement = li.getElementsByClassName("p_name")[0];
+  const plateName = plateNameElement ? plateNameElement.textContent : 'unknown';
+  console.log(`Auto-populating coordinates for plate: ${plateName}`);
+
   try {
     const { objectCount, objects } = await calculateObjectCoordinatesFromBbox(li);
+    console.log('Calculated:', objectCount, 'objects:', objects);
 
     // Find the plate index in the current list
     const allPlates = document.querySelectorAll('#playlist_ol li.list_item:not(.hidden)');
@@ -133,55 +142,25 @@ export async function autoPopulatePlateCoordinates(li) {
       // Make sure settings exist for this plate
       if (!allSettings.has(plateIndex)) {
         allSettings.set(plateIndex, {
-          objectCount: 1,
-          objectCoords: [],
+          objectCount: objectCount, // Use the calculated count, not default 1
+          objectCoords: objects.map(obj => obj.centerX), // Use calculated coords
+          objects: objects, // Store full object info including isWipeTower
           hidePurgeLoad: true,
           turnOffPurge: false,
           bedRaiseOffset: 30,
           securePushoff: true,
           extraPushoffLevels: 2
         });
+      } else {
+        // Update existing settings
+        const settings = allSettings.get(plateIndex);
+        settings.objectCount = objectCount;
+        settings.objectCoords = objects.map(obj => obj.centerX);
+        settings.objects = objects; // Store full object info including isWipeTower
       }
 
-      const settings = allSettings.get(plateIndex);
-      settings.objectCount = objectCount;
-      settings.objectCoords = objects.map(obj => obj.centerX);
-
-      // If this plate is currently selected in settings, also update the UI
-      const plateSpecificSettings = document.getElementById("plate_specific_settings");
-      const objCountSelector = plateSpecificSettings?.querySelector(".obj-count");
-
-      if (objCountSelector && !plateSpecificSettings.classList.contains('hidden')) {
-        // Update the UI if settings panel is visible
-        objCountSelector.value = Math.min(20, Math.max(1, objectCount)).toString();
-        objCountSelector.dispatchEvent(new Event('change'));
-
-        // Wait for UI update then populate coordinates
-        setTimeout(() => {
-          const coordInputs = plateSpecificSettings.querySelectorAll('.obj-coords input.obj-x');
-          const coordLabels = plateSpecificSettings.querySelectorAll('.obj-coords b');
-
-          coordInputs.forEach((input, index) => {
-            if (index < objects.length) {
-              const obj = objects[index];
-              input.value = obj.centerX.toString();
-              input.style.backgroundColor = '#f8f9fa';
-
-              if (coordLabels[index]) {
-                if (obj.isWipeTower) {
-                  coordLabels[index].textContent = 'Wipe Tower';
-                } else {
-                  const objectNumber = objects.slice(0, index + 1).filter(o => !o.isWipeTower).length;
-                  coordLabels[index].textContent = `Objekt ${objectNumber}`;
-                }
-              }
-            }
-          });
-        }, 100);
-      }
+      console.log(`✅ Auto-populated plate ${plateIndex} "${li.getElementsByClassName("p_name")[0]?.textContent || 'unknown'}" with ${objectCount} objects, coords:`, allSettings.get(plateIndex).objectCoords);
     }
-
-    console.log(`Auto-populated plate "${li.getElementsByClassName("p_name")[0]?.textContent || 'unknown'}" with ${objectCount} objects`);
 
   } catch (error) {
     console.error("Error auto-populating plate coordinates:", error);

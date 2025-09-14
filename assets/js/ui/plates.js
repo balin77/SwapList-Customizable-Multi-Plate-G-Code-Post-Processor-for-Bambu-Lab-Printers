@@ -36,24 +36,85 @@ export function readPlateXCoordsSorted(li) {
     .sort((a, b) => b - a);
 }
 
-export function validatePlateXCoords() {
+export async function validatePlateXCoords() {
   if (!(state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')) {
     return true; // Im A1M-Modus keine Prüfung nötig
   }
 
-  const inputs = document.querySelectorAll('.plate-x1p1-settings .obj-coords input.obj-x');
+  // Import here to avoid circular dependency
+  let allSettings = null;
+  try {
+    // Use dynamic import to avoid circular dependencies
+    const settingsModule = await import('../ui/settings.js');
+    allSettings = settingsModule.getAllPlateSettings();
+  } catch (error) {
+    console.warn('Could not import settings module:', error);
+  }
   let hasError = false;
 
-  inputs.forEach(inp => {
-    const val = parseFloat(inp.value);
-    if (!Number.isFinite(val) || val === 0) {
-      hasError = true;
+  let firstErrorPlate = -1;
+  let firstErrorCoordIndex = -1;
 
-      // kurz rot highlighten
-      inp.classList.add('coord-error');
-      setTimeout(() => inp.classList.remove('coord-error'), 5000);
+  if (allSettings && allSettings.size > 0) {
+    // Validate using the new settings system
+    allSettings.forEach((settings, plateIndex) => {
+      if (settings.objectCoords && settings.objectCoords.length > 0) {
+        settings.objectCoords.forEach((coord, coordIndex) => {
+          if (!Number.isFinite(coord) || coord === 0) {
+            hasError = true;
+            console.warn(`Plate ${plateIndex}, object ${coordIndex + 1}: Invalid X coordinate (${coord})`);
+
+            // Remember the first error for auto-selection
+            if (firstErrorPlate === -1) {
+              firstErrorPlate = plateIndex;
+              firstErrorCoordIndex = coordIndex;
+            }
+          }
+        });
+      }
+    });
+
+    // If we found errors, select the first plate with errors and highlight the coordinate
+    if (firstErrorPlate !== -1) {
+      console.log(`Auto-selecting plate ${firstErrorPlate} with invalid coordinate at position ${firstErrorCoordIndex}`);
+
+      // Import and call the plate selection function
+      try {
+        const settingsModule = await import('../ui/settings.js');
+
+        // Select the problematic plate (this handles both visual selection and settings display)
+        settingsModule.selectPlate(firstErrorPlate);
+
+        // Wait a bit for the UI to update, then highlight the error
+        setTimeout(() => {
+          const plateSettings = document.getElementById("plate_specific_settings");
+          if (plateSettings) {
+            const inputs = plateSettings.querySelectorAll('.obj-coords-grid .obj-x');
+            if (inputs[firstErrorCoordIndex]) {
+              inputs[firstErrorCoordIndex].classList.add('coord-error');
+              setTimeout(() => inputs[firstErrorCoordIndex].classList.remove('coord-error'), 5000);
+
+              // Scroll to the problematic input field
+              inputs[firstErrorCoordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        }, 200);
+      } catch (error) {
+        console.error('Could not auto-select plate with error:', error);
+      }
     }
-  });
+  } else {
+    // Fallback to old method if new settings not available
+    const inputs = document.querySelectorAll('.plate-x1p1-settings .obj-coords input.obj-x, .obj-coords-grid input.obj-x');
+    inputs.forEach(inp => {
+      const val = parseFloat(inp.value);
+      if (!Number.isFinite(val) || val === 0) {
+        hasError = true;
+        inp.classList.add('coord-error');
+        setTimeout(() => inp.classList.remove('coord-error'), 5000);
+      }
+    });
+  }
 
   if (hasError) {
     showWarning("Warning: Some X coordinates are missing (0). Please enter valid values before exporting.");

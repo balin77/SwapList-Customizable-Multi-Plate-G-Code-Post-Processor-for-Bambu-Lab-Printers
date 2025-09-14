@@ -1,9 +1,12 @@
 // /src/ui/settings.js
 
-export function toggle_settings(state) {
+import { state } from '../config/state.js';
+import { autoPopulatePlateCoordinates } from '../utils/plateUtils.js';
+
+export function toggle_settings(settingsState) {
   const settingsPanel = document.getElementById("settings_panel");
   if (settingsPanel) {
-    settingsPanel.classList.toggle("hidden", !state);
+    settingsPanel.classList.toggle("hidden", !settingsState);
   }
   
   // Legacy support - remove old settings wrapper if it exists
@@ -20,6 +23,7 @@ export function show_settings_when_plates_loaded() {
 
   if (hasPlates) {
     updatePlateSelector();
+    updateSettingsVisibilityForMode();
   }
 }
 
@@ -116,7 +120,7 @@ export function updatePlateSelector() {
   }
 }
 
-function selectPlate(plateIndex) {
+export function selectPlate(plateIndex) {
   const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
 
   // Update visual selection
@@ -157,8 +161,13 @@ export function displayPlateSettings(plateIndex) {
     initializePlateSettings(plateIndex);
   }
 
+  console.log(`Displaying settings for plate ${plateIndex}, objectCount:`, currentPlateSettings.get(plateIndex)?.objectCount);
+
   // Load settings from plate element and our stored settings
   loadPlateSettingsToUI(plateIndex, plateEl);
+
+  // Hide/show sections based on current app mode
+  updateSettingsVisibilityForMode();
 
   // Hide/show purge off option based on plate index
   updatePurgeOffVisibility(plateIndex);
@@ -171,6 +180,7 @@ function initializePlateSettings(plateIndex) {
   currentPlateSettings.set(plateIndex, {
     objectCount: 1,
     objectCoords: [],
+    objects: [], // Store full object info including isWipeTower
     hidePurgeLoad: true,
     turnOffPurge: false,
     bedRaiseOffset: 30,
@@ -246,10 +256,13 @@ function renderPlateCoordinatesInSettings(plateIndex) {
   const coordsContainer = plateSpecificSettings?.querySelector(".obj-coords");
   const settings = currentPlateSettings.get(plateIndex);
 
+
   if (!coordsContainer || !settings) return;
 
   coordsContainer.innerHTML = "";
   const count = settings.objectCount;
+
+  console.log(`Rendering ${count} coordinates for plate ${plateIndex}:`, settings.objectCoords);
 
   // Create grid container
   const gridContainer = document.createElement('div');
@@ -258,8 +271,22 @@ function renderPlateCoordinatesInSettings(plateIndex) {
   for (let i = 1; i <= count; i++) {
     const coordItem = document.createElement('div');
     coordItem.className = 'obj-coord-item';
+
+    // Determine the label based on object info
+    let objectLabel = `Objekt ${i}`;
+    if (settings.objects && settings.objects[i-1]) {
+      const obj = settings.objects[i-1];
+      if (obj.isWipeTower) {
+        objectLabel = 'Wipe Tower';
+      } else {
+        // Count non-wipe-tower objects up to current index
+        const objectNumber = settings.objects.slice(0, i).filter(o => !o.isWipeTower).length;
+        objectLabel = `Objekt ${objectNumber}`;
+      }
+    }
+
     coordItem.innerHTML = `
-      <b>Objekt ${i}</b>
+      <b>${objectLabel}</b>
       <label>X <input type="number" class="obj-x" step="1" value="${settings.objectCoords[i-1] || 0}" min="0" max="255" data-obj="${i}"></label>
     `;
 
@@ -274,6 +301,31 @@ function renderPlateCoordinatesInSettings(plateIndex) {
   }
 
   coordsContainer.appendChild(gridContainer);
+
+  // Add auto-populate button for X1/P1 modes only (X-coordinates irrelevant for A1/A1M)
+  if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+    const autoBtn = document.createElement('button');
+    autoBtn.type = 'button';
+    autoBtn.className = 'btn-auto-coords';
+    autoBtn.textContent = '📐 Auto-calculate from objects';
+    autoBtn.title = 'Automatically calculate object count and X coordinates from plate data';
+    autoBtn.style.marginTop = '8px';
+    autoBtn.onclick = async () => {
+      try {
+        // Get the plate element from the list
+        const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+        if (plateIndex < plates.length) {
+          const li = plates[plateIndex];
+          await autoPopulatePlateCoordinates(li);
+          // Refresh the settings UI to show updated coordinates
+          setTimeout(() => renderPlateCoordinatesInSettings(plateIndex), 100);
+        }
+      } catch (error) {
+        console.error("Failed to auto-populate plate coordinates:", error);
+      }
+    };
+    coordsContainer.appendChild(autoBtn);
+  }
 }
 
 function updatePurgeOffVisibility(plateIndex) {
@@ -386,4 +438,66 @@ export function getSettingForPlate(plateIndex, settingId) {
 
 // Make this function available globally for gcodeUtils
 window.getSettingForPlate = getSettingForPlate;
+
+// Function to hide/show settings sections based on current app mode
+function updateSettingsVisibilityForMode() {
+  const isSwapMode = state.APP_MODE === 'swap';
+  const isA1Mode = state.CURRENT_MODE === 'A1' || state.CURRENT_MODE === 'A1M';
+
+  // Global settings sections - find cooling section by looking for all h4 elements
+  const globalSection = document.getElementById('global_settings_section');
+  if (globalSection) {
+    const settingsGroups = globalSection.querySelectorAll('.settings-group');
+    settingsGroups.forEach(group => {
+      const h4 = group.querySelector('h4');
+      if (h4 && h4.textContent.includes('Cooling')) {
+        group.classList.toggle('hidden', isSwapMode);
+      }
+    });
+  }
+
+  // Per-plate settings sections in template
+  const plateSettings = document.getElementById('plate_specific_settings');
+  if (plateSettings) {
+    let hasVisibleGroups = false;
+
+    // Objects section - find by h5 text content
+    const settingsGroups = plateSettings.querySelectorAll('.settings-group');
+    settingsGroups.forEach(group => {
+      const h5 = group.querySelector('h5');
+      if (h5) {
+        const text = h5.textContent;
+        if (text.includes('Objects')) {
+          // Hide Objects section for SWAP mode OR for A1/A1M modes
+          const shouldHide = isSwapMode || isA1Mode;
+          group.classList.toggle('hidden', shouldHide);
+          if (!shouldHide) {
+            hasVisibleGroups = true;
+          }
+        } else if (text.includes('Nozzle') || text.includes('Push-off')) {
+          group.classList.toggle('hidden', isSwapMode);
+          if (!isSwapMode) {
+            hasVisibleGroups = true;
+          }
+        } else {
+          // Count other visible groups (like future custom sections)
+          if (!group.classList.contains('hidden')) {
+            hasVisibleGroups = true;
+          }
+        }
+      }
+    });
+
+    // Hide/show the entire plate settings section based on whether it has visible content
+    const plateSettingsSection = document.getElementById('plate_settings_section');
+    if (plateSettingsSection) {
+      plateSettingsSection.classList.toggle('hidden', isSwapMode && !hasVisibleGroups);
+    }
+  }
+
+  console.log(`Settings visibility updated - SWAP: ${isSwapMode}, A1: ${isA1Mode}, Mode: ${state.CURRENT_MODE}`);
+}
+
+// Export the function for external use
+export { updateSettingsVisibilityForMode };
 

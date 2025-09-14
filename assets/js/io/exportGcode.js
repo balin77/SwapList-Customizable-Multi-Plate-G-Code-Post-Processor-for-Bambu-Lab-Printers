@@ -15,7 +15,7 @@ function findFilamentBySettingId(settingId) {
 }
 
 export async function export_gcode_txt() {
-  if (!validatePlateXCoords()) return;
+  if (!(await validatePlateXCoords())) return;
   try {
     update_progress(5);
 
@@ -37,6 +37,10 @@ export async function export_gcode_txt() {
       ? (state.USE_PURGE_START ? "_purge" : "_standard")
       : "";
 
+    // Check if test file export is enabled
+    const testFileExportCheckbox = document.getElementById("opt_test_file_export");
+    const isTestFileExport = testFileExportCheckbox && testFileExportCheckbox.checked;
+
     if (DEV_MODE) {
       // DEV MODE: Exportiere vollständige ZIP-Struktur mit detaillierten Namen
       await exportDevMode(base, modeTag, purgeTag, {
@@ -47,7 +51,8 @@ export async function export_gcode_txt() {
       });
     } else {
       // NORMAL MODE: Exportiere nur modifizierten kombinierten GCODE mit einfachem Namen
-      await exportNormalMode(base, modeTag, modifiedLooped);
+      const finalBase = isTestFileExport ? `${base}_test` : base;
+      await exportNormalMode(finalBase, modeTag, modifiedLooped);
     }
 
     update_progress(100);
@@ -109,13 +114,14 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
   download(`${base}_${modeTag}${purgeTag}_gcode_exports.zip`, zipUrl);
 }
 
+
 async function exportNormalMode(base, modeTag, modifiedLooped) {
   update_progress(60);
-  
+
   // Create GCODE file directly from array - avoids string length issues
   const gcodeBlob = new Blob(modifiedLooped.map(line => line + '\n'), { type: "text/x-gcode" });
   const gcodeUrl = URL.createObjectURL(gcodeBlob);
-  
+
   // Simple filename: base_mode.gcode (no purge tags for normal users)
   const filename = `${base}_${modeTag}.gcode`;
   download(filename, gcodeUrl);

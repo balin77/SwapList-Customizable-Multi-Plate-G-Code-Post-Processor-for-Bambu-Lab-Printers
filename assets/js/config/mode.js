@@ -3,6 +3,7 @@
 import { state } from "./state.js";
 import { renderCoordInputs } from "../ui/plates.js";
 import { showError, showWarning } from "../ui/infobox.js";
+import { updateSettingsVisibilityForMode } from "../ui/settings.js";
 
 export const PRINTER_MODEL_MAP = {
   "Bambu Lab X1 Carbon": "X1",
@@ -123,6 +124,9 @@ export function setMode(mode) {
 
   // Update printer model info display
   updatePrinterModelDisplay(mode);
+
+  // Update settings visibility based on new mode
+  updateSettingsVisibilityForMode();
 
   console.log("Mode switched to:", mode, "App mode:", state.APP_MODE);
 }

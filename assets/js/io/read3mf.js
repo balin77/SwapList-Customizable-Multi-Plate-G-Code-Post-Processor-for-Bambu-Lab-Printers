@@ -237,15 +237,6 @@ export function handleFile(f) {
           state.playlist_ol.appendChild(li);
           initPlateX1P1UI(li);
           installPlateButtons(li);
-          
-          // Auto-populate coordinates for X1/P1 modes after UI is initialized
-          if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
-            setTimeout(() => {
-              autoPopulatePlateCoordinates(li).catch(error => {
-                console.error("Failed to auto-populate plate coordinates during load:", error);
-              });
-            }, 300); // Delay to ensure ZIP data is accessible
-          }
 
           var f_name = li.getElementsByClassName("f_name")[0];
           var p_name = li.getElementsByClassName("p_name")[0];
@@ -358,6 +349,7 @@ export function handleFile(f) {
 
             update_statistics();
 
+
             console.log("plate_name:" + relativePath.name + " time-string", time_sting);
           });
         })();
@@ -376,6 +368,43 @@ export function handleFile(f) {
 
       if (state.last_file) {
         makeListSortable(state.playlist_ol);
+
+        // Auto-populate coordinates for X1/P1 modes after ALL plates are completely processed
+        if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+          setTimeout(async () => {
+            const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+            console.log(`Auto-populating coordinates for ${plates.length} plates in ${state.CURRENT_MODE} mode`);
+
+            // Auto-populate all plates
+            const promises = Array.from(plates).map(async (li, index) => {
+              try {
+                await autoPopulatePlateCoordinates(li);
+              } catch (error) {
+                console.error(`Failed to auto-populate coordinates for plate ${index}:`, error);
+              }
+            });
+
+            // Wait for all auto-populations to complete
+            await Promise.all(promises);
+
+            // Update UI after all calculations are done
+            console.log('All coordinates calculated, updating UI...');
+            // Trigger settings display update if a plate is currently selected
+            setTimeout(() => {
+              const selectedPlate = document.querySelector("#playlist_ol li.list_item.plate-selected");
+              if (selectedPlate) {
+                // Force refresh of the settings display by re-selecting the same plate
+                const plateIndex = Array.from(plates).indexOf(selectedPlate);
+                if (plateIndex >= 0) {
+                  // Re-import and call the display function directly
+                  import('../ui/settings.js').then(({ displayPlateSettings }) => {
+                    displayPlateSettings(plateIndex);
+                  });
+                }
+              }
+            }, 100);
+          }, 500); // Longer delay to ensure all async plate processing is complete
+        }
       }
     }, function (e) {
       var errorDiv = document.createElement("div");
