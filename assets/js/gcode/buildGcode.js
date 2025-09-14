@@ -147,6 +147,140 @@ export function buildCooldownFansWaitPayload(gcode, ctx) {
   return lines.join("\n");
 }
 
+export function buildA1NozzleCoolingSequence(gcode, ctx) {
+  // Extract temperatures from GCODE comment
+  const temperatureMatch = gcode.match(/;\s*nozzle_temperature\s*=\s*([\d,]+)/i);
+  let temperatures = [];
+  if (temperatureMatch) {
+    temperatures = temperatureMatch[1].split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
+  }
+  
+  // Extract first extruder from plate JSON if available in sourcePlateText
+  let firstExtruder = 0;
+  const plateJsonMatch = ctx.sourcePlateText?.match(/"first_extruder"\s*:\s*(\d+)/);
+  if (plateJsonMatch) {
+    firstExtruder = parseInt(plateJsonMatch[1]);
+  }
+  
+  // Get the temperature for the first extruder
+  let baseTemp = 220; // fallback temperature
+  if (temperatures.length > firstExtruder) {
+    baseTemp = temperatures[firstExtruder];
+  }
+  
+  // Calculate cooling temperature (baseTemp - 20)
+  const coolingTemp = Math.max(180, baseTemp - 20);
+  
+  console.log(`[A1 Cooling] First extruder: ${firstExtruder}, base temp: ${baseTemp}, cooling temp: ${coolingTemp}`);
+  
+  return `\n\nG1 Z3 F800 ; move nozzle up a little\nM106 P1 S255 ; turn on fan to cool tip of nozzle, prevents oozing\nM109 S${coolingTemp} ; wait for warm up but don't fully heat yet to prevent oozing\n`;
+}
+
+export function buildA1EndseqCooldown(gcode, ctx) {
+  const targetTemp = getCooldownTargetBedTemp(); // UI Setting
+  const waitTemp = Math.max(0, targetTemp - 5); // -5 °C offset
+  const maxTimeMin = getCooldownMaxTime(); // UI Setting für Anzahl der M190 Zeilen
+
+  // Z-Höhen Logik wie bei buildRaiseBedAfterCooldownPayload
+  const src = ctx.sourcePlateText || gcode || "";
+  const header = (splitIntoSections(src).header || src);
+  const maxZ = parseMaxZHeight(header);
+  
+  const offset = getUserBedRaiseOffset(); // UI Setting (default 30mm für X1/P1, sollte 40mm für A1 sein)
+  let targetZ = 1;
+  if (Number.isFinite(maxZ)) {
+    targetZ = Math.max(1, +(maxZ - offset).toFixed(1)); // eine Nachkommastelle
+  }
+
+  console.log("[A1 Endseq Cooldown] maxZ=", maxZ, "offset=", offset, "→ Z=", targetZ);
+
+  const lines = [];
+  
+  lines.push("M400                ;wait for all print moves to be done");
+  lines.push("");
+  lines.push(";===== Cool Down =======");
+  lines.push("G90");
+  lines.push("G1 X-48 Y262 F3600 ; move to safe limit position on the left");
+  
+  // Füge die M190 Zeilen basierend auf maxTimeMin hinzu
+  for (let i = 0; i < maxTimeMin; i++) {
+    lines.push(`M190 S${waitTemp}    ;wait for bed temp, ${i + 1} to be done`);
+  }
+  
+  // Bed ausschalten und Push-Off Marker
+  lines.push("");
+  lines.push("M140 S0 ; turn off bed");
+  lines.push("");
+  lines.push("");
+  lines.push(";======= Cool Down Done, Start Push Off =============");
+  
+  // Z-Movement basierend auf Höhe und Offset
+  lines.push(`G1 Z${targetZ} F600`);
+  
+  // Push-off Sequenz
+  lines.push("M400 P100");
+  lines.push("G1 Y-0.5 F300        ; very slow push off use x gantry");
+
+  return lines.join("\n");
+}
+
+export function buildA1SafetyClear(gcode, ctx) {
+  const levels = getExtraPushOffLevels(); // UI Setting für additional push off levels
+  
+  const lines = [];
+  
+  // Header und initiale Bewegungen
+  lines.push(";======== Push off complete, start safety clear / side push off ======");
+  lines.push("G1 Y262 F800    ;move bed forward again");
+  lines.push("G1 Z1 F600      ;move nozzle closer to the bed when using tall parts");
+  
+  // X-mal die Push-Off Sequenz
+  for (let i = 0; i < levels; i++) {
+    const yPos = Math.max(0, 262 - (i + 1) * 50); // Y niemals kleiner als 0
+    lines.push("");
+    lines.push(`G1 Y${yPos} F2000    ;move bed back a little`);
+    lines.push("G1 X256 F800    ;move to the right");
+    lines.push("G1 X-48 F2000    ;move back to the left");
+  }
+  
+  // Finale Bewegungen
+  lines.push("");
+  lines.push("G1 Y262 F2000    ;push bed forward one last time");
+  lines.push("");
+  lines.push(";====== Safety clear complete =======");
+  lines.push("");
+  
+  console.log(`[A1 Safety Clear] Using ${levels} additional push off levels`);
+  
+  return lines.join("\n");
+}
+
+export function buildA1PrePrintExtrusion(gcode, ctx) {
+  // Extract temperatures from GCODE comment
+  const temperatureMatch = gcode.match(/;\s*nozzle_temperature\s*=\s*([\d,]+)/i);
+  let temperatures = [];
+  if (temperatureMatch) {
+    temperatures = temperatureMatch[1].split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
+  }
+  
+  // Extract first extruder from plate JSON if available in sourcePlateText
+  let firstExtruder = 0;
+  const plateJsonMatch = ctx.sourcePlateText?.match(/"first_extruder"\s*:\s*(\d+)/);
+  if (plateJsonMatch) {
+    firstExtruder = parseInt(plateJsonMatch[1]);
+  }
+  
+  // Get the temperature for the first extruder
+  let printTemp = 220; // fallback temperature
+  if (temperatures.length > firstExtruder) {
+    printTemp = temperatures[firstExtruder];
+  }
+  
+  console.log(`[A1 PrePrint] First extruder: ${firstExtruder}, print temp: ${printTemp}`);
+  
+  return `\nG0 E2.2 F800 ; Extrude a little so nozzle is filled for print start you might have to increase this up to E2.5 depending on your filament\nM104 S${printTemp} ; heat up to full temp in first few moves\n`;
+}
+
 export function bumpFirstExtrusionToE3(gcode, plateIndex = -1) {
   const lines = gcode.split(/\r?\n/);
   const reG1 = /^\s*G1\b/i;
@@ -171,6 +305,100 @@ export function bumpFirstExtrusionToE3(gcode, plateIndex = -1) {
   if (hit === -1) return gcode;
 
   lines[hit] = lines[hit].replace(reEsub, 'E3');
+  return lines.join('\n');
+}
+
+export function bumpFirstThreeExtrusionsX1P1(gcode, plateIndex = -1) {
+  const lines = gcode.split(/\r?\n/);
+  const reG1 = /^\s*G1\b/i;
+  const reX = /\bX[-+]?\d*\.?\d+/i;
+  const reY = /\bY[-+]?\d*\.?\d+/i;
+  const reE = /\bE([-+]?\d*\.?\d+)/i;
+  const reEsub = /\bE[-+]?\d*\.?\d+/i;
+
+  const targetTotalE = 3; // Target total extrusion value
+  let foundCount = 0;
+  const hitIndices = [];
+
+  // Find the first three extrude commands
+  for (let i = 0; i < lines.length && foundCount < 3; i++) {
+    const raw = lines[i];
+    if (/^\s*;/.test(raw)) continue; // Skip comments
+    const code = raw.split(';', 1)[0]; // Remove inline comments
+    if (!reG1.test(code)) continue; // Must be G1 command
+    if (!reX.test(code) || !reY.test(code)) continue; // Must have X and Y coordinates
+    const mE = code.match(reE);
+    if (!mE) continue; // Must have E parameter
+    const eVal = parseFloat(mE[1]);
+    if (!Number.isFinite(eVal) || eVal <= 0) continue; // E value must be positive
+    
+    hitIndices.push(i);
+    foundCount++;
+  }
+
+  if (hitIndices.length === 0) return gcode; // No extrude commands found
+
+  // Calculate how to distribute the target E3 value across the found commands
+  const distributedE = targetTotalE / hitIndices.length;
+
+  // Modify each found extrude command
+  for (const hit of hitIndices) {
+    const raw = lines[hit];
+    const code = raw.split(';', 1)[0];
+    const comment = raw.includes(';') ? raw.substring(raw.indexOf(';')) : '';
+    
+    const newCode = code.replace(reEsub, `E${distributedE.toFixed(5)}`);
+    lines[hit] = newCode + comment;
+  }
+
+  return lines.join('\n');
+}
+
+export function bumpFirstThreeExtrusionsA1PushOff(gcode, plateIndex = -1) {
+  const lines = gcode.split(/\r?\n/);
+  const reG1 = /^\s*G1\b/i;
+  const reX = /\bX[-+]?\d*\.?\d+/i;
+  const reY = /\bY[-+]?\d*\.?\d+/i;
+  const reE = /\bE([-+]?\d*\.?\d+)/i;
+  const reEsub = /\bE[-+]?\d*\.?\d+/i;
+
+  const extrudeIncrease = 0.5 / 3; // 0.167 per command, total 0.5
+  let foundCount = 0;
+  const hitIndices = [];
+
+  // Find the first three extrude commands
+  for (let i = 0; i < lines.length && foundCount < 3; i++) {
+    const raw = lines[i];
+    if (/^\s*;/.test(raw)) continue; // Skip comments
+    const code = raw.split(';', 1)[0]; // Remove inline comments
+    if (!reG1.test(code)) continue; // Must be G1 command
+    if (!reX.test(code) || !reY.test(code)) continue; // Must have X and Y coordinates
+    const mE = code.match(reE);
+    if (!mE) continue; // Must have E parameter
+    const eVal = parseFloat(mE[1]);
+    if (!Number.isFinite(eVal) || eVal <= 0) continue; // E value must be positive
+    
+    hitIndices.push(i);
+    foundCount++;
+  }
+
+  if (hitIndices.length === 0) return gcode; // No extrude commands found
+
+  // Modify each found extrude command
+  for (const hit of hitIndices) {
+    const raw = lines[hit];
+    const code = raw.split(';', 1)[0];
+    const comment = raw.includes(';') ? raw.substring(raw.indexOf(';')) : '';
+    
+    const mE = code.match(reE);
+    if (mE) {
+      const originalE = parseFloat(mE[1]);
+      const newE = originalE + extrudeIncrease;
+      const newCode = code.replace(reEsub, `E${newE.toFixed(5)}`);
+      lines[hit] = newCode + comment;
+    }
+  }
+
   return lines.join('\n');
 }
 

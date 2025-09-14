@@ -6,6 +6,7 @@ import { state } from "../config/state.js";
 import { parsePrinterModelFromGcode } from "../gcode/readGcode.js";
 import { ensureModeOrReject } from "../config/mode.js";
 import { initPlateX1P1UI, makeListSortable, installPlateButtons } from "../ui/plates.js";
+import { autoPopulatePlateCoordinates } from "../utils/plateUtils.js";
 import {
   wirePlateSwatches,
   updateAllPlateSwatchColors,
@@ -14,6 +15,7 @@ import {
 import { update_statistics } from "../ui/statistics.js";
 import { export_3mf } from "./export3mf.js";
 import { err00, err01 } from "../constants/errorMessages.js";
+import { showError, showWarning } from "../ui/infobox.js";
 
 // Zeigt eine Fehlermeldung an, rollt den zuletzt gepushten File zurück
 // und setzt die UI zurück, falls noch keine Plate geladen wurde.
@@ -33,7 +35,7 @@ function reject_file(message) {
     div.textContent = msg;
     host.appendChild(div);
   } else {
-    alert(msg);
+    showError(msg);
   }
 
   // den zuletzt hinzugefügten File entfernen (wir haben ihn oben gepusht)
@@ -57,7 +59,7 @@ function reject_file(message) {
   if (!anyItem) {
     document.getElementById("drop_zones_wrapper")?.classList.remove("mini_drop_zone");
     document.getElementById("action_buttons")?.classList.add("hidden");
-    document.getElementById("mode_switch")?.classList.add("hidden");
+    document.getElementById("printer_model_info")?.classList.add("hidden");
     document.getElementById("statistics")?.classList.add("hidden");
   }
 }
@@ -208,7 +210,7 @@ export function handleFile(f) {
       //change UI layout
       document.getElementById("drop_zones_wrapper").classList.add("mini_drop_zone");
       document.getElementById("action_buttons").classList.remove("hidden");
-      document.getElementById("printer_mode_switch").classList.remove("hidden");  // Printer mode selection
+      document.getElementById("printer_model_info").classList.remove("hidden");   // Printer model info
       document.getElementById("app_mode_toggle").classList.remove("hidden");      // App mode toggle  
       document.getElementById("statistics").classList.remove("hidden");
 
@@ -231,6 +233,15 @@ export function handleFile(f) {
           state.playlist_ol.appendChild(li);
           initPlateX1P1UI(li);
           installPlateButtons(li);
+          
+          // Auto-populate coordinates for X1/P1 modes after UI is initialized
+          if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+            setTimeout(() => {
+              autoPopulatePlateCoordinates(li).catch(error => {
+                console.error("Failed to auto-populate plate coordinates during load:", error);
+              });
+            }, 300); // Delay to ensure ZIP data is accessible
+          }
 
           var f_name = li.getElementsByClassName("f_name")[0];
           var p_name = li.getElementsByClassName("p_name")[0];

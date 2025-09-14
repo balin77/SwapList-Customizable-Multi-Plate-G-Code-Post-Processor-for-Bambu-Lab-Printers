@@ -3,6 +3,8 @@
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
 import { checkAutoToggleOverrideMetadata } from "./filamentColors.js";
+import { showWarning } from "./infobox.js";
+import { autoPopulatePlateCoordinates } from "../utils/plateUtils.js";
 
 export function readPlateXCoordsSorted(li) {
   const inputs = li.querySelectorAll(
@@ -34,7 +36,7 @@ export function validatePlateXCoords() {
   });
 
   if (hasError) {
-    alert("Warning: Some X coordinates are missing (0). Please enter valid values before exporting.");
+    showWarning("Warning: Some X coordinates are missing (0). Please enter valid values before exporting.");
     return false; // ungültig
   }
   return true; // alles ok
@@ -128,7 +130,7 @@ export function renderCoordInputs(count, targetDiv) {
   }
 
   targetDiv.innerHTML = "";
-  const n = Math.max(1, Math.min(5, count | 0));
+  const n = Math.max(1, Math.min(20, count | 0));
 
   for (let i = 1; i <= n; i++) {
     const wrap = document.createElement("div");
@@ -148,7 +150,7 @@ export function renderPlateCoordInputs(li, count) {
   if (!coordsWrap) return;
   coordsWrap.innerHTML = "";
 
-  const n = Math.max(1, Math.min(5, count | 0));
+  const n = Math.max(1, Math.min(20, count | 0));
   for (let i = 1; i <= n; i++) {
     const row = document.createElement('div');
     row.className = 'obj-coord-row';
@@ -157,6 +159,21 @@ export function renderPlateCoordInputs(li, count) {
       <label>X <input type="number" class="obj-x" step="1" value="0" min="0" max="255" data-obj="${i}"></label>
     `;
     coordsWrap.appendChild(row);
+  }
+
+  // Add auto-populate button BELOW the object list for X1/P1 modes
+  if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+    const autoBtn = document.createElement('button');
+    autoBtn.type = 'button';
+    autoBtn.className = 'btn-auto-coords';
+    autoBtn.textContent = '📐 Auto-calculate from objects';
+    autoBtn.title = 'Automatically calculate object count and X coordinates from plate data';
+    autoBtn.onclick = () => {
+      autoPopulatePlateCoordinates(li).catch(error => {
+        console.error("Failed to auto-populate plate coordinates:", error);
+      });
+    };
+    coordsWrap.appendChild(autoBtn);
   }
 }
 
@@ -177,6 +194,8 @@ export function initPlateX1P1UI(li) {
   sel.addEventListener('change', (e) => {
     renderPlateCoordInputs(li, parseInt(e.target.value || "1", 10));
   });
+
+  // Note: Auto-populate is now handled in read3mf.js after plate data is fully loaded
 }
 
 export function installPlateButtons(li){
@@ -201,9 +220,37 @@ export function installPlateButtons(li){
   }
 }
 
+function deepCopyDatasets(sourceEl, targetEl) {
+  // Kopiere alle dataset-Eigenschaften des Hauptelements
+  if (sourceEl.dataset && targetEl.dataset) {
+    for (const key in sourceEl.dataset) {
+      targetEl.dataset[key] = sourceEl.dataset[key];
+    }
+  }
+
+  // Rekursiv für alle Kindelemente
+  const sourceChildren = sourceEl.children;
+  const targetChildren = targetEl.children;
+  
+  for (let i = 0; i < sourceChildren.length && i < targetChildren.length; i++) {
+    deepCopyDatasets(sourceChildren[i], targetChildren[i]);
+  }
+}
+
 export function duplicatePlate(li){
   const clone = li.cloneNode(true);
   clone.classList.remove('hidden');
+
+  // Deep Copy aller dataset-Eigenschaften
+  deepCopyDatasets(li, clone);
+
+  // Kopiere plate time Werte explizit
+  const originalTime = li.getElementsByClassName("p_time")[0];
+  const cloneTime = clone.getElementsByClassName("p_time")[0];
+  if (originalTime && cloneTime) {
+    cloneTime.innerText = originalTime.innerText;
+    cloneTime.title = originalTime.title;
+  }
 
   // Button/Wrapper im Klon installieren
   installPlateButtons(clone);
@@ -211,11 +258,20 @@ export function duplicatePlate(li){
   // Plate-spezifische UI (X1/P1 Koordinaten Select-Listener etc.)
   initPlateX1P1UI(clone);
 
-  // Nach dem Original einfügen
-  li.parentNode.insertBefore(clone, li.nextSibling);
+  // Am Ende der Liste einfügen statt direkt nach dem Original
+  li.parentNode.appendChild(clone);
 
   // Statistik neu berechnen (Farblogik bleibt unverändert)
   update_statistics();
+  
+  // Auto-populate coordinates for duplicated plate (same as original)
+  if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+    setTimeout(() => {
+      autoPopulatePlateCoordinates(clone).catch(error => {
+        console.error("Failed to auto-populate duplicated plate coordinates:", error);
+      });
+    }, 200); // Small delay to ensure UI is ready
+  }
 }
 
 
