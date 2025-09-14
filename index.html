@@ -24,6 +24,7 @@
       <div>
         <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo">
         <img id="logo_pushoff" src="assets/img/logo_clearbed_app.png" height="42" alt="clearbed logo" class="hidden">
+        <img id="logo_a1_swap" src="assets/img/3Print.png" height="42" alt="3print logo" class="hidden">
         <div id="statistics" class="hidden">
           <div id="queue_statistics">
             <h3>Queue statistics:</h3>
@@ -58,19 +59,10 @@
             </span>
           </label>
         </div>
-        <!-- Printer Mode Selection -->
-        <div id="printer_mode_switch" class="mode-toggle hidden">
-          <input type="radio" id="mode_a1m" name="mode" value="A1M" checked>
-          <label for="mode_a1m">A1M</label>
-
-          <input type="radio" id="mode_a1" name="mode" value="A1">
-          <label for="mode_a1">A1</label>
-
-          <input type="radio" id="mode_x1" name="mode" value="X1">
-          <label for="mode_x1">X1</label>
-
-          <input type="radio" id="mode_p1" name="mode" value="P1">
-          <label for="mode_p1">P1</label>
+        <!-- Printer Model Info -->
+        <div id="printer_model_info" class="printer-info hidden">
+          <span class="info-label">Printer Model:</span>
+          <span id="current_printer_model" class="info-value">Unknown</span>
         </div>
       </div>
       <div>
@@ -89,6 +81,13 @@
             title="Vergleicht original vs. modifiziertes project_settings und loggt Unterschiede in die Konsole">
             Compare project_settings
           </button>
+          <details class="tool_info" id="compare_settings_help">
+            <summary></summary>
+            <p>
+              Compares the original <code>project_settings.config</code> from loaded files with the modified version
+              that would be generated based on current UI settings. Logs all differences to the console for debugging.
+            </p>
+          </details>
           <label class="opt block">
             <button id="btn_compare_gcode" type="button">Compare GCODE test files</button>
           </label>
@@ -172,7 +171,7 @@
             <!-- Cooling Settings -->
             <div class="settings-group">
               <h4>Cooling & Bed Temperature</h4>
-              <label>
+              <label id="bedlevel_cooling_container">
                 <input type="checkbox" id="opt_bedlevel_cooling">
                 Raise Bed Level for cooling
                 <details class="tool_info">
@@ -308,6 +307,21 @@
             <option value="3">3</option>
             <option value="4">4</option>
             <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
           </select>
         </label>
 

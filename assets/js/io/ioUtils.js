@@ -10,6 +10,7 @@ import { applySwapRulesToGcode } from "../commands/applySwapRules.js";
 import { applyAmsOverridesToPlate } from "../gcode/gcodeManipulation.js";
 import { optimizeAMSBlocks } from "../gcode/gcodeManipulation.js";
 import { SWAP_RULES } from "../commands/swapRules.js";
+import { showError, showWarning } from "../ui/infobox.js";
 
 
 function buildRuleContext(plateIndex, extra = {}) {
@@ -101,7 +102,7 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
   }
 
   if (platesOnce.length === 0) {
-    alert("No active plates (Repeats=0).");
+    showWarning("No active plates (Repeats=0).");
     update_progress(-1);
     return { empty: true };
   }
@@ -150,21 +151,53 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
     : platesOnce.slice();
 
   const loops = Math.max(1, (document.getElementById("loops").value * 1) || 1);
-  const originalCombined = Array(loops).fill(platesOnce).flat().join("\n");
-
+  
+  // Use streaming approach for large arrays to avoid RangeError
+  function safeJoinArray(arr, separator = "\n", chunkSize = 1000) {
+    if (arr.length <= chunkSize) {
+      try {
+        return arr.join(separator);
+      } catch (e) {
+        // Fallback to manual concatenation if even small chunks fail
+        return manualJoin(arr, separator);
+      }
+    }
+    
+    return manualJoin(arr, separator);
+  }
+  
+  function manualJoin(arr, separator) {
+    if (arr.length === 0) return "";
+    if (arr.length === 1) return arr[0];
+    
+    let result = arr[0];
+    for (let i = 1; i < arr.length; i++) {
+      result += separator + arr[i];
+    }
+    return result;
+  }
+  
+  const originalFlat = Array(loops).fill(platesOnce).flat();
   let modifiedLooped = Array(loops).fill(modifiedPerPlate).flat();
   if (applyOptimization) modifiedLooped = optimizeAMSBlocks(modifiedLooped);
 
-  // Header removal is handled by the remove_header_non_first_plates swap rule
-  const modifiedCombined = modifiedLooped.join("\n");
-  return {
+  // Lazy evaluation for combined strings to avoid memory issues
+  const result = {
     empty: false,
     platesOnce,
     modifiedPerPlate,
-    originalCombined,
-    modifiedCombined,
     modifiedLooped,
+    get originalCombined() {
+      // Only create the string when accessed
+      return safeJoinArray(originalFlat);
+    },
+    get modifiedCombined() {
+      // Only create the string when accessed  
+      return safeJoinArray(modifiedLooped);
+    }
   };
+  
+  return result;
 }
 
 function _computeOverridesForLi(li) {

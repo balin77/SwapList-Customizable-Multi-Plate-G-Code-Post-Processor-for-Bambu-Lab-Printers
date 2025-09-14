@@ -6,6 +6,7 @@ import { download, collectAndTransform, chunked_md5 } from "./ioUtils.js";
 import { model_settings_xml } from "../config/xmlConfig.js";
 import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
+import { showError, showWarning } from "../ui/infobox.js";
 
 // Generate combined plate_1.json data from all plates
 async function generatePlateJsonData() {
@@ -169,7 +170,7 @@ export async function export_3mf() {
     // Collect and transform the data
     const result = await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
     if (result.empty) {
-      alert("Keine aktiven Platten (Repeats=0).");
+      showWarning("Keine aktiven Platten (Repeats=0).");
       update_progress(-1);
       return;
     }
@@ -188,6 +189,23 @@ export async function export_3mf() {
     if (baseZip.file("Metadata/custom_gcode_per_layer.xml")) {
       baseZip.remove("Metadata/custom_gcode_per_layer.xml");
     }
+
+    // Remove unnecessary files (keep only plate_1.* and filament_settings_1.config)
+    const filesToRemove = [
+      /filament_settings_(?:[2-9]|\d{2,})\.config$/,
+      /pick_(?:[2-9]|\d{2,})\.png$/,
+      /plate_(?:[2-9]|\d{2,})\.gcode\.md5$/,
+      /plate_(?:[2-9]|\d{2,})\.json$/,
+      /plate_(?:[2-9]|\d{2,})\.png$/,
+      /plate_(?:[2-9]|\d{2,})_small\.png$/,
+      /plate_no_light_(?:[2-9]|\d{2,})\.png$/,
+      /top_(?:[2-9]|\d{2,})\.png$/
+    ];
+
+    filesToRemove.forEach(pattern => {
+      const files = baseZip.file(pattern);
+      files.forEach(f => baseZip.remove(f.name));
+    });
 
     // project_settings vom "größten AMS"-File lesen
     const projZip = await JSZip.loadAsync(state.my_files[state.ams_max_file_id]);
@@ -216,16 +234,27 @@ export async function export_3mf() {
     const indexNode = platesXML[0].querySelector("[key='index']");
     if (indexNode) indexNode.setAttribute("value", "1");
 
-    // --- Filament-Override nur, wenn aktiviert ---
+    // Stats-Quelle für Verbrauchsdaten
+    const slotDivs = document
+      .getElementById("filament_total")
+      ?.querySelectorAll(":scope > div[title]") || [];
+
+    // Map für Verbrauchsdaten erstellen (Slot-ID -> {usedM, usedG}) und Gesamtgewicht berechnen
+    const usageMap = new Map();
+    let totalWeight = 0;
+    for (let i = 0; i < slotDivs.length; i++) {
+      const div = slotDivs[i];
+      const usedM = parseFloat(div.dataset.used_m || "0") || 0;
+      const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+      const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
+      usageMap.set(slotId, { usedM, usedG });
+      totalWeight += usedG;
+    }
+
     if (state.OVERRIDE_METADATA) {
       // Alte Filament-Knoten leeren
       let filamentNodes = platesXML[0].getElementsByTagName("filament");
       while (filamentNodes.length > 0) filamentNodes[filamentNodes.length - 1].remove();
-
-      // Stats-Quelle
-      const slotDivs = document
-        .getElementById("filament_total")
-        ?.querySelectorAll(":scope > div[title]") || [];
 
       for (let i = 0; i < slotDivs.length; i++) {
         const div = slotDivs[i];
@@ -256,7 +285,31 @@ export async function export_3mf() {
 
         platesXML[0].appendChild(filament_tag);
       }
-      // Wenn Override AUS ist, belassen wir die originalen Filament-Einträge unverändert.
+    } else {
+      // Override AUS: nur Verbrauchsdaten aktualisieren, andere Attribute beibehalten
+      const filamentNodes = platesXML[0].getElementsByTagName("filament");
+      for (let i = 0; i < filamentNodes.length; i++) {
+        const filamentNode = filamentNodes[i];
+        const slotId = parseInt(filamentNode.id || filamentNode.getAttribute("id") || "1", 10);
+        
+        if (usageMap.has(slotId)) {
+          const { usedM, usedG } = usageMap.get(slotId);
+          filamentNode.setAttribute("used_m", String(usedM));
+          filamentNode.setAttribute("used_g", String(usedG));
+        }
+      }
+    }
+
+    // Weight-Metadaten in allen Fällen aktualisieren
+    const weightNode = platesXML[0].querySelector("[key='weight']");
+    if (weightNode) {
+      weightNode.setAttribute("value", totalWeight.toFixed(2));
+    } else {
+      // Weight-Node erstellen falls nicht vorhanden
+      const weightElement = slicer_config_xml.createElement("metadata");
+      weightElement.setAttribute("key", "weight");
+      weightElement.setAttribute("value", totalWeight.toFixed(2));
+      platesXML[0].appendChild(weightElement);
     }
 
     const s = new XMLSerializer();
@@ -293,7 +346,7 @@ export async function export_3mf() {
     });
   } catch (err) {
     console.error("export_3mf failed:", err);
-    alert("Export fehlgeschlagen: " + (err && err.message ? err.message : err));
+    showError("Export fehlgeschlagen: " + (err && err.message ? err.message : err));
     update_progress(-1);
   }
 }

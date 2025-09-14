@@ -11,12 +11,19 @@ import {
   removeLinesMatching,
   keepOnlyLastMatching,
 } from "../gcode/gcodeManipulation.js";
+import { DEV_MODE } from "../index.js";
 
 import {
   bumpFirstExtrusionToE3,
+  bumpFirstThreeExtrusionsX1P1,
+  bumpFirstThreeExtrusionsA1PushOff,
   buildRaiseBedAfterCooldownPayload,
   buildCooldownFansWaitPayload,
   buildPushOffPayload,
+  buildA1NozzleCoolingSequence,
+  buildA1PrePrintExtrusion,
+  buildA1EndseqCooldown,
+  buildA1SafetyClear,
 } from "../gcode/buildGcode.js";
 
 import {
@@ -69,6 +76,14 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
           out = bumpFirstExtrusionToE3(out, ctx.plateIndex ?? -1);
           break;
         }
+        case "bump_first_three_extrusions_x1_p1": {
+          out = bumpFirstThreeExtrusionsX1P1(out, ctx.plateIndex ?? -1);
+          break;
+        }
+        case "bump_first_three_extrusions_a1_pushoff": {
+          out = bumpFirstThreeExtrusionsA1PushOff(out, ctx.plateIndex ?? -1);
+          break;
+        }
         case "remove_header_block": {
           // Remove header from HEADER_BLOCK_START to CONFIG_BLOCK_END, then add plate marker after EXECUTABLE_BLOCK_START
           const headerStart = out.indexOf('; HEADER_BLOCK_START');
@@ -78,8 +93,15 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
             let nextNewline = out.indexOf('\n', afterConfigEnd);
             if (nextNewline === -1) nextNewline = afterConfigEnd;
             
-            // Remove header first
-            out = out.substring(nextNewline);
+            // In dev mode, add marker for removed header
+            if (DEV_MODE) {
+              const removedHeader = out.substring(0, nextNewline);
+              const headerMarker = `\n;<<< REMOVED HEADER BLOCK START >>>\n${removedHeader.split('\n').map(line => `; ${line}`).join('\n')}\n;>>> REMOVED HEADER BLOCK END >>>\n`;
+              out = headerMarker + out.substring(nextNewline);
+            } else {
+              // Remove header first
+              out = out.substring(nextNewline);
+            }
             
             // Find EXECUTABLE_BLOCK_START and add plate marker after it
             const execStart = out.indexOf('; EXECUTABLE_BLOCK_START');
@@ -216,6 +238,14 @@ function resolveDynamicPayload(fnId, gcode, ctx) {
       return buildCooldownFansWaitPayload(gcode, ctx);
     case "buildPushOffPayload":
       return buildPushOffPayload(gcode, ctx);
+    case "a1NozzleCoolingSequence":
+      return buildA1NozzleCoolingSequence(gcode, ctx);
+    case "a1PrePrintExtrusion":
+      return buildA1PrePrintExtrusion(gcode, ctx);
+    case "a1EndseqCooldown":
+      return buildA1EndseqCooldown(gcode, ctx);
+    case "a1SafetyClear":
+      return buildA1SafetyClear(gcode, ctx);
     default:
       return "";
   }

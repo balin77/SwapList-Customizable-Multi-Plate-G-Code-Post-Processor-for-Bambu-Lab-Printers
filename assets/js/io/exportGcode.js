@@ -7,6 +7,7 @@ import { collectAndTransform } from "./ioUtils.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 import { DEV_MODE } from "../index.js";
+import { showError, showWarning } from "../ui/infobox.js";
 
 // Hilfsfunktion: Finde das Filament-Objekt anhand setting_id
 function findFilamentBySettingId(settingId) {
@@ -22,7 +23,7 @@ export async function export_gcode_txt() {
       await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
 
     if (empty) {
-      alert("Keine aktiven Platten (Repeats=0).");
+      showWarning("Keine aktiven Platten (Repeats=0).");
       update_progress(-1);
       return;
     }
@@ -46,14 +47,14 @@ export async function export_gcode_txt() {
       });
     } else {
       // NORMAL MODE: Exportiere nur modifizierten kombinierten GCODE mit einfachem Namen
-      await exportNormalMode(base, modeTag, modifiedCombined);
+      await exportNormalMode(base, modeTag, modifiedLooped);
     }
 
     update_progress(100);
     setTimeout(() => update_progress(-1), 500);
   } catch (err) {
     console.error("GCODE export failed:", err);
-    alert("GCODE-Export fehlgeschlagen: " + (err.message || err));
+    showError("GCODE-Export fehlgeschlagen: " + (err.message || err));
     update_progress(-1);
   }
 }
@@ -63,9 +64,17 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
   const zip = new JSZip();
   const root = zip.folder(`${base}_gcode_exports_${modeTag}${purgeTag}_${stamp}`);
 
-  // Combined files
-  root.file(`${base}_${modeTag}${purgeTag}_original_combined.txt`, data.originalCombined);
-  root.file(`${base}_${modeTag}${purgeTag}_modified_combined.txt`, data.modifiedCombined);
+  // Combined files - use lazy evaluation to avoid memory issues
+  try {
+    root.file(`${base}_${modeTag}${purgeTag}_original_combined.txt`, data.originalCombined);
+  } catch (err) {
+    console.warn("Skipping original_combined.txt due to size limitations:", err.message);
+  }
+  try {
+    root.file(`${base}_${modeTag}${purgeTag}_modified_combined.txt`, data.modifiedCombined);
+  } catch (err) {
+    console.warn("Skipping modified_combined.txt due to size limitations:", err.message);
+  }
 
   // Per-plate original files
   const originalFolder = root.folder("per_plate_original");
@@ -100,11 +109,11 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
   download(`${base}_${modeTag}${purgeTag}_gcode_exports.zip`, zipUrl);
 }
 
-async function exportNormalMode(base, modeTag, modifiedCombined) {
+async function exportNormalMode(base, modeTag, modifiedLooped) {
   update_progress(60);
   
-  // Create simple GCODE file
-  const gcodeBlob = new Blob([modifiedCombined], { type: "text/x-gcode" });
+  // Create GCODE file directly from array - avoids string length issues
+  const gcodeBlob = new Blob(modifiedLooped.map(line => line + '\n'), { type: "text/x-gcode" });
   const gcodeUrl = URL.createObjectURL(gcodeBlob);
   
   // Simple filename: base_mode.gcode (no purge tags for normal users)

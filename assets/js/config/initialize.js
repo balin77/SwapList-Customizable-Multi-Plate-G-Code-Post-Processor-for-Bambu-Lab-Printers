@@ -2,6 +2,7 @@
 
 import { DEV_MODE } from "../index.js";
 import { state } from "./state.js";
+import { setMode } from "./mode.js";
 import { getSecurePushOffEnabled } from "../ui/settings.js";
 import { removePlate, duplicatePlate } from "../ui/plates.js";
 import { update_progress } from "../ui/progressbar.js";
@@ -12,6 +13,7 @@ import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
 import { toggle_settings, custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
 import { compareProjectSettingsFiles } from "../utils/utils.js";
+import { initInfobox, showError, showWarning, showInfo, showSuccess } from "../ui/infobox.js";
 
 import {
   wirePlateSwatches,
@@ -25,6 +27,9 @@ import {
 
 export function initialize_page() {
 
+  // Initialize infobox
+  initInfobox();
+
   //buttons
   document.getElementById("export")?.addEventListener("click", export_3mf);
   document.getElementById("export_gcode")?.addEventListener("click", export_gcode_txt);
@@ -33,6 +38,7 @@ export function initialize_page() {
   // Dev Mode: Show/Hide compare buttons based on DEV_MODE
   const btnCmp = document.getElementById("btn_compare_settings");
   const btnCmpGcode = document.getElementById("btn_compare_gcode");
+  const compareSettingsHelp = document.getElementById("compare_settings_help");
   const compareGcodeHelp = document.getElementById("compare_gcode_help");
   
   if (btnCmp) {
@@ -47,10 +53,10 @@ export function initialize_page() {
         try {
           const result = await compareProjectSettingsFiles(); // loggt selbst in die Konsole
           console.log("[compareProjectSettingsFiles] finished", result);
-          alert("Vergleich abgeschlossen. Details stehen in der Konsole.");
+          showInfo("Vergleich abgeschlossen. Details stehen in der Konsole.");
         } catch (err) {
           console.error("Fehler beim Vergleich:", err);
-          alert("Vergleich fehlgeschlagen: " + (err?.message || err));
+          showError("Vergleich fehlgeschlagen: " + (err?.message || err));
         } finally {
           btnCmp.disabled = false;
           btnCmp.textContent = origLabel;
@@ -62,6 +68,16 @@ export function initialize_page() {
     } else {
       btnCmp.style.display = "none";
       btnCmp.classList.add("hidden");
+    }
+  }
+
+  if (compareSettingsHelp) {
+    if (DEV_MODE) {
+      compareSettingsHelp.style.display = "block";
+      compareSettingsHelp.classList.remove("hidden");
+    } else {
+      compareSettingsHelp.style.display = "none";
+      compareSettingsHelp.classList.add("hidden");
     }
   }
   
@@ -110,10 +126,10 @@ export function initialize_page() {
           }
           
           console.log(`[GCODE Compare] Total differences: ${differences}`);
-          alert(`GCODE comparison complete. Found ${differences} differences. Check console for details.`);
+          showInfo(`GCODE comparison complete. Found ${differences} differences. Check console for details.`);
         } catch (err) {
           console.error("Error comparing GCODE files:", err);
-          alert("GCODE comparison failed: " + (err?.message || err));
+          showError("GCODE comparison failed: " + (err?.message || err));
         } finally {
           btnCmpGcode.disabled = false;
           btnCmpGcode.textContent = origLabel;
@@ -136,22 +152,7 @@ export function initialize_page() {
   }
 
 
-  // mode toggle listeners
-  var mA1M = document.getElementById('mode_a1m');
-  var mA1 = document.getElementById('mode_a1');
-  var mX1 = document.getElementById('mode_x1');
-  var mP1 = document.getElementById('mode_p1');
-  if (mA1M && mA1 && mX1 && mP1) {
-    // Deaktivieren: nur noch per detect → setMode()
-    mA1M.disabled = true;
-    mA1.disabled = true;
-    mX1.disabled = true;
-    mP1.disabled = true;
-
-    // Optional: Tooltip
-    mA1M.title = mA1.title = mX1.title = mP1.title = "Printer mode is set automatically from the loaded file(s).";
-
-  }
+  // Printer model info is now displayed automatically via setMode() function
   // Purge-Checkbox
   var chkPurge = document.getElementById('opt_purge');
   if (chkPurge) {
@@ -200,87 +201,62 @@ export function initialize_page() {
   const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox");
   const swapLogo = document.getElementById("logo");
   const pushOffLogo = document.getElementById("logo_pushoff");
+  const a1SwapLogo = document.getElementById("logo_a1_swap");
 
   function updateAppModeDisplay(isPushOffMode) {
-    if (swapLogo && pushOffLogo) {
+    if (swapLogo && pushOffLogo && a1SwapLogo) {
       if (isPushOffMode) {
+        // Push Off Mode: Show push off logo
         swapLogo.classList.add("hidden");
         pushOffLogo.classList.remove("hidden");
+        a1SwapLogo.classList.add("hidden");
         document.body.classList.add("pushoff-mode");
+        document.body.classList.remove("a1-swap-mode");
       } else {
-        swapLogo.classList.remove("hidden");
+        // Swap Mode: Check if A1 or A1M
         pushOffLogo.classList.add("hidden");
         document.body.classList.remove("pushoff-mode");
+
+        if (state.CURRENT_MODE === 'A1') {
+          // A1 Swap Mode: Show 3Print logo with gray styling
+          swapLogo.classList.add("hidden");
+          a1SwapLogo.classList.remove("hidden");
+          document.body.classList.add("a1-swap-mode");
+        } else {
+          // A1M Swap Mode: Show standard swap logo with yellow styling
+          swapLogo.classList.remove("hidden");
+          a1SwapLogo.classList.add("hidden");
+          document.body.classList.remove("a1-swap-mode");
+        }
       }
     }
-    
-    // Update available printer modes
-    updatePrinterModeAvailability(isPushOffMode);
+
   }
 
   // Make function globally available for setMode() in mode.js
   window.updateAppModeDisplay = updateAppModeDisplay;
 
-  function updatePrinterModeAvailability(isPushOffMode) {
-    const a1mRadio = document.getElementById("mode_a1m");
-    const a1mLabel = document.querySelector("label[for='mode_a1m']");
-    const a1Radio = document.getElementById("mode_a1");
-    const a1Label = document.querySelector("label[for='mode_a1']");
-    const x1Radio = document.getElementById("mode_x1");
-    const x1Label = document.querySelector("label[for='mode_x1']");
-    const p1Radio = document.getElementById("mode_p1");
-    const p1Label = document.querySelector("label[for='mode_p1']");
-
-    if (isPushOffMode) {
-      // Push Off Mode: Show A1M, A1, X1, P1
-      [a1mRadio, a1mLabel, a1Radio, a1Label, x1Radio, x1Label, p1Radio, p1Label].forEach(el => {
-        if (el) el.style.display = "";
-      });
-      
-      // Label zurück zur Kurzform im Push Off Mode
-      if (a1mLabel) {
-        a1mLabel.textContent = "A1M";
-      }
-      
-      // Default to A1M in push off mode if A1M was selected in swap mode
-      if (a1mRadio && a1mRadio.checked) {
-        a1mRadio.checked = true;
-      }
-    } else {
-      // Swap Mode: Show only A1M (A1 Mini), hide others
-      if (a1mRadio && a1mLabel) {
-        a1mRadio.style.display = "";
-        a1mLabel.style.display = "";
-        a1mLabel.textContent = "A1 Mini"; // Ausgeschrieben im SWAP Mode
-        a1mRadio.checked = true; // Force A1M selection in swap mode
-      }
-      
-      // Hide A1, X1, P1 in swap mode
-      [a1Radio, a1Label, x1Radio, x1Label, p1Radio, p1Label].forEach(el => {
-        if (el) el.style.display = "none";
-      });
-    }
-  }
-
   if (modeToggleCheckbox) {
-    // Initial state - default to push off mode
-    state.APP_MODE = "pushoff";
-    modeToggleCheckbox.checked = true; // Push Off Mode aktivieren
-    updateAppModeDisplay(true);
+    // Initial state - default to swap mode
+    state.APP_MODE = "swap";
+    modeToggleCheckbox.checked = false; // SWAP Mode aktivieren
+    updateAppModeDisplay(false);
     
     modeToggleCheckbox.addEventListener("change", () => {
       const isPushOffMode = modeToggleCheckbox.checked;
       
       // Prüfen ob SWAP Mode für aktuellen Drucker erlaubt ist
-      if (!isPushOffMode && state.CURRENT_MODE && state.CURRENT_MODE !== 'A1M') {
-        // SWAP Mode nur für A1M erlaubt - Toggle zurücksetzen und Fehlermeldung
+      if (!isPushOffMode && state.CURRENT_MODE && state.CURRENT_MODE !== 'A1M' && state.CURRENT_MODE !== 'A1') {
+        // SWAP Mode nur für A1M und A1 erlaubt - Toggle zurücksetzen und Fehlermeldung
         modeToggleCheckbox.checked = true; // Zurück zu Push Off Mode
-        alert("SWAP Mode is only available for the A1 Mini.\nFor other printers, please use Push Off Mode.");
+        showWarning("SWAP Mode is only available for A1 Mini and A1 printers. For other printers, please use Push Off Mode.");
         return;
       }
       
       state.APP_MODE = isPushOffMode ? "pushoff" : "swap";
       updateAppModeDisplay(isPushOffMode);
+      // Update printer mode UI to refresh settings visibility
+      setMode(state.CURRENT_MODE);
       console.log("APP_MODE changed to:", state.APP_MODE);
       console.log("Body classes:", document.body.className);
       console.log("Push off mode active:", isPushOffMode);
