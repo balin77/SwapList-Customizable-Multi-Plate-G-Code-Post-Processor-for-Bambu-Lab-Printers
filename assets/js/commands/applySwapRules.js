@@ -1,6 +1,6 @@
 // /src/commands/applySwapRules.js
 
-import { splitIntoSections, joinSections } from "../gcode/readGcode.js";
+import { splitIntoSections, joinSections, joinSectionsTestMode } from "../gcode/readGcode.js";
 import {
   prependBlock,
   insertAfterAnchor,

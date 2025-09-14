@@ -97,6 +97,12 @@ export function joinSections(parts) {
   return (parts.header || "") + (parts.startseq || "") + (parts.body || "") + (parts.endseq || "");
 }
 
+export function joinSectionsTestMode(parts) {
+  // For test files: only header, startseq, and endseq - no body (printing code)
+  const testComment = "\n; BODY SECTION REMOVED FOR TEST FILE\n; (Original printing code would be here)\n\n";
+  return (parts.header || "") + (parts.startseq || "") + testComment + (parts.endseq || "");
+}
+
 export async function collectPlateGcodesOnce() {
   const my_plates = state.playlist_ol.getElementsByTagName("li");
   const list = [];

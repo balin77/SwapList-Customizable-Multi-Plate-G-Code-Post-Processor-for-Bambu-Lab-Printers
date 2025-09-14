@@ -163,7 +163,7 @@ async function generatePlateJsonData() {
 
 export async function export_3mf() {
   try {
-    if (!validatePlateXCoords()) return;
+    if (!(await validatePlateXCoords())) return;
     update_progress(5);
 
 
