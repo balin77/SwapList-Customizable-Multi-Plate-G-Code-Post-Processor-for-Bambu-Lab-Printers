@@ -2,6 +2,7 @@
 
 import JSZip from "jszip";
 import { state } from "../config/state.js";
+import { getPlateSettings, getAllPlateSettings } from "../ui/settings.js";
 
 /**
  * Calculates object count and X coordinates from bbox_objects in plate JSON data
@@ -107,47 +108,81 @@ export async function autoPopulatePlateCoordinates(li) {
   if (!(state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')) {
     return;
   }
-  
+
   try {
     const { objectCount, objects } = await calculateObjectCoordinatesFromBbox(li);
-    
-    // Update object count selector
-    const objCountSelector = li.querySelector('.obj-count');
-    if (objCountSelector) {
-      objCountSelector.value = Math.min(20, Math.max(1, objectCount)).toString();
-      
-      // Trigger change event to regenerate coordinate inputs
-      objCountSelector.dispatchEvent(new Event('change'));
-      
-      // Wait a bit for the UI to update
-      setTimeout(() => {
-        // Fill in the calculated X coordinates with proper naming
-        const coordInputs = li.querySelectorAll('.obj-coords .obj-coord-row input.obj-x');
-        const coordLabels = li.querySelectorAll('.obj-coords .obj-coord-row b');
-        
-        coordInputs.forEach((input, index) => {
-          if (index < objects.length) {
-            const obj = objects[index];
-            input.value = obj.centerX.toString();
-            input.style.backgroundColor = '#f8f9fa'; // Light gray to indicate auto-filled
-            
-            // Update label with appropriate name
-            if (coordLabels[index]) {
-              if (obj.isWipeTower) {
-                coordLabels[index].textContent = 'Wipe Tower';
-              } else {
-                // Count non-wipe-tower objects up to current index
-                const objectNumber = objects.slice(0, index + 1).filter(o => !o.isWipeTower).length;
-                coordLabels[index].textContent = `Object ${objectNumber}`;
+
+    // Find the plate index in the current list
+    const allPlates = document.querySelectorAll('#playlist_ol li.list_item:not(.hidden)');
+    let plateIndex = -1;
+    for (let i = 0; i < allPlates.length; i++) {
+      if (allPlates[i] === li) {
+        plateIndex = i;
+        break;
+      }
+    }
+
+    if (plateIndex === -1) {
+      console.warn('Could not determine plate index for auto-population');
+      return;
+    }
+
+    // Always update the internal settings data structure first
+    const allSettings = getAllPlateSettings();
+    if (allSettings) {
+      // Make sure settings exist for this plate
+      if (!allSettings.has(plateIndex)) {
+        allSettings.set(plateIndex, {
+          objectCount: 1,
+          objectCoords: [],
+          hidePurgeLoad: true,
+          turnOffPurge: false,
+          bedRaiseOffset: 30,
+          securePushoff: true,
+          extraPushoffLevels: 2
+        });
+      }
+
+      const settings = allSettings.get(plateIndex);
+      settings.objectCount = objectCount;
+      settings.objectCoords = objects.map(obj => obj.centerX);
+
+      // If this plate is currently selected in settings, also update the UI
+      const plateSpecificSettings = document.getElementById("plate_specific_settings");
+      const objCountSelector = plateSpecificSettings?.querySelector(".obj-count");
+
+      if (objCountSelector && !plateSpecificSettings.classList.contains('hidden')) {
+        // Update the UI if settings panel is visible
+        objCountSelector.value = Math.min(20, Math.max(1, objectCount)).toString();
+        objCountSelector.dispatchEvent(new Event('change'));
+
+        // Wait for UI update then populate coordinates
+        setTimeout(() => {
+          const coordInputs = plateSpecificSettings.querySelectorAll('.obj-coords input.obj-x');
+          const coordLabels = plateSpecificSettings.querySelectorAll('.obj-coords b');
+
+          coordInputs.forEach((input, index) => {
+            if (index < objects.length) {
+              const obj = objects[index];
+              input.value = obj.centerX.toString();
+              input.style.backgroundColor = '#f8f9fa';
+
+              if (coordLabels[index]) {
+                if (obj.isWipeTower) {
+                  coordLabels[index].textContent = 'Wipe Tower';
+                } else {
+                  const objectNumber = objects.slice(0, index + 1).filter(o => !o.isWipeTower).length;
+                  coordLabels[index].textContent = `Objekt ${objectNumber}`;
+                }
               }
             }
-          }
-        });
-        
-        console.log(`Auto-populated plate "${li.getElementsByClassName("p_name")[0]?.textContent || 'unknown'}" with ${objectCount} objects`);
-      }, 100);
+          });
+        }, 100);
+      }
     }
-    
+
+    console.log(`Auto-populated plate "${li.getElementsByClassName("p_name")[0]?.textContent || 'unknown'}" with ${objectCount} objects`);
+
   } catch (error) {
     console.error("Error auto-populating plate coordinates:", error);
   }

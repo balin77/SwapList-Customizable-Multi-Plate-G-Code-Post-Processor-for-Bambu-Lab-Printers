@@ -7,6 +7,9 @@ import {
   getUserBedRaiseOffset,
   getCooldownTargetBedTemp,
   getCooldownMaxTime,
+  getSecurePushOffEnabledForPlate,
+  getExtraPushOffLevelsForPlate,
+  getUserBedRaiseOffsetForPlate,
 } from "../ui/settings.js";
 
 
@@ -92,8 +95,15 @@ export function buildPushOffPayload(gcode, ctx) {
 
   // Secure push-off staircase (only if enabled)
   let staircaseSeq = "";
-  if (getSecurePushOffEnabled()) {
-    const levels = getExtraPushOffLevels(); // 1..10
+  const plateIndex = ctx.plateIndex;
+  const securePushOffEnabled = plateIndex !== undefined
+    ? getSecurePushOffEnabledForPlate(plateIndex)
+    : getSecurePushOffEnabled();
+
+  if (securePushOffEnabled) {
+    const levels = plateIndex !== undefined
+      ? getExtraPushOffLevelsForPlate(plateIndex)
+      : getExtraPushOffLevels(); // 1..10
     staircaseSeq = buildFixedPushOffMultiZ(maxZ, levels);
   }
 
@@ -105,7 +115,10 @@ export function buildRaiseBedAfterCooldownPayload(gcodeSection, ctx) {
   const header = (splitIntoSections(src).header || src);
   const maxZ = parseMaxZHeight(header);
 
-  const offset = getUserBedRaiseOffset();         // ← Userwert (z.B. 30 mm)
+  const plateIndex = ctx.plateIndex;
+  const offset = plateIndex !== undefined
+    ? getUserBedRaiseOffsetForPlate(plateIndex)
+    : getUserBedRaiseOffset();         // ← Userwert (z.B. 30 mm)
   let targetZ = 1;
   if (Number.isFinite(maxZ)) {
     targetZ = Math.max(1, +(maxZ - offset).toFixed(1)); // eine Nachkommastelle
@@ -186,7 +199,10 @@ export function buildA1EndseqCooldown(gcode, ctx) {
   const header = (splitIntoSections(src).header || src);
   const maxZ = parseMaxZHeight(header);
   
-  const offset = getUserBedRaiseOffset(); // UI Setting (default 30mm für X1/P1, sollte 40mm für A1 sein)
+  const plateIndex = ctx.plateIndex;
+  const offset = plateIndex !== undefined
+    ? getUserBedRaiseOffsetForPlate(plateIndex)
+    : getUserBedRaiseOffset(); // UI Setting (default 30mm für X1/P1, sollte 40mm für A1 sein)
   let targetZ = 1;
   if (Number.isFinite(maxZ)) {
     targetZ = Math.max(1, +(maxZ - offset).toFixed(1)); // eine Nachkommastelle
@@ -225,7 +241,10 @@ export function buildA1EndseqCooldown(gcode, ctx) {
 }
 
 export function buildA1SafetyClear(gcode, ctx) {
-  const levels = getExtraPushOffLevels(); // UI Setting für additional push off levels
+  const plateIndex = ctx.plateIndex;
+  const levels = plateIndex !== undefined
+    ? getExtraPushOffLevelsForPlate(plateIndex)
+    : getExtraPushOffLevels(); // UI Setting für additional push off levels
   
   const lines = [];
   

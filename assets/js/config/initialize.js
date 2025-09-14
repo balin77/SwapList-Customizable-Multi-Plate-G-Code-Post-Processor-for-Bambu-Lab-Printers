@@ -237,10 +237,10 @@ export function initialize_page() {
   window.updateAppModeDisplay = updateAppModeDisplay;
 
   if (modeToggleCheckbox) {
-    // Initial state - default to swap mode
-    state.APP_MODE = "swap";
-    modeToggleCheckbox.checked = false; // SWAP Mode aktivieren
-    updateAppModeDisplay(false);
+    // Initial state - default to push off mode
+    state.APP_MODE = "pushoff";
+    modeToggleCheckbox.checked = true; // Push Off Mode aktivieren
+    updateAppModeDisplay(true);
     
     modeToggleCheckbox.addEventListener("change", () => {
       const isPushOffMode = modeToggleCheckbox.checked;

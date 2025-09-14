@@ -5,8 +5,28 @@ import { update_statistics } from "../ui/statistics.js";
 import { checkAutoToggleOverrideMetadata } from "./filamentColors.js";
 import { showWarning } from "./infobox.js";
 import { autoPopulatePlateCoordinates } from "../utils/plateUtils.js";
+import { updatePlateSelector, getObjectCoordsForPlate } from "./settings.js";
 
 export function readPlateXCoordsSorted(li) {
+  // Try to get plate index from the DOM
+  const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+  let plateIndex = -1;
+
+  plates.forEach((plate, index) => {
+    if (plate === li) {
+      plateIndex = index;
+    }
+  });
+
+  if (plateIndex >= 0) {
+    // Get coordinates from new settings system
+    const coords = getObjectCoordsForPlate(plateIndex);
+    return coords
+      .filter(v => Number.isFinite(v))
+      .sort((a, b) => b - a);
+  }
+
+  // Fallback to old method if not found in settings
   const inputs = li.querySelectorAll(
     '.plate-x1p1-settings .obj-coords .obj-coord-row input.obj-x'
   );
@@ -51,9 +71,12 @@ export function removePlate(btn) {
 
   // Stats neu berechnen
   if (typeof update_statistics === "function") update_statistics();
-  
+
   // Auto-disable Override metadata wenn keine modified plates mehr vorhanden
   checkAutoToggleOverrideMetadata();
+
+  // Update plate selector
+  updatePlateSelector();
 
   // Wenn keine Platten mehr vorhanden → volle Rücksetzung
   const remaining = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)").length;
@@ -263,7 +286,10 @@ export function duplicatePlate(li){
 
   // Statistik neu berechnen (Farblogik bleibt unverändert)
   update_statistics();
-  
+
+  // Update plate selector after adding new plate
+  updatePlateSelector();
+
   // Auto-populate coordinates for duplicated plate (same as original)
   if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
     setTimeout(() => {
