@@ -1,5 +1,11 @@
 // /src/commands/swapRules.js
 
+export const HOMING_All_AXES = 
+`
+G28; home all axes
+`;
+
+
 export const SWAP_START_A1M = `;swap ini code
 G91 ; 
 G0 Z50 F1000; 
@@ -19,8 +25,9 @@ G4 P500; wait
 G0 Y10 F1000; load 
 G0 Y20 F15000; ready `;
 
+
 export const SWAP_END_A1M = `;swap
-G0 X-10 F5000;
+G0 X-10 F5000;  park extruder 
 G0 Z175;
 G0 Y-5 F2000;
 G0 Y186.5 F2000;
@@ -53,57 +60,53 @@ G28 XY                  ; home XY axes
 G0  X-10 F5000          ; move X slightly out of the way
 
 ; --- Grab/Set Sequence ---
-M211 S0                 ; disable soft endstops
+;M211 S0                 ; disable soft endstops
 G0  Y0   F5000          ; "grab": grip at the back
 G0  Y266 F2000          ; "pull": plate forward
-G0  Y115 F8000          ; "rehook"
-G4  P1000
+G0  Y60  F15000         ; "rehook"
+G4  P1000               ; wait for back hook to snap
 G0  Y266 F2000          ; "pull" again
+G0  Y20 F2000           ; move to "set" position
 G4  P500
-G0  Y-2 F2000           ; snap beyond 0
-M211 S1                 ; re-enable soft endstops
+G0  Y0 F300             ; snap plate
+G0  Y5 F300             ; let plate fall
+G4  P500
 G0  Y150 F2000          ; safe park position
 ; ==== End GRAB_ONLY ====`;
 
 export const A1_3Print_END = `; ==== A1 PLATE_SWAP_FULL ====
-G91;
-G380 S3 Z-20 F1200
-G380 S2 Z75 F1200
-G380 S3 Z-20 F1200
-G380 S2 Z75 F1200
-G380 S3 Z-20 F1200
-G380 S2 Z75 F1200
-G380 S3 Z-20 F1200
-G380 S2 Z75 F1200
-G380 S3 Z-20 F1200
-G1 Z5 F1200
 G90;
-G28 Y;
-G90;
-G1 Y266 F2000;
+;M211 S0                 ; disable soft endstops
+;Pull off sequence
+G0 Y266 F2500           ; bring plate in position
+G4 P1000                ; wait for front hook to snap
+G0 Z260 F2000;          ; raise Z to activate front hook
 G4 P1000
-G91;
-G380 S2 Z30 F1200
-G90;
-M211  Y0 Z0 ; disable soft endstops
-G91;
-G90;
-G1 Y50 F1000
-G1 Y0 F2500
-G91;
-G380 S3 Z-20 F1200 
-G90;
-G1 Y266 F2000
-G1 Y43 F2000
-G1 Y266 F2000
-G1 Y250 F8000
-G1 Y266 F8000
-G1 Y43 F5000
-G1 Y266 F2000
-G1 Y250 F8000
-G1 Y266 F8000
-G1 Y-2 F7000
-G1 Y150 F2000
+G0 Y50 F1000
+G0 Y0 F2500
+G0 Z120 F2000;          ; lower Z to release front hook
+;Push build plate off buildplate
+G0 Y266 F2000
+G0 Y43 F2000
+G0 Y266 F2000
+G0 Y250 F8000
+G0 Y266 F8000
+G0 Y43 F5000
+G0 Y266 F2000
+G0 Y250 F8000
+G0 Y266 F8000
+; Set new plate sequence
+G0  Y0   F5000          ; "grab": grip at the back
+G0  Y266 F2000          ; "pull": plate forward
+G0  Y60  F15000         ; "rehook"
+G4  P1000               ; wait for back hook to snap
+G0  Y266 F2000          ; "pull" again
+G0  Y20 F2000           ; move to "set" position
+G4  P500
+G0  Y0 F300             ; snap plate
+G0  Y5 F300             ; let plate fall
+G4  P500
+G0 Y150 F2000           ; safe park position 
 ; ==== Ende SWAP_FULL ====`;
 
 // commands.js
