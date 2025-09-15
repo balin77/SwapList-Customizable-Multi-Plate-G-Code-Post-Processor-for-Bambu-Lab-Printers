@@ -32,8 +32,10 @@ import {
   _logRule,
   _ruleActiveWhy,
   resolvePayloadVar,
-  _findRange 
+  _findRange
 } from "../gcode/gcodeUtils.js";
+
+import { showWarning } from "../ui/infobox.js";
 
 // ===== Regel-Engine mit Abschnitt-Scopes =====
 
@@ -196,6 +198,11 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
     } catch (e) {
       extra.error = (e && e.message) ? e.message : String(e);
       console.error("[SWAP_RULE_ERROR]", { id: rule.id, action: rule.action, scope, plate: ctx.plateIndex, error: extra.error });
+
+      // Show warning message in infobox
+      const plateNum = (ctx.plateIndex ?? -1) + 1;
+      const warningMsg = `SwapRule "${rule.id}" failed on plate ${plateNum}: ${extra.error}`;
+      showWarning(warningMsg, 30000); // Show for 30 seconds
     }
 
     _logRule(rule, ctx, scope, src, out, extra);

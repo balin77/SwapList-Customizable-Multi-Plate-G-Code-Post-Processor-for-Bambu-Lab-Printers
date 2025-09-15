@@ -12,7 +12,7 @@ import { optimizeAMSBlocks } from "../gcode/gcodeManipulation.js";
 import { SWAP_RULES } from "../commands/swapRules.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
-import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END } from "../commands/swapRules.js";
+import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, HOMING_All_AXES } from "../commands/swapRules.js";
 
 
 function buildRuleContext(plateIndex, extra = {}) {
@@ -243,6 +243,8 @@ function createSwapTestFile(plateCount) {
     `; Mode: ${state.CURRENT_MODE} - ${plateCount} plate changes`,
     '',
     startSequence,
+    '',
+    HOMING_All_AXES,
     '',
     '; PRINT BODIES REMOVED FOR TEST FILE',
     `; (${plateCount} plates of actual printing code would be here)`,

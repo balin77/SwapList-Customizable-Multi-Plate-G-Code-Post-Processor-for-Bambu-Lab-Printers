@@ -286,17 +286,103 @@ export async function export_3mf() {
         platesXML[0].appendChild(filament_tag);
       }
     } else {
-      // Override AUS: nur Verbrauchsdaten aktualisieren, andere Attribute beibehalten
-      const filamentNodes = platesXML[0].getElementsByTagName("filament");
-      for (let i = 0; i < filamentNodes.length; i++) {
-        const filamentNode = filamentNodes[i];
-        const slotId = parseInt(filamentNode.id || filamentNode.getAttribute("id") || "1", 10);
-        
-        if (usageMap.has(slotId)) {
-          const { usedM, usedG } = usageMap.get(slotId);
-          filamentNode.setAttribute("used_m", String(usedM));
-          filamentNode.setAttribute("used_g", String(usedG));
+      // Override AUS: alle Filamente von allen aktiven Platten sammeln
+
+      // Sammle alle Filamente von allen aktiven Platten
+      const allFilaments = new Map(); // id -> {type, color, used_m, used_g, plateIndex}
+
+      const my_plates = state.playlist_ol.getElementsByTagName("li");
+      for (let i = 0; i < my_plates.length; i++) {
+        const li = my_plates[i];
+        const c_f_id = li.getElementsByClassName("f_id")[0].title;
+        const p_rep = li.getElementsByClassName("p_rep")[0].value * 1;
+
+        if (p_rep > 0) {
+          try {
+            const zip = await JSZip.loadAsync(state.my_files[c_f_id]);
+            const plateSliceInfo = await zip.file("Metadata/slice_info.config").async("text");
+            const plateParser = new DOMParser();
+            const plateXML = plateParser.parseFromString(plateSliceInfo, "text/xml");
+            const plateFilaments = plateXML.getElementsByTagName("filament");
+
+            console.log(`Collecting filaments from plate ${i + 1} (${plateFilaments.length} filaments)`);
+
+            for (let j = 0; j < plateFilaments.length; j++) {
+              const filament = plateFilaments[j];
+              const id = filament.id || filament.getAttribute("id");
+              const type = filament.getAttribute("type");
+              const color = filament.getAttribute("color");
+              const used_m = parseFloat(filament.getAttribute("used_m") || "0");
+              const used_g = parseFloat(filament.getAttribute("used_g") || "0");
+
+              if (allFilaments.has(id)) {
+                // Konflikt: Filament-ID bereits vorhanden
+                const existing = allFilaments.get(id);
+                console.log(`Filament ID ${id} conflict: plate ${existing.plateIndex + 1} vs plate ${i + 1}`);
+
+                // Verbrauch addieren, aber Farbe/Typ von niedrigerer Platte behalten
+                if (i < existing.plateIndex) {
+                  // Aktuelle Platte hat niedrigere Nummer - ihre Werte übernehmen
+                  allFilaments.set(id, {
+                    type: type,
+                    color: color,
+                    used_m: existing.used_m + used_m,
+                    used_g: existing.used_g + used_g,
+                    plateIndex: i
+                  });
+                  console.log(`Using color/type from plate ${i + 1}, combined usage`);
+                } else {
+                  // Bestehende Platte hat niedrigere Nummer - nur Verbrauch addieren
+                  existing.used_m += used_m;
+                  existing.used_g += used_g;
+                  console.log(`Keeping color/type from plate ${existing.plateIndex + 1}, combined usage`);
+                }
+              } else {
+                // Neues Filament
+                allFilaments.set(id, {
+                  type: type,
+                  color: color,
+                  used_m: used_m,
+                  used_g: used_g,
+                  plateIndex: i
+                });
+              }
+            }
+          } catch (e) {
+            console.warn(`Failed to read filaments from plate ${i + 1}:`, e);
+          }
         }
+      }
+
+      // Alle alten Filament-Knoten entfernen
+      const oldFilamentNodes = platesXML[0].getElementsByTagName("filament");
+      while (oldFilamentNodes.length > 0) {
+        oldFilamentNodes[0].remove();
+      }
+
+      // Neue Filament-Knoten aus gesammelten Daten erstellen
+      console.log(`Creating ${allFilaments.size} merged filament nodes`);
+      for (const [id, data] of allFilaments) {
+        // Verbrauchsdaten aus UI überschreiben falls vorhanden
+        let finalUsedM = data.used_m;
+        let finalUsedG = data.used_g;
+
+        const numericId = parseInt(id, 10);
+        if (usageMap.has(numericId)) {
+          const uiData = usageMap.get(numericId);
+          finalUsedM = uiData.usedM;
+          finalUsedG = uiData.usedG;
+          console.log(`Override usage for filament ${id} with UI data: ${finalUsedM}m, ${finalUsedG}g`);
+        }
+
+        const filament_tag = slicer_config_xml.createElement("filament");
+        filament_tag.id = String(id);
+        filament_tag.setAttribute("type", data.type || "PLA");
+        filament_tag.setAttribute("color", data.color || "#cccccc");
+        filament_tag.setAttribute("used_m", String(finalUsedM));
+        filament_tag.setAttribute("used_g", String(finalUsedG));
+
+        platesXML[0].appendChild(filament_tag);
       }
     }
 
