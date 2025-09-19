@@ -4,6 +4,7 @@ import { DEV_MODE } from "../index.js";
 import { state } from "./state.js";
 import { setMode } from "./mode.js";
 import { applyTheme, THEMES, initializeCSSVariables } from "./colors.js";
+import { applyVisibilityRules, UI_ELEMENTS, applyInitialState } from "./uiVisibility.js";
 import { getSecurePushOffEnabled } from "../ui/settings.js";
 import { removePlate, duplicatePlate } from "../ui/plates.js";
 import { update_progress } from "../ui/progressbar.js";
@@ -30,6 +31,9 @@ export function initialize_page() {
 
   // Initialize CSS variables from JavaScript config
   initializeCSSVariables();
+
+  // Apply initial UI state (hide everything until files are loaded)
+  applyInitialState();
 
   // Initialize infobox
   initInfobox();
@@ -236,9 +240,13 @@ export function initialize_page() {
         state.SELECTED_SWAP_LOGO = '3print';
         updateSwapModeLogos();
         updateFilenamePreview();
-        // Apply default A1M theme (yellow)
-        applyTheme('A1M_SWAP');
-        console.log('Selected 3Print logo and applied default theme');
+        // Apply appropriate theme based on current device mode
+        if (state.CURRENT_MODE === 'A1') {
+          applyTheme('A1_SWAP'); // Gray theme for A1
+        } else {
+          applyTheme('A1M_SWAP'); // Yellow theme for A1M
+        }
+        console.log('Selected 3Print logo and applied appropriate theme for', state.CURRENT_MODE);
       }
     });
   }
@@ -258,41 +266,29 @@ export function initialize_page() {
   }
 
   function updateAppModeDisplay(isPushOffMode) {
-    if (swapLogo && pushOffLogo && swapModeLogos) {
-      if (isPushOffMode) {
-        // Push Off Mode: Show push off logo
-        swapLogo.classList.add("hidden");
-        pushOffLogo.classList.remove("hidden");
-        swapModeLogos.classList.add("hidden");
-        // Apply push off theme
-        applyTheme('PUSHOFF');
-      } else {
-        // Swap Mode: Check if A1 or A1M
-        pushOffLogo.classList.add("hidden");
-        document.body.classList.remove("pushoff-mode");
+    const appMode = isPushOffMode ? 'PUSHOFF' : 'SWAP';
 
-        if (state.CURRENT_MODE === 'A1') {
-          // A1 Swap Mode: Show swap mode logos
-          swapLogo.classList.add("hidden");
-          swapModeLogos.classList.remove("hidden");
-          updateSwapModeLogos();
-          // Apply appropriate theme based on selected logo
-          if (state.SELECTED_SWAP_LOGO === 'printflow') {
-            applyTheme('PRINTFLOW');
-          } else {
-            applyTheme('A1_SWAP');
-          }
+    // Apply centralized visibility rules
+    applyVisibilityRules(appMode, state.CURRENT_MODE);
+
+    // Apply themes - the theme system handles body classes automatically
+    if (isPushOffMode) {
+      applyTheme('PUSHOFF');
+    } else {
+      // Swap Mode: Apply appropriate theme based on device and selected logo
+      if (state.CURRENT_MODE === 'A1') {
+        updateSwapModeLogos(); // Update 3Print/Printflow logo states
+        if (state.SELECTED_SWAP_LOGO === 'printflow') {
+          applyTheme('PRINTFLOW');
         } else {
-          // A1M Swap Mode: Show standard swap logo
-          swapLogo.classList.remove("hidden");
-          swapModeLogos.classList.add("hidden");
-          document.body.classList.remove("a1-swap-mode");
-          // Apply default A1M theme
-          applyTheme('A1M_SWAP');
+          applyTheme('A1_SWAP');
         }
+      } else {
+        applyTheme('A1M_SWAP');
       }
     }
 
+    // Note: Body classes are now managed by the theme system in applyTheme()
   }
 
   // Function to update filename extension preview
@@ -316,12 +312,11 @@ export function initialize_page() {
   window.updateFilenamePreview = updateFilenamePreview;
 
   if (modeToggleCheckbox) {
-    // Initial state - default to push off mode
+    // Initial state - default to push off mode (but don't update UI yet)
     state.APP_MODE = "pushoff";
     modeToggleCheckbox.checked = true; // Push Off Mode aktivieren
-    updateAppModeDisplay(true);
-    updateFilenamePreview();
-    
+    // Don't call updateAppModeDisplay yet - wait for files to be loaded
+
     modeToggleCheckbox.addEventListener("change", () => {
       const isPushOffMode = modeToggleCheckbox.checked;
       

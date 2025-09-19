@@ -86,6 +86,11 @@ body.printflow-mode .list_item.plate-selected {
   border-color: var(--printflow-color);
 }
 
+/* Standard SWAP Mode (A1M) - ensure primary color is applied */
+body:not(.pushoff-mode):not(.a1-swap-mode):not(.printflow-mode) #export {
+  background-color: var(--primary-color) !important;
+}
+
 *{ font-family:'Noto Sans','Arial',sans-serif; }
 
 body{
@@ -576,7 +581,7 @@ body.compact-mode #app_logo {
 /* ---------- Buttons / Actions ---------- */
 
 #export{
-  background-color:var(--primary-color);
+  background-color:var(--primary-color) !important;
   border:#555 2px solid;
   border-radius:5px;
   height: 60px;
@@ -1661,4 +1666,14 @@ body.a1-swap-mode .list_item.plate-selected {
   color: #666;
   font-style: italic;
   margin: 0 0 16px 0;
+}
+
+/* Test file export container - hidden by default (for Push Off Mode start) */
+#test_file_export_container {
+  display: none;
+}
+
+/* Show in Swap Mode - when pushoff-mode class is not present */
+body:not(.pushoff-mode) #test_file_export_container {
+  display: block;
 }
