@@ -894,7 +894,7 @@ export const SWAP_RULES = [
     action: "disable_between"
   },
   {
-    id: "a1_a1m_remove_all_finish_sounds",
+    id: "a1_remove_all_finish_sounds",
     description: "Remove all finish printer sounds for A1/A1M when sound removal mode is 'all'",
     enabled: true,
     order: 101,
@@ -903,7 +903,25 @@ export const SWAP_RULES = [
     useRegex: false,
     scope: "endseq",
     when: {
-      modes: ["A1", "A1M"],
+      modes: ["A1"],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_printer_sounds"],
+      requireFalse: []
+    },
+    onlyIf: { soundRemovalMode: "all" },
+    action: "disable_between"
+  },
+  {
+    id: "a1m_remove_all_finish_sounds",
+    description: "Remove all finish printer sounds for A1/A1M when sound removal mode is 'all'",
+    enabled: true,
+    order: 101,
+    start: ";=====printer finish  sound=========",
+    end: "M400 S1",
+    useRegex: false,
+    scope: "endseq",
+    when: {
+      modes: ["A1M"],
       appModes: ["pushoff", "swap"],
       requireTrue: ["opt_disable_printer_sounds"],
       requireFalse: []
@@ -930,7 +948,7 @@ export const SWAP_RULES = [
     action: "disable_between"
   },
   {
-    id: "a1_a1m_remove_between_plates_finish_sounds",
+    id: "a1_remove_between_plates_finish_sounds",
     description: "Remove finish printer sounds between plates for A1/A1M when sound removal mode is 'between_plates' (all plates except last)",
     enabled: true,
     order: 103,
@@ -939,7 +957,25 @@ export const SWAP_RULES = [
     useRegex: false,
     scope: "endseq",
     when: {
-      modes: ["A1", "A1M"],
+      modes: ["A1"],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_printer_sounds"],
+      requireFalse: []
+    },
+    onlyIf: { soundRemovalMode: "between_plates", plateIndexLessThan: "lastPlate" },
+    action: "disable_between"
+  },
+    {
+    id: "a1m_remove_between_plates_finish_sounds",
+    description: "Remove finish printer sounds between plates for A1/A1M when sound removal mode is 'between_plates' (all plates except last)",
+    enabled: true,
+    order: 103,
+    start: ";=====printer finish  sound=========",
+    end: "M400 S1",
+    useRegex: false,
+    scope: "endseq",
+    when: {
+      modes: ["A1M"],
       appModes: ["pushoff", "swap"],
       requireTrue: ["opt_disable_printer_sounds"],
       requireFalse: []

@@ -430,7 +430,6 @@ export function initialize_page() {
   state.li_prototype = tpl?.content?.firstElementChild || null;
   state.fileInput = document.getElementById("file");
   state.playlist_ol = document.getElementById("playlist_ol");
-  state.err = document.getElementById("err");
   state.p_scale = document.getElementById("progress_scale");
 
   update_progress(-1);
