@@ -4,6 +4,7 @@ import { state } from "./state.js";
 import { renderCoordInputs } from "../ui/plates.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { updateSettingsVisibilityForMode } from "../ui/settings.js";
+import { applyVisibilityRules, showUIAfterFileLoad } from "./uiVisibility.js";
 
 export const PRINTER_MODEL_MAP = {
   "Bambu Lab X1 Carbon": "X1",
@@ -63,6 +64,10 @@ export function setMode(mode) {
   if (updateAppModeDisplay) {
     updateAppModeDisplay(state.APP_MODE === "pushoff");
   }
+
+  // Show UI elements after file load and apply visibility rules
+  const appMode = state.APP_MODE === "pushoff" ? 'PUSHOFF' : 'SWAP';
+  showUIAfterFileLoad(appMode, mode);
 
   const isX1P1 = (mode === 'X1' || mode === 'P1');
   const shouldShowSettings = isX1P1 || ((mode === 'A1' || mode === 'A1M') && state.APP_MODE === 'pushoff');
