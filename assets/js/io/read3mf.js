@@ -27,16 +27,8 @@ function reject_file(message) {
 
   console.warn("[read3mf] reject_file:", msg);
 
-  // Fehlerbox (falls vorhanden), sonst Fallback-Alert
-  const host = state.err || document.getElementById("err");
-  if (host) {
-    const div = document.createElement("div");
-    div.className = "alert alert-danger";
-    div.textContent = msg;
-    host.appendChild(div);
-  } else {
-    showError(msg);
-  }
+  // Use the modern infobox system instead of legacy error container
+  showError(msg);
 
   // den zuletzt hinzugefügten File entfernen (wir haben ihn oben gepusht)
   if (Array.isArray(state.my_files) && state.my_files.length) {
@@ -407,10 +399,9 @@ export function handleFile(f) {
         }
       }
     }, function (e) {
-      var errorDiv = document.createElement("div");
-      errorDiv.className = "alert alert-danger";
-      errorDiv.textContent = "Error reading " + f.name + ": " + e.message;
-      state.err.appendChild(errorDiv);
+      const errorMessage = `Error reading ${f.name}: ${e.message}`;
+      console.error("[read3mf]", errorMessage);
+      showError(errorMessage);
       reject_file(err00);
     });
 }

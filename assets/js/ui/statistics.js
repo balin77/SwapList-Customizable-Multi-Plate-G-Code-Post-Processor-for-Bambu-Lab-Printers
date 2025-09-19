@@ -81,11 +81,30 @@ export function update_filament_usage() {
     const repEl = row.parentElement?.parentElement?.getElementsByClassName("p_rep")[0];
     const r = parseFloat(repEl?.value) || 0;
 
-    const mVal = parseFloat(row.getElementsByClassName("f_used_m")[0]?.innerText) || 0;
-    const gVal = parseFloat(row.getElementsByClassName("f_used_g")[0]?.innerText) || 0;
+    // Get original consumption values (store them in dataset if not already stored)
+    const mElement = row.getElementsByClassName("f_used_m")[0];
+    const gElement = row.getElementsByClassName("f_used_g")[0];
 
-    used_m[slot] += r * mVal;
-    used_g[slot] += r * gVal;
+    // Store original values on first run or if not stored
+    if (!mElement.dataset.originalValue) {
+      mElement.dataset.originalValue = mElement.innerText;
+    }
+    if (!gElement.dataset.originalValue) {
+      gElement.dataset.originalValue = gElement.innerText;
+    }
+
+    const mOriginal = parseFloat(mElement.dataset.originalValue) || 0;
+    const gOriginal = parseFloat(gElement.dataset.originalValue) || 0;
+
+    // Update displayed values to show multiplied consumption
+    const mDisplayed = mOriginal * r;
+    const gDisplayed = gOriginal * r;
+
+    mElement.innerText = mDisplayed.toFixed(2);
+    gElement.innerText = gDisplayed.toFixed(1);
+
+    used_m[slot] += mDisplayed;
+    used_g[slot] += gDisplayed;
 
     const tEl   = row.getElementsByClassName("f_type")[0];
     const tOrig = tEl?.dataset?.origType || "";
