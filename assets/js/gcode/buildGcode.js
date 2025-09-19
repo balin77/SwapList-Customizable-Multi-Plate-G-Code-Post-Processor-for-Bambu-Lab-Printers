@@ -281,23 +281,87 @@ export function buildA1PrePrintExtrusion(gcode, ctx) {
   if (temperatureMatch) {
     temperatures = temperatureMatch[1].split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
   }
-  
+
   // Extract first extruder from plate JSON if available in sourcePlateText
   let firstExtruder = 0;
   const plateJsonMatch = ctx.sourcePlateText?.match(/"first_extruder"\s*:\s*(\d+)/);
   if (plateJsonMatch) {
     firstExtruder = parseInt(plateJsonMatch[1]);
   }
-  
+
   // Get the temperature for the first extruder
   let printTemp = 220; // fallback temperature
   if (temperatures.length > firstExtruder) {
     printTemp = temperatures[firstExtruder];
   }
-  
+
   console.log(`[A1 PrePrint] First extruder: ${firstExtruder}, print temp: ${printTemp}`);
-  
+
   return `\nG0 E2.2 F800 ; Extrude a little so nozzle is filled for print start you might have to increase this up to E2.5 depending on your filament\nM104 S${printTemp} ; heat up to full temp in first few moves\n`;
+}
+
+export function buildA1MPushoffTempSequence(gcode, ctx) {
+  // Extract temperatures from GCODE comment
+  const temperatureMatch = gcode.match(/;\s*nozzle_temperature\s*=\s*([\d,]+)/i);
+  let temperatures = [];
+  if (temperatureMatch) {
+    temperatures = temperatureMatch[1].split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
+  }
+
+  // Extract first extruder from plate JSON if available in sourcePlateText
+  let firstExtruder = 0;
+  const plateJsonMatch = ctx.sourcePlateText?.match(/"first_extruder"\s*:\s*(\d+)/);
+  if (plateJsonMatch) {
+    firstExtruder = parseInt(plateJsonMatch[1]);
+  }
+
+  // Get the temperature for the first extruder
+  let baseTemp = 220; // fallback temperature
+  if (temperatures.length > firstExtruder) {
+    baseTemp = temperatures[firstExtruder];
+  }
+
+  // Calculate cooling temperature (baseTemp - 20)
+  const coolingTemp = Math.max(180, baseTemp - 20);
+
+  console.log(`[A1M Pushoff] First extruder: ${firstExtruder}, base temp: ${baseTemp}, cooling temp: ${coolingTemp}`);
+
+  return [
+    "M106 P1 S255 ; turn on fan to cool tip of nozzle, prevents oozing",
+    `M109 S${coolingTemp} ; wait for warm up but don't fully heat yet to prevent oozing`,
+    "G90",
+    "M83",
+    "M400"
+  ].join("\n");
+}
+
+export function buildA1MPushoffExtrusionSequence(gcode, ctx) {
+  // Extract temperatures from GCODE comment
+  const temperatureMatch = gcode.match(/;\s*nozzle_temperature\s*=\s*([\d,]+)/i);
+  let temperatures = [];
+  if (temperatureMatch) {
+    temperatures = temperatureMatch[1].split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
+  }
+
+  // Extract first extruder from plate JSON if available in sourcePlateText
+  let firstExtruder = 0;
+  const plateJsonMatch = ctx.sourcePlateText?.match(/"first_extruder"\s*:\s*(\d+)/);
+  if (plateJsonMatch) {
+    firstExtruder = parseInt(plateJsonMatch[1]);
+  }
+
+  // Get the temperature for the first extruder (full print temperature)
+  let printTemp = 220; // fallback temperature
+  if (temperatures.length > firstExtruder) {
+    printTemp = temperatures[firstExtruder];
+  }
+
+  console.log(`[A1M Pushoff Extrusion] First extruder: ${firstExtruder}, print temp: ${printTemp}`);
+
+  return [
+    "G0 E1 F800 ;Extrude a little so nozzle is filled for print start you might have to increase this up to E1.3 depending on your filament",
+    `M104 S${printTemp} ; heat up to full temp in first few moves`
+  ].join("\n");
 }
 
 export function bumpFirstExtrusionToE3(gcode, plateIndex = -1) {

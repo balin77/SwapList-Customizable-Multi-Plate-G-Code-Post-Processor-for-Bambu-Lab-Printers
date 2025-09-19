@@ -13,7 +13,8 @@
       "Grep(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\**)",
       "Read(/C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website/**)",
       "Bash(npm run dev:*)",
-      "Bash(del test_extrusion.js)"
+      "Bash(del test_extrusion.js)",
+      "Bash(del test_sound_settings.js)"
     ],
     "deny": [],
     "ask": []

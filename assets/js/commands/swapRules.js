@@ -1,12 +1,74 @@
 // /src/commands/swapRules.js
 
-export const HOMING_All_AXES = 
-`
+export const GCODE_WAIT_30SECONDS = `
+G4 P30000 ; wait 30 seconds
+`;
+
+export const HOMING_All_AXES = `
 G28; home all axes
 `;
 
+export const HOMING_XY_AXES = `
+G28 XY; home xy axes
+`;
 
-export const SWAP_START_A1M = `;swap ini code
+
+export const START_SOUND_A1M = `
+;=====start printer sound ===================
+M17
+M400 S1
+M1006 S1
+M1006 A0 B10 L100 C37 D10 M60 E37 F10 N60
+M1006 A0 B10 L100 C41 D10 M60 E41 F10 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A43 B10 L100 C46 D10 M70 E39 F10 N80
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
+M1006 A0 B10 L100 C43 D10 M60 E39 F10 N80
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
+M1006 A0 B10 L100 C41 D10 M80 E41 F10 N80
+M1006 A0 B10 L100 C44 D10 M80 E44 F10 N80
+M1006 A0 B10 L100 C49 D10 M80 E49 F10 N80
+M1006 A0 B10 L100 C0 D10 M80 E0 F10 N80
+M1006 A44 B10 L100 C48 D10 M60 E39 F10 N80
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
+M1006 A0 B10 L100 C44 D10 M80 E39 F10 N80
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
+M1006 A43 B10 L100 C46 D10 M60 E39 F10 N80
+M1006 W
+M18 
+;=====start printer sound ===================
+`;
+
+export const END_SOUND_A1M = `
+;=====printer finish  sound=========
+M17
+M400 S1
+M1006 S1
+M1006 A0 B20 L100 C37 D20 M40 E42 F20 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C46 D10 M80 E46 F10 N80
+M1006 A44 B20 L100 C39 D20 M60 E48 F20 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C39 D10 M60 E39 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C39 D10 M60 E39 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C48 D10 M60 E44 F10 N80
+M1006 A0 B10 L100 C0 D10 M60 E0 F10  N80
+M1006 A44 B20 L100 C49 D20 M80 E41 F20 N80
+M1006 A0 B20 L100 C0 D20 M60 E0 F20 N80
+M1006 A0 B20 L100 C37 D20 M30 E37 F20 N60
+M1006 W
+;=====printer finish  sound=========
+`;
+
+
+
+export const SWAP_START_A1M = `
 G91 ; 
 G0 Z50 F1000; 
 G0 Z-20; 
@@ -23,10 +85,12 @@ G0 Y3 F15000; back
 G0 Y-5 F200; snap 
 G4 P500; wait  
 G0 Y10 F1000; load 
-G0 Y20 F15000; ready `;
+G0 X70 Y70 F15000; ready 
+G28 Z; home z axis
+`;
 
 
-export const SWAP_END_A1M = `;swap
+export const SWAP_END_A1M = `
 G0 X-10 F5000;  park extruder 
 G0 Z175;
 G0 Y-5 F2000;
@@ -51,7 +115,8 @@ G0 Z100 Y186 F2000;
 G0 Y150;
 G4 P1000; wait  `;
 
-export const A1_3Print_START = `; ==== A1 PLATE_GRAB_ONLY ====
+export const A1_3Print_START = `
+; ==== A1 PLATE_GRAB_ONLY ====
 G91                     ; relative positioning
 G380 S2 Z50 F1200       ; lift Z by 50mm
 G380 S3 Z-20 F1200      ; lower Z by 20mm
@@ -61,53 +126,90 @@ G0  X-10 F5000          ; move X slightly out of the way
 
 ; --- Grab/Set Sequence ---
 ;M211 S0                 ; disable soft endstops
-G0  Y0   F5000          ; "grab": grip at the back
-G0  Y266 F2000          ; "pull": plate forward
-G0  Y60  F15000         ; "rehook"
-G4  P1000               ; wait for back hook to snap
-G0  Y266 F2000          ; "pull" again
+G0  Y0   F2500          ; "grab": grip at the back
+G0  Y170 F2000          ; "pull": plate forward
+G0  Y43 F2000           ; rehook
+G0  Y266 F2000          ; pull new plate forward
+G0  Y20 F2000           ; move to "set" position
+G4  P500
+G0  Y0 F300             ; snap plate
+G0  Y5 F300             ; let plate fall
+G4  P500
+G0  X150 Y150 F5000          ; safe park position
+G28 Z                   ; home Z axis
+; ==== End GRAB_ONLY ====`;
+
+export const A1_3Print_END = `
+; ==== A1 PLATE_SWAP_FULL ====
+G90;
+;M211 S0                ; disable soft endstops
+
+; --- Pull off sequence ---
+
+G0 Y266 Z260 F2500      ; bring plate in position and raise Z to activate front hook
+G4 P1000
+G0 Y50 F1000
+G0 Y0 Z160 F2500        ; hook new plate and lower Z
+
+; --- Push build plate off buildplate ---
+
+G0 Y170 F2000           ; rehook old plate at second front hook
+G0 Y43 F2000            ; release old plate from bed almost entirely
+
+; --- Set new plate sequence ---
+
+G0 Y266 F2000           ; pull new plate forward and push off old plate
 G0  Y20 F2000           ; move to "set" position
 G4  P500
 G0  Y0 F300             ; snap plate
 G0  Y5 F300             ; let plate fall
 G4  P500
 G0  Y150 F2000          ; safe park position
-; ==== End GRAB_ONLY ====`;
-
-export const A1_3Print_END = `; ==== A1 PLATE_SWAP_FULL ====
-G90;
-;M211 S0                 ; disable soft endstops
-;Pull off sequence
-G0 Y266 F2500           ; bring plate in position
-G4 P1000                ; wait for front hook to snap
-G0 Z260 F2000;          ; raise Z to activate front hook
-G4 P1000
-G0 Y50 F1000
-G0 Y0 F2500
-G0 Z120 F2000;          ; lower Z to release front hook
-;Push build plate off buildplate
-G0 Y266 F2000
-G0 Y43 F2000
-G0 Y266 F2000
-G0 Y250 F8000
-G0 Y266 F8000
-G0 Y43 F5000
-G0 Y266 F2000
-G0 Y250 F8000
-G0 Y266 F8000
-; Set new plate sequence
-G0  Y0   F5000          ; "grab": grip at the back
-G0  Y266 F2000          ; "pull": plate forward
-G0  Y60  F15000         ; "rehook"
-G4  P1000               ; wait for back hook to snap
-G0  Y266 F2000          ; "pull" again
-G0  Y20 F2000           ; move to "set" position
-G4  P500
-G0  Y0 F300             ; snap plate
-G0  Y5 F300             ; let plate fall
-G4  P500
-G0 Y150 F2000           ; safe park position 
 ; ==== Ende SWAP_FULL ====`;
+
+
+
+export const A1_PRINTFLOW_START = `
+M17 X1.2 Y1.2 Z0.75 ; START
+G28 XY
+;G1 Y0 F2000 ; move the bed backward and grab a new plate
+G1 Y250 F3000 ; move the bed with the new plate
+G1 Y265.5 F1500 ; move the bed with the new plate
+G1 Y30 F3000; 
+G1 Y-1.8 F500; 
+G1 Y8.5 F100; 
+M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power
+G1 Y-2 F500 
+M17 X1.2 Y1.2 Z0.75; motor current to 100% power
+G1 Z150 F1500 
+G1 X150 Y150 F5000; END
+G28 Z; Home z axis
+`;
+
+
+export const A1_PRINTFLOW_END = `
+M17 X1.2 Y1.2 Z0.75 ; START
+G1 Y264 Z235 F4000 ; move the bed all the way forward and hook
+G1 Y160 F1000
+G1 Y210 F1000
+G1 Y80 F1000
+G1 Y140 F1000
+G1 Y20 F1000 ; move the bed 250mm backward
+G1 Y150 F2000 ; move the bed 150mm Forward
+G1 Y-1 Z190 F3000 ; move the bed backward and grab a new plate
+G28 Y
+G1 Y250 F3000 ; move the bed with the new plate
+G1 Y265.5 F1500 ; move the bed with the new plate
+G1 Y30 F3000; 
+M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power
+G1 Y-2 F500; -1.8
+G1 Y8.5 F100; 
+M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power
+G1 Y-2 F500; -1.8
+M17 X1.2 Y1.2 Z0.75; motor current to 100% power
+G1 Z150 F1500 
+G1 Y150 F3000; END
+`;
 
 // commands.js
 export const SWAP_RULES = [
@@ -435,7 +537,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["A1"],
-      appModes: ["pushoff", "swap"],
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -444,7 +546,7 @@ export const SWAP_RULES = [
   },
   {
     id: "a1_bed_leveling",
-    description: "Disable bed leveling for A1 in pushoff and swap modes",
+    description: "Disable bed leveling for A1 in pushoff mode",
     enabled: true,
     start: ";===== bed leveling ==================================",
     end: ";===== bed leveling end ================================",
@@ -452,7 +554,7 @@ export const SWAP_RULES = [
     scope: "startseq",
     when: {
       modes: ["A1"],
-      appModes: ["pushoff", "swap"],
+      appModes: ["pushoff"],
       requireTrue: [],
       requireFalse: []
     },
@@ -589,6 +691,113 @@ export const SWAP_RULES = [
   // ===== A1M (SWAP MODE) RULES =====
 
   {
+    id: "a1m_pushoff_mech_mode_inner_disable",
+    description: "Disable code between G1 Z5 F3000 and M975 S1 within mech mode fast check block for A1M in pushoff mode",
+    enabled: true,
+    start: ";===== mech mode fast check============================",
+    end: ";===== wipe nozzle ===============================",
+    useRegex: false,
+    scope: "startseq",
+    innerStart: "G1 Z5 F3000",
+    innerEnd: "M975 S1",
+    innerUseRegex: false,
+    when: {
+      modes: ["A1M"],
+      appModes: ["pushoff"],
+      requireTrue: [],
+      requireFalse: []
+    },
+    action: "disable_inner_between"
+  },
+  {
+    id: "a1m_pushoff_disable_filament_type_next_line",
+    description: "Disable the line following M1002 set_filament_type within nozzle load line block for A1M in pushoff mode",
+    enabled: true,
+    start: ";===== nozzle load line ===============================",
+    end: "M412 S1 ;    ===turn on  filament runout detection===",
+    pattern: "M1002 set_filament_type:",
+    useRegex: false,
+    patternUseRegex: false,
+    scope: "startseq",
+    when: {
+      modes: ["A1M"],
+      appModes: ["pushoff"],
+      requireTrue: [],
+      requireFalse: []
+    },
+    action: "disable_next_line_after_pattern_in_range"
+  },
+  {
+    id: "a1m_pushoff_disable_m400_s2_to_extrude_cali",
+    description: "Disable code between M400 S2 and extrude cali test block for A1M in pushoff mode",
+    enabled: true,
+    start: "M400 S2",
+    end: ";===== extrude cali test ===============================",
+    useRegex: false,
+    scope: "startseq",
+    when: {
+      modes: ["A1M"],
+      appModes: ["pushoff"],
+      requireTrue: [],
+      requireFalse: []
+    },
+    action: "disable_between"
+  },
+  {
+    id: "a1m_pushoff_disable_extrude_cali_test_block",
+    description: "Disable extrude cali test block for A1M in pushoff mode",
+    enabled: true,
+    start: ";===== extrude cali test ===============================",
+    end: ";========turn off light and wait extrude temperature =============",
+    useRegex: false,
+    scope: "startseq",
+    when: {
+      modes: ["A1M"],
+      appModes: ["pushoff"],
+      requireTrue: [],
+      requireFalse: []
+    },
+    action: "disable_between"
+  },
+  {
+    id: "a1m_pushoff_insert_temp_sequence_after_extrude_cali",
+    description: "Insert temperature control sequence after extrude cali test comment for A1M in pushoff mode",
+    enabled: true,
+    order: 15,
+    action: "insert_after",
+    anchor: ";===== extrude cali test ===============================",
+    occurrence: "first",
+    useRegex: false,
+    scope: "startseq",
+    wrapWithMarkers: true,
+    when: {
+      modes: ["A1M"],
+      appModes: ["pushoff"],
+      requireTrue: [],
+      requireFalse: []
+    },
+    payloadFnId: "a1mPushoffTempSequence"
+  },
+  {
+    id: "a1m_pushoff_insert_extrusion_after_m1007",
+    description: "Insert extrusion sequence after M1007 S1 for A1M in pushoff mode",
+    enabled: true,
+    order: 20,
+    action: "insert_after",
+    anchor: "M1007 S1",
+    occurrence: "first",
+    useRegex: false,
+    scope: "startseq",
+    wrapWithMarkers: true,
+    when: {
+      modes: ["A1M"],
+      appModes: ["pushoff"],
+      requireTrue: [],
+      requireFalse: []
+    },
+    payloadFnId: "a1mPushoffExtrusionSequence"
+  },
+  {
     id: "a1m_prepend_startseg",
     description: "Insert A1M start segment AFTER ; EXECUTABLE_BLOCK_START on first plate (SWAP mode only)",
     enabled: true,
@@ -662,6 +871,81 @@ export const SWAP_RULES = [
       requireTrue: ["opt_purge"],
       requireFalse: []
     }
+  },
+
+  // ===== SOUND REMOVAL RULES =====
+
+  {
+    id: "a1_a1m_remove_all_start_sounds",
+    description: "Remove all start printer sounds for A1/A1M when sound removal mode is 'all'",
+    enabled: true,
+    order: 100,
+    start: ";=====start printer sound ===================",
+    end: ";=====avoid end stop =================",
+    useRegex: false,
+    scope: "startseq",
+    when: {
+      modes: ["A1", "A1M"],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_printer_sounds"],
+      requireFalse: []
+    },
+    onlyIf: { soundRemovalMode: "all" },
+    action: "disable_between"
+  },
+  {
+    id: "a1_a1m_remove_all_finish_sounds",
+    description: "Remove all finish printer sounds for A1/A1M when sound removal mode is 'all'",
+    enabled: true,
+    order: 101,
+    start: ";=====printer finish  sound=========",
+    end: ";M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power",
+    useRegex: false,
+    scope: "endseq",
+    when: {
+      modes: ["A1", "A1M"],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_printer_sounds"],
+      requireFalse: []
+    },
+    onlyIf: { soundRemovalMode: "all" },
+    action: "disable_between"
+  },
+  {
+    id: "a1_a1m_remove_between_plates_start_sounds",
+    description: "Remove start printer sounds between plates for A1/A1M when sound removal mode is 'between_plates' (all plates except first)",
+    enabled: true,
+    order: 102,
+    start: ";=====start printer sound ===================",
+    end: ";=====avoid end stop =================",
+    useRegex: false,
+    scope: "startseq",
+    when: {
+      modes: ["A1", "A1M"],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_printer_sounds"],
+      requireFalse: []
+    },
+    onlyIf: { soundRemovalMode: "between_plates", plateIndexGreaterThan: 0 },
+    action: "disable_between"
+  },
+  {
+    id: "a1_a1m_remove_between_plates_finish_sounds",
+    description: "Remove finish printer sounds between plates for A1/A1M when sound removal mode is 'between_plates' (all plates except last)",
+    enabled: true,
+    order: 103,
+    start: ";=====printer finish  sound=========",
+    end: ";M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power",
+    useRegex: false,
+    scope: "endseq",
+    when: {
+      modes: ["A1", "A1M"],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_printer_sounds"],
+      requireFalse: []
+    },
+    onlyIf: { soundRemovalMode: "between_plates", plateIndexLessThan: "lastPlate" },
+    action: "disable_between"
   },
 ];
 

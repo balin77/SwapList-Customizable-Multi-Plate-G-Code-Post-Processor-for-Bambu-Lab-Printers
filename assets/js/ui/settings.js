@@ -68,6 +68,23 @@ export function getExtraPushOffLevels() {
   return Number.isFinite(n) ? Math.max(1, Math.min(10, n)) : 1;
 }
 
+export function getDisablePrinterSounds() {
+  const el = document.getElementById("opt_disable_printer_sounds");
+  return !!(el && el.checked);
+}
+
+export function getSoundRemovalMode() {
+  const allSounds = document.getElementById("sound_removal_all");
+  const betweenPlates = document.getElementById("sound_removal_between_plates");
+
+  if (allSounds && allSounds.checked) {
+    return "all";
+  } else if (betweenPlates && betweenPlates.checked) {
+    return "between_plates";
+  }
+  return "all"; // default
+}
+
 export function getCooldownMaxTime() {
   const el = document.getElementById("cooldown_max_time");
   const n = el ? parseInt(el.value, 10) : 40;
@@ -436,8 +453,10 @@ export function getSettingForPlate(plateIndex, settingId) {
   }
 }
 
-// Make this function available globally for gcodeUtils
+// Make these functions available globally for gcodeUtils
 window.getSettingForPlate = getSettingForPlate;
+window.getDisablePrinterSounds = getDisablePrinterSounds;
+window.getSoundRemovalMode = getSoundRemovalMode;
 
 // Function to hide/show settings sections based on current app mode
 function updateSettingsVisibilityForMode() {
@@ -453,8 +472,19 @@ function updateSettingsVisibilityForMode() {
       if (h4 && h4.textContent.includes('Cooling')) {
         group.classList.toggle('hidden', isSwapMode);
       }
+      // Hide AMS Optimization section for non-A1/A1M printers
+      if (h4 && h4.textContent.includes('AMS Optimization')) {
+        group.classList.toggle('hidden', !isA1Mode);
+      }
+      // Hide Printer Sounds section for non-A1/A1M printers
+      if (h4 && h4.textContent.includes('Printer Sounds')) {
+        group.classList.toggle('hidden', !isA1Mode);
+      }
     });
   }
+
+  // Setup sound settings event listeners if in A1/A1M mode
+  setupSoundSettingsListeners();
 
   // Per-plate settings sections in template
   const plateSettings = document.getElementById('plate_specific_settings');
@@ -496,6 +526,32 @@ function updateSettingsVisibilityForMode() {
   }
 
   console.log(`Settings visibility updated - SWAP: ${isSwapMode}, A1: ${isA1Mode}, Mode: ${state.CURRENT_MODE}`);
+}
+
+// Function to setup sound settings event listeners
+function setupSoundSettingsListeners() {
+  const disableSoundsCheckbox = document.getElementById("opt_disable_printer_sounds");
+  const soundOptions = document.getElementById("sound_removal_options");
+
+  if (disableSoundsCheckbox && soundOptions) {
+    // Remove existing listeners first
+    disableSoundsCheckbox.removeEventListener("change", toggleSoundOptions);
+
+    // Add new listener
+    disableSoundsCheckbox.addEventListener("change", toggleSoundOptions);
+
+    // Set initial state
+    toggleSoundOptions();
+  }
+}
+
+function toggleSoundOptions() {
+  const disableSoundsCheckbox = document.getElementById("opt_disable_printer_sounds");
+  const soundOptions = document.getElementById("sound_removal_options");
+
+  if (disableSoundsCheckbox && soundOptions) {
+    soundOptions.style.display = disableSoundsCheckbox.checked ? "block" : "none";
+  }
 }
 
 // Export the function for external use

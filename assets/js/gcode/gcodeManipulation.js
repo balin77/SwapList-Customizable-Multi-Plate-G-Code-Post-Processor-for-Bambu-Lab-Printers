@@ -193,6 +193,22 @@ export function optimizeAMSBlocks(gcodeArray) {
   // Defensive: falscher Typ -> nichts tun
   if (!Array.isArray(gcodeArray)) return gcodeArray;
 
+  // Check if AMS optimization is enabled via checkbox
+  const amsOptimizationCheckbox = document.getElementById('opt_ams_optimization');
+  const isAmsOptimizationEnabled = amsOptimizationCheckbox ? amsOptimizationCheckbox.checked : true;
+
+  if (!isAmsOptimizationEnabled) {
+    console.log('AMS optimization skipped - disabled by user setting');
+    return gcodeArray;
+  }
+
+  // Only apply optimization for A1/A1M printers in swap mode
+  const isA1Mode = state.CURRENT_MODE === 'A1' || state.CURRENT_MODE === 'A1M';
+  if (!isA1Mode || state.APP_MODE !== 'swap') {
+    console.log(`AMS optimization skipped - only applies to A1/A1M in swap mode (current: ${state.CURRENT_MODE}, ${state.APP_MODE})`);
+    return gcodeArray;
+  }
+
   // Wir erkennen AMS-Swaps an "\nM620 S"
   const ams_flag = "\nM620 S";
 
@@ -311,7 +327,79 @@ export function keepOnlyLastMatching(gcode, pattern, flags = "gm", appendIfMissi
   return out;
 }
 
-function _alreadyInserted(gcode, guardId) {
+export function disableNextLineAfterPattern(gcode, pattern, { useRegex = false } = {}) {
+  const re = useRegex
+    ? new RegExp(pattern, "gm")
+    : new RegExp(`(^|\\n)[ \\t]*${_escRe(pattern)}[^\\n]*(\\n|$)`, "gm");
+
+  let result = gcode;
+  let match;
+  const processedPositions = new Set(); // Vermeide doppelte Bearbeitung
+
+  // Reset regex lastIndex for multiple matches
+  re.lastIndex = 0;
+
+  while ((match = re.exec(gcode)) !== null) {
+    const matchEnd = match.index + match[0].length;
+
+    // Überspringe bereits bearbeitete Positionen
+    if (processedPositions.has(match.index)) {
+      continue;
+    }
+    processedPositions.add(match.index);
+
+    // Finde die nächste Zeile nach dem Match
+    const nextLineStart = gcode.indexOf('\n', matchEnd);
+    if (nextLineStart === -1) {
+      // Keine weitere Zeile vorhanden
+      continue;
+    }
+
+    const nextLineEnd = gcode.indexOf('\n', nextLineStart + 1);
+    const actualEnd = nextLineEnd === -1 ? gcode.length : nextLineEnd;
+
+    // Extrahiere die nächste Zeile
+    const nextLine = gcode.slice(nextLineStart + 1, actualEnd);
+
+    // Überspringe leere Zeilen oder bereits auskommentierte Zeilen
+    if (!nextLine.trim() || nextLine.trim().startsWith(';')) {
+      continue;
+    }
+
+    // Ersetze die nächste Zeile durch eine auskommentierte Version
+    if (isDevModeEnabled()) {
+      const commentedLine = `; ${nextLine.trim()} ; DISABLED_NEXT_LINE_AFTER_PATTERN`;
+      result = result.slice(0, nextLineStart + 1) + commentedLine + result.slice(actualEnd);
+    } else {
+      // In production mode, remove the line completely
+      result = result.slice(0, nextLineStart + 1) + result.slice(actualEnd + 1);
+    }
+
+    // Verhindere infinite loops bei zero-length matches
+    if (match[0].length === 0) {
+      re.lastIndex++;
+    }
+  }
+
+  return result;
+}
+
+export function disableNextLineAfterPatternInRange(gcode, opts) {
+  const { start, end, pattern, useRegex = false, patternUseRegex = false } = opts;
+  const outerRange = _findRange(gcode, start, end, useRegex);
+  if (!outerRange.found) return gcode;
+
+  const before = gcode.slice(0, outerRange.sIdx);
+  let middle = gcode.slice(outerRange.sIdx, outerRange.eIdx);
+  const after = gcode.slice(outerRange.eIdx);
+
+  // Apply disableNextLineAfterPattern only to the middle part
+  middle = disableNextLineAfterPattern(middle, pattern, { useRegex: patternUseRegex });
+
+  return before + middle + after;
+}
+
+export function _alreadyInserted(gcode, guardId) {
   if (!guardId) return false;
   // If dev mode is disabled, markers are not inserted, so never consider anything as already inserted
   if (!isDevModeEnabled()) return false;
