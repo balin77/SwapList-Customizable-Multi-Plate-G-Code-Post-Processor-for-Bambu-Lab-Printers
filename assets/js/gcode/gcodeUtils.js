@@ -85,6 +85,36 @@ export function _ruleActiveWhy(rule, ctx) {
   if (Number.isFinite(onlyIf.plateIndexGreaterThan) && !(ctx.plateIndex > onlyIf.plateIndexGreaterThan)) return "plateIndexGreaterThan_false";
   if (Number.isFinite(onlyIf.plateIndexEquals) && !(ctx.plateIndex === onlyIf.plateIndexEquals)) return "plateIndexEquals_false";
   if (typeof onlyIf.isLastPlate === "boolean" && !(!!ctx.isLastPlate === onlyIf.isLastPlate)) return "isLastPlate_mismatch";
+
+  // Handle plateIndexLessThan with special case for "lastPlate"
+  if (onlyIf.plateIndexLessThan !== undefined) {
+    let maxIndex;
+    if (onlyIf.plateIndexLessThan === "lastPlate") {
+      maxIndex = (ctx.totalPlates || 1) - 1;
+    } else if (Number.isFinite(onlyIf.plateIndexLessThan)) {
+      maxIndex = onlyIf.plateIndexLessThan;
+    } else {
+      return "plateIndexLessThan_invalid";
+    }
+    if (!(ctx.plateIndex < maxIndex)) return "plateIndexLessThan_false";
+  }
+
+  // Check sound removal mode
+  if (onlyIf.soundRemovalMode) {
+    let currentMode = "all"; // default
+    try {
+      // Import and use the sound settings functions
+      if (typeof getSoundRemovalMode === 'function') {
+        currentMode = getSoundRemovalMode();
+      } else if (typeof window !== 'undefined' && window.getSoundRemovalMode) {
+        currentMode = window.getSoundRemovalMode();
+      }
+    } catch (e) {
+      console.warn("Failed to get sound removal mode:", e);
+    }
+    if (currentMode !== onlyIf.soundRemovalMode) return `soundRemovalMode_mismatch:${onlyIf.soundRemovalMode}`;
+  }
+
   return "active";
 }
 

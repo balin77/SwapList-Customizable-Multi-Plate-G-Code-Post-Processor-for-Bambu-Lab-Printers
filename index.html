@@ -21,7 +21,10 @@
     <div id="app_logo">
       <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo" class="hidden">
       <img id="logo_pushoff" src="assets/img/logo_clearbed_app.png" height="42" alt="clearbed logo">
-      <img id="logo_a1_swap" src="assets/img/3Print.png" height="42" alt="3print logo" class="hidden">
+      <div id="swap_mode_logos" class="hidden">
+        <img id="logo_3print" src="assets/img/3Print.png" height="42" alt="3print logo" class="swap-logo active">
+        <img id="logo_printflow" src="assets/img/printflowlogo.svg" height="42" alt="printflow logo" class="swap-logo inactive">
+      </div>
     </div>
 
     <div id="app_header" class="compact">
@@ -152,25 +155,6 @@
           <div id="global_settings_section">
             <h4>Global Settings</h4>
 
-            <!-- Override Settings (Global) -->
-            <div class="settings-group">
-              <h4>Project Settings</h4>
-              <label class="opt">
-                <input type="checkbox" id="opt_override_metadata">
-                Override project &amp; filament settings
-                <details class="tool_info" id="opt_override_metadata_help">
-                  <summary></summary>
-                  <p>
-                    When <b>on</b>, the app regenerates
-                    the filament entries and material/printer settings. This is essential if you use new
-                    AMS slot assignments that weren't present in the original G-code. When <b>off</b>,
-                    the original 3MF metadata is kept as-is; if you remap to AMS slots that weren't
-                    originally defined, the printer or Studio may report a mismatch.
-                  </p>
-                </details>
-              </label>
-            </div>
-
             <!-- Cooling Settings (Global) -->
             <div class="settings-group">
               <h4>Cooling & Bed Temperature</h4>
@@ -209,6 +193,69 @@
               </div>
             </div>
 
+            <!-- Printer Sounds Settings (Global) -->
+            <div class="settings-group printer-sounds-settings">
+              <h4>Printer Sounds</h4>
+              <label class="opt">
+                <input type="checkbox" id="opt_disable_printer_sounds" checked>
+                Disable printer sounds
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>
+                    Controls printer sound removal for A1/A1M printers. When enabled, you can choose to
+                    remove all sounds or only sounds between plates. This setting only affects A1/A1M printers.
+                  </p>
+                </details>
+              </label>
+
+              <div id="sound_removal_options" class="settings-row" style="margin-left: 20px;">
+                <label>
+                  <input type="radio" name="sound_removal_mode" id="sound_removal_all" value="all" checked>
+                  Remove all printer sounds
+                </label>
+                <label>
+                  <input type="radio" name="sound_removal_mode" id="sound_removal_between_plates" value="between_plates">
+                  Remove sounds only between plates
+                </label>
+              </div>
+            </div>
+
+            <!-- AMS Optimization Settings (Global) -->
+            <div class="settings-group ams-optimization-settings">
+              <h4>AMS Optimization</h4>
+              <label class="opt">
+                <input type="checkbox" id="opt_ams_optimization" checked>
+                Enable AMS redundancy removal
+                <details class="tool_info" id="opt_ams_optimization_help">
+                  <summary></summary>
+                  <p>
+                    When <b>on</b>, the app automatically removes redundant AMS filament swaps
+                    between plates. This eliminates unnecessary "unload all" + "load same slot"
+                    sequences, making multi-plate prints more efficient. Only available for A1/A1M printers.
+                  </p>
+                </details>
+              </label>
+            </div>
+
+            <!-- Override Settings (Global) -->
+            <div class="settings-group">
+              <h4>Project Settings</h4>
+              <label class="opt">
+                <input type="checkbox" id="opt_override_metadata">
+                Override project &amp; filament settings
+                <details class="tool_info" id="opt_override_metadata_help">
+                  <summary></summary>
+                  <p>
+                    When <b>on</b>, the app regenerates
+                    the filament entries and material/printer settings. This is essential if you use new
+                    AMS slot assignments that weren't present in the original G-code. When <b>off</b>,
+                    the original 3MF metadata is kept as-is; if you remap to AMS slots that weren't
+                    originally defined, the printer or Studio may report a mismatch.
+                  </p>
+                </details>
+              </label>
+            </div>
+
             <!-- Custom File Name Settings (Global) -->
             <div class="settings-group">
               <h4>File Settings</h4>
@@ -216,7 +263,7 @@
                 <div class="settings-col">
                   <label for="file_name">Custom file name:</label>
                   <input id="file_name" autocomplete="off" type="text" style="width: 18ch" placeholder="output_file_name">
-                  <span> .swap.3mf</span>
+                  <span id="filename_extension_preview"> .swap.3mf</span>
                 </div>
               </div>
 

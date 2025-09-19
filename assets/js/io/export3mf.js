@@ -424,8 +424,17 @@ export async function export_3mf() {
 
       const fnField = document.getElementById("file_name");
       const baseName = (fnField.value || fnField.placeholder || "output").trim();
+
+      // Build filename with printer type, mode, and submode (only for swap mode)
+      const printerType = state.CURRENT_MODE || "unknown";
+      const mode = state.APP_MODE || "swap";
+      const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+      const fileName = submode
+        ? `${baseName}.${printerType}.${mode}.${submode}.3mf`
+        : `${baseName}.${printerType}.${mode}.3mf`;
+
       const url = URL.createObjectURL(zipBlob);
-      download(`${baseName}.swap.3mf`, url);
+      download(fileName, url);
 
       update_progress(100);
       setTimeout(() => update_progress(-1), 400);

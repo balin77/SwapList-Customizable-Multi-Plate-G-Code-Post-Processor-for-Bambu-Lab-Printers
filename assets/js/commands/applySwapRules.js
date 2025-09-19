@@ -10,7 +10,13 @@ import {
   disableInnerBetweenMarkers,
   removeLinesMatching,
   keepOnlyLastMatching,
+  disableNextLineAfterPattern,
+  disableNextLineAfterPatternInRange,
+  _alreadyInserted,
 } from "../gcode/gcodeManipulation.js";
+
+import { A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END } from "../commands/swapRules.js";
+import { state } from "../config/state.js";
 import { DEV_MODE } from "../index.js";
 
 import {
@@ -24,6 +30,8 @@ import {
   buildA1PrePrintExtrusion,
   buildA1EndseqCooldown,
   buildA1SafetyClear,
+  buildA1MPushoffTempSequence,
+  buildA1MPushoffExtrusionSequence,
 } from "../gcode/buildGcode.js";
 
 import {
@@ -36,6 +44,21 @@ import {
 } from "../gcode/gcodeUtils.js";
 
 import { showWarning } from "../ui/infobox.js";
+
+// Helper function to get dynamic payload based on state
+function getDynamicPayload(originalPayload, ctx) {
+  // Handle A1 start sequence selection based on logo
+  if (originalPayload === A1_3Print_START && ctx.mode === "A1") {
+    return state.SELECTED_SWAP_LOGO === "printflow" ? A1_PRINTFLOW_START : A1_3Print_START;
+  }
+
+  // Handle A1 end sequence selection based on logo
+  if (originalPayload === A1_3Print_END && ctx.mode === "A1") {
+    return state.SELECTED_SWAP_LOGO === "printflow" ? A1_PRINTFLOW_END : A1_3Print_END;
+  }
+
+  return originalPayload;
+}
 
 // ===== Regel-Engine mit Abschnitt-Scopes =====
 
@@ -153,9 +176,39 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
           });
           break;
         }
+        case "disable_next_line_after_pattern": {
+          const matches = _countPattern(out, rule.pattern, rule.useRegex ? "gm" : "gm");
+          extra.matches = matches;
+          extra.patternFound = matches > 0;
+          out = disableNextLineAfterPattern(out, rule.pattern, { useRegex: !!rule.useRegex });
+          break;
+        }
+        case "disable_next_line_after_pattern_in_range": {
+          const r = _findRange(out, rule.start, rule.end, !!rule.useRegex);
+          extra.outerRangeFound = r.found;
+          if (r.found) {
+            const middlePart = out.slice(r.sIdx, r.eIdx);
+            const matches = _countPattern(middlePart, rule.pattern, rule.patternUseRegex ? "gm" : "gm");
+            extra.matches = matches;
+            extra.patternFound = matches > 0;
+          } else {
+            extra.matches = 0;
+            extra.patternFound = false;
+          }
+          out = disableNextLineAfterPatternInRange(out, {
+            start: rule.start,
+            end: rule.end,
+            pattern: rule.pattern,
+            useRegex: !!rule.useRegex,
+            patternUseRegex: !!rule.patternUseRegex
+          });
+          break;
+        }
         case "insert_after": {
           let payload = rule.payload || "";
           if (!payload && rule.payloadFnId) payload = resolveDynamicPayload(rule.payloadFnId, out, ctx);
+          // Apply dynamic payload for A1 logo selection
+          payload = getDynamicPayload(payload, ctx);
           extra.anchorFound = _hasAnchor(out, rule.anchor, !!rule.useRegex);
           extra.payloadBytes = (payload || "").length;
           const before = out;
@@ -172,6 +225,8 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
           let payload = rule.payload || "";
           if (!payload && rule.payloadVar) payload = resolvePayloadVar(rule.payloadVar);
           if (!payload && rule.payloadFnId) payload = resolveDynamicPayload(rule.payloadFnId, out, ctx);
+          // Apply dynamic payload for A1 logo selection
+          payload = getDynamicPayload(payload, ctx);
 
           extra.anchorFound = _hasAnchor(out, rule.anchor, !!rule.useRegex);
           extra.payloadBytes = (payload || "").length;
@@ -203,6 +258,24 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
       const plateNum = (ctx.plateIndex ?? -1) + 1;
       const warningMsg = `SwapRule "${rule.id}" failed on plate ${plateNum}: ${extra.error}`;
       showWarning(warningMsg, 30000); // Show for 30 seconds
+    }
+
+    // Check for potential issues with rule application
+    const applied = (out !== src);
+    if (!applied && rule.action === "disable_between" && extra.rangeFound === false) {
+      const plateNum = (ctx.plateIndex ?? -1) + 1;
+      const warningMsg = `SwapRule "${rule.id}" on plate ${plateNum}: Could not find markers "${rule.start}" to "${rule.end}"`;
+      showWarning(warningMsg, 25000);
+    }
+    if (!applied && rule.action === "insert_after" && extra.anchorFound === false) {
+      const plateNum = (ctx.plateIndex ?? -1) + 1;
+      const warningMsg = `SwapRule "${rule.id}" on plate ${plateNum}: Could not find anchor "${rule.anchor}"`;
+      showWarning(warningMsg, 25000);
+    }
+    if (!applied && rule.action === "insert_before" && extra.anchorFound === false) {
+      const plateNum = (ctx.plateIndex ?? -1) + 1;
+      const warningMsg = `SwapRule "${rule.id}" on plate ${plateNum}: Could not find anchor "${rule.anchor}"`;
+      showWarning(warningMsg, 25000);
     }
 
     _logRule(rule, ctx, scope, src, out, extra);
@@ -253,6 +326,10 @@ function resolveDynamicPayload(fnId, gcode, ctx) {
       return buildA1EndseqCooldown(gcode, ctx);
     case "a1SafetyClear":
       return buildA1SafetyClear(gcode, ctx);
+    case "a1mPushoffTempSequence":
+      return buildA1MPushoffTempSequence(gcode, ctx);
+    case "a1mPushoffExtrusionSequence":
+      return buildA1MPushoffExtrusionSequence(gcode, ctx);
     default:
       return "";
   }

@@ -3,31 +3,33 @@
   --ci_2:#00eeff;
   --primary-color:#EDF07A; /* Gelb für A1M Swap Mode */
   --a1-swap-color:#B0B0B0; /* Grau für A1 Swap Mode */
+  --pushoff-color:#E8A8A8; /* Rot für Push Off Mode */
+  --printflow-color:#7270ccff; /* Blau für Printflow Mode */
 }
 
 /* Push Off Mode Farbschema - alle Elemente direkt überschreiben */
 body.pushoff-mode #export {
-  background-color: #E8A8A8 !important;
+  background-color: var(--pushoff-color) !important;
 }
 
 body.pushoff-mode #reset {
-  color: #E8A8A8 !important;
+  color: var(--pushoff-color) !important;
 }
 
 body.pushoff-mode details[open].tool_info summary::before {
-  background-color: #E8A8A8 !important;
+  background-color: var(--pushoff-color) !important;
 }
 
 body.pushoff-mode .mode-toggle input:checked + label {
-  background: #E8A8A8 !important;
+  background: var(--pushoff-color) !important;
 }
 
 body.pushoff-mode .mode-slider {
-  background-color: #E8A8A8 !important;
+  background-color: var(--pushoff-color) !important;
 }
 
 body.pushoff-mode .plate-duplicate {
-  background: #E8A8A8 !important;
+  background: var(--pushoff-color) !important;
 }
 
 /* A1 Swap Mode Farbschema - Grau statt Gelb */
@@ -55,11 +57,41 @@ body.a1-swap-mode .plate-duplicate {
   background: var(--a1-swap-color) !important;
 }
 
+/* Printflow Mode Farbschema - blaue Farben */
+body.printflow-mode #export {
+  background-color: var(--printflow-color) !important;
+}
+
+body.printflow-mode #reset {
+  color: var(--printflow-color) !important;
+}
+
+body.printflow-mode details[open].tool_info summary::before {
+  background-color: var(--printflow-color) !important;
+}
+
+body.printflow-mode .mode-toggle input:checked + label {
+  background: var(--printflow-color) !important;
+}
+
+body.printflow-mode .mode-slider {
+  background-color: var(--printflow-color) !important;
+}
+
+body.printflow-mode .plate-duplicate {
+  background: var(--printflow-color) !important;
+}
+
+body.printflow-mode .list_item.plate-selected {
+  border-color: var(--printflow-color);
+}
+
 *{ font-family:'Noto Sans','Arial',sans-serif; }
 
 body{
   font-size:14px;
   margin:0;
+  overflow-y: scroll; /* Always show vertical scrollbar */
 }
 
 /* Printer Model Info Styling */
@@ -174,7 +206,7 @@ body{
 .infobox-warning,
 .infobox-error {
   background-color: #ffcccc; /* using existing red background */
-  border-color: #E8A8A8; /* using existing red tone from pushoff mode */
+  border-color: var(--pushoff-color); /* using existing red tone from pushoff mode */
   color: #2d3748;
 }
 
@@ -390,10 +422,41 @@ details.tool_info summary::before{ content:'( ? )'; }
   width: 100%;
   padding: 10px 0;
   margin-bottom: 10px;
+  height: 62px; /* Fixed height to prevent animation jumping */
 }
 
 #app_logo img {
   padding: 0;
+}
+
+/* Swap Mode Logo Container */
+#swap_mode_logos {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Swap Logo Base Styles */
+.swap-logo {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+/* Active Logo Styling */
+.swap-logo.active {
+  height: 42px;
+  opacity: 1;
+}
+
+/* Inactive Logo Styling */
+.swap-logo.inactive {
+  height: 32px;
+  opacity: 0.6;
+}
+
+.swap-logo.inactive:hover {
+  opacity: 0.8;
 }
 
 #app_header {
@@ -478,7 +541,7 @@ body.compact-mode #app_logo {
   border-right:#777 1px solid;
   padding-right:40px !important;
   flex-shrink: 0;
-  width: 190px;
+  width: 250px;
 }
 #filament_statistics{
   padding-left:25px;
@@ -1575,7 +1638,7 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
 
 /* Theme-specific selected plate borders */
 body.pushoff-mode .list_item.plate-selected {
-  border-color: #E8A8A8;
+  border-color: var(--pushoff-color);
 }
 
 body.a1-swap-mode .list_item.plate-selected {

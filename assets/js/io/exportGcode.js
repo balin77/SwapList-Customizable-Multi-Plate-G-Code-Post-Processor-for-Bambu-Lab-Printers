@@ -52,7 +52,7 @@ export async function export_gcode_txt() {
     } else {
       // NORMAL MODE: Exportiere nur modifizierten kombinierten GCODE mit einfachem Namen
       const finalBase = isTestFileExport ? `${base}_test` : base;
-      await exportNormalMode(finalBase, modeTag, modifiedLooped);
+      await exportNormalMode(finalBase, modeTag, modifiedCombined);
     }
 
     update_progress(100);
@@ -66,17 +66,22 @@ export async function export_gcode_txt() {
 
 async function exportDevMode(base, modeTag, purgeTag, data) {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  // Build filename with printer type, mode, and submode (only for swap mode)
+  const mode = state.APP_MODE || "swap";
+  const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+  const filenamePart = submode ? `${modeTag}.${mode}.${submode}` : `${modeTag}.${mode}`;
+
   const zip = new JSZip();
-  const root = zip.folder(`${base}_gcode_exports_${modeTag}${purgeTag}_${stamp}`);
+  const root = zip.folder(`${base}_gcode_exports_${filenamePart}${purgeTag}_${stamp}`);
 
   // Combined files - use lazy evaluation to avoid memory issues
   try {
-    root.file(`${base}_${modeTag}${purgeTag}_original_combined.txt`, data.originalCombined);
+    root.file(`${base}_${filenamePart}${purgeTag}_original_combined.txt`, data.originalCombined);
   } catch (err) {
     console.warn("Skipping original_combined.txt due to size limitations:", err.message);
   }
   try {
-    root.file(`${base}_${modeTag}${purgeTag}_modified_combined.txt`, data.modifiedCombined);
+    root.file(`${base}_${filenamePart}${purgeTag}_modified_combined.txt`, data.modifiedCombined);
   } catch (err) {
     console.warn("Skipping modified_combined.txt due to size limitations:", err.message);
   }
@@ -102,7 +107,7 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
     return filament ? filament.settings : null;
   });
   const projectSettings = buildProjectSettingsForUsedSlots(data.originalCombined, templates);
-  root.file(`${base}_${modeTag}${purgeTag}_project_settings.txt`, projectSettings);
+  root.file(`${base}_${filenamePart}${purgeTag}_project_settings.txt`, projectSettings);
 
   update_progress(60);
   const zipBlob = await zip.generateAsync(
@@ -111,18 +116,23 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
   );
 
   const zipUrl = URL.createObjectURL(zipBlob);
-  download(`${base}_${modeTag}${purgeTag}_gcode_exports.zip`, zipUrl);
+  download(`${base}_${filenamePart}${purgeTag}_gcode_exports.zip`, zipUrl);
 }
 
 
-async function exportNormalMode(base, modeTag, modifiedLooped) {
+async function exportNormalMode(base, modeTag, modifiedCombined) {
   update_progress(60);
 
+  // Build filename with printer type, mode, and submode (only for swap mode)
+  const mode = state.APP_MODE || "swap";
+  const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+  const filename = submode
+    ? `${base}.${modeTag}.${mode}.${submode}.gcode`
+    : `${base}.${modeTag}.${mode}.gcode`;
+
   // Create GCODE file directly from array - avoids string length issues
-  const gcodeBlob = new Blob(modifiedLooped.map(line => line + '\n'), { type: "text/x-gcode" });
+  const gcodeBlob = new Blob(modifiedCombined.map(line => line + '\n'), { type: "text/x-gcode" });
   const gcodeUrl = URL.createObjectURL(gcodeBlob);
 
-  // Simple filename: base_mode.gcode (no purge tags for normal users)
-  const filename = `${base}_${modeTag}.gcode`;
   download(filename, gcodeUrl);
 }

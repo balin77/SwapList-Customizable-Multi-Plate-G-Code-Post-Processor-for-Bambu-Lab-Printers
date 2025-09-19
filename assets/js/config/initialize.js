@@ -3,6 +3,7 @@
 import { DEV_MODE } from "../index.js";
 import { state } from "./state.js";
 import { setMode } from "./mode.js";
+import { applyTheme, THEMES, initializeCSSVariables } from "./colors.js";
 import { getSecurePushOffEnabled } from "../ui/settings.js";
 import { removePlate, duplicatePlate } from "../ui/plates.js";
 import { update_progress } from "../ui/progressbar.js";
@@ -26,6 +27,9 @@ import {
 } from "../ui/filamentColors.js";
 
 export function initialize_page() {
+
+  // Initialize CSS variables from JavaScript config
+  initializeCSSVariables();
 
   // Initialize infobox
   initInfobox();
@@ -201,46 +205,122 @@ export function initialize_page() {
   const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox");
   const swapLogo = document.getElementById("logo");
   const pushOffLogo = document.getElementById("logo_pushoff");
-  const a1SwapLogo = document.getElementById("logo_a1_swap");
+  const swapModeLogos = document.getElementById("swap_mode_logos");
+  const logo3print = document.getElementById("logo_3print");
+  const logoPrintflow = document.getElementById("logo_printflow");
+
+  // State to track which logo is selected in swap mode
+  let selectedSwapLogo = '3print'; // '3print' or 'printflow'
+
+  function updateSwapModeLogos() {
+    if (logo3print && logoPrintflow) {
+      if (selectedSwapLogo === '3print') {
+        logo3print.classList.remove('inactive');
+        logo3print.classList.add('active');
+        logoPrintflow.classList.remove('active');
+        logoPrintflow.classList.add('inactive');
+      } else {
+        logoPrintflow.classList.remove('inactive');
+        logoPrintflow.classList.add('active');
+        logo3print.classList.remove('active');
+        logo3print.classList.add('inactive');
+      }
+    }
+  }
+
+  // Logo click handlers for swap mode
+  if (logo3print) {
+    logo3print.addEventListener('click', () => {
+      if (selectedSwapLogo !== '3print') {
+        selectedSwapLogo = '3print';
+        state.SELECTED_SWAP_LOGO = '3print';
+        updateSwapModeLogos();
+        updateFilenamePreview();
+        // Apply default A1M theme (yellow)
+        applyTheme('A1M_SWAP');
+        console.log('Selected 3Print logo and applied default theme');
+      }
+    });
+  }
+
+  if (logoPrintflow) {
+    logoPrintflow.addEventListener('click', () => {
+      if (selectedSwapLogo !== 'printflow') {
+        selectedSwapLogo = 'printflow';
+        state.SELECTED_SWAP_LOGO = 'printflow';
+        updateSwapModeLogos();
+        updateFilenamePreview();
+        // Apply Printflow blue theme
+        applyTheme('PRINTFLOW');
+        console.log('Selected PrintFlow logo and applied blue theme');
+      }
+    });
+  }
 
   function updateAppModeDisplay(isPushOffMode) {
-    if (swapLogo && pushOffLogo && a1SwapLogo) {
+    if (swapLogo && pushOffLogo && swapModeLogos) {
       if (isPushOffMode) {
         // Push Off Mode: Show push off logo
         swapLogo.classList.add("hidden");
         pushOffLogo.classList.remove("hidden");
-        a1SwapLogo.classList.add("hidden");
-        document.body.classList.add("pushoff-mode");
-        document.body.classList.remove("a1-swap-mode");
+        swapModeLogos.classList.add("hidden");
+        // Apply push off theme
+        applyTheme('PUSHOFF');
       } else {
         // Swap Mode: Check if A1 or A1M
         pushOffLogo.classList.add("hidden");
         document.body.classList.remove("pushoff-mode");
 
         if (state.CURRENT_MODE === 'A1') {
-          // A1 Swap Mode: Show 3Print logo with gray styling
+          // A1 Swap Mode: Show swap mode logos
           swapLogo.classList.add("hidden");
-          a1SwapLogo.classList.remove("hidden");
-          document.body.classList.add("a1-swap-mode");
+          swapModeLogos.classList.remove("hidden");
+          updateSwapModeLogos();
+          // Apply appropriate theme based on selected logo
+          if (state.SELECTED_SWAP_LOGO === 'printflow') {
+            applyTheme('PRINTFLOW');
+          } else {
+            applyTheme('A1_SWAP');
+          }
         } else {
-          // A1M Swap Mode: Show standard swap logo with yellow styling
+          // A1M Swap Mode: Show standard swap logo
           swapLogo.classList.remove("hidden");
-          a1SwapLogo.classList.add("hidden");
+          swapModeLogos.classList.add("hidden");
           document.body.classList.remove("a1-swap-mode");
+          // Apply default A1M theme
+          applyTheme('A1M_SWAP');
         }
       }
     }
 
   }
 
-  // Make function globally available for setMode() in mode.js
+  // Function to update filename extension preview
+  function updateFilenamePreview() {
+    const extensionElement = document.getElementById("filename_extension_preview");
+    if (!extensionElement) return;
+
+    const printerType = state.CURRENT_MODE || "unknown";
+    const mode = state.APP_MODE || "swap";
+    const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+
+    const extension = submode
+      ? ` .${printerType}.${mode}.${submode}.3mf`
+      : ` .${printerType}.${mode}.3mf`;
+
+    extensionElement.textContent = extension;
+  }
+
+  // Make functions globally available
   window.updateAppModeDisplay = updateAppModeDisplay;
+  window.updateFilenamePreview = updateFilenamePreview;
 
   if (modeToggleCheckbox) {
     // Initial state - default to push off mode
     state.APP_MODE = "pushoff";
     modeToggleCheckbox.checked = true; // Push Off Mode aktivieren
     updateAppModeDisplay(true);
+    updateFilenamePreview();
     
     modeToggleCheckbox.addEventListener("change", () => {
       const isPushOffMode = modeToggleCheckbox.checked;
@@ -255,6 +335,7 @@ export function initialize_page() {
       
       state.APP_MODE = isPushOffMode ? "pushoff" : "swap";
       updateAppModeDisplay(isPushOffMode);
+      updateFilenamePreview();
       // Update printer mode UI to refresh settings visibility
       setMode(state.CURRENT_MODE);
       console.log("APP_MODE changed to:", state.APP_MODE);

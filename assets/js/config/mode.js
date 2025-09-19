@@ -128,6 +128,11 @@ export function setMode(mode) {
   // Update settings visibility based on new mode
   updateSettingsVisibilityForMode();
 
+  // Update filename preview when mode changes
+  if (window.updateFilenamePreview) {
+    window.updateFilenamePreview();
+  }
+
   console.log("Mode switched to:", mode, "App mode:", state.APP_MODE);
 }
 
