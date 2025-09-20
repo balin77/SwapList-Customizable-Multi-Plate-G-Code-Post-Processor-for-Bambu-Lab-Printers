@@ -180,7 +180,7 @@ export async function export_3mf() {
 
     update_progress(25);
 
-    // 3MF Basis
+    // 3MF Basis (always from first file for structure consistency)
     const baseZip = await JSZip.loadAsync(state.my_files[0]);
 
     const oldPlates = baseZip.file(/plate_\d+\.gcode\b$/);
@@ -188,6 +188,80 @@ export async function export_3mf() {
 
     if (baseZip.file("Metadata/custom_gcode_per_layer.xml")) {
       baseZip.remove("Metadata/custom_gcode_per_layer.xml");
+    }
+
+    // Find first active plate and copy its PNG files to plate_1 BEFORE removing files
+    const my_plates = state.playlist_ol.getElementsByTagName("li");
+    let firstActivePlateIndex = -1;
+    
+    console.log(`Finding first active plate from ${my_plates.length} plates`);
+    for (let i = 0; i < my_plates.length; i++) {
+      const li = my_plates[i];
+      const p_rep = li.getElementsByClassName("p_rep")[0].value * 1;
+      const c_pname = li.getElementsByClassName("p_name")[0].title;
+      
+      console.log(`UI Position ${i}: plate_name=${c_pname}, repetitions=${p_rep}`);
+      
+      if (p_rep > 0) {
+        // Extract plate number from filename (e.g., "plate_3.gcode" -> 3)
+        const plateMatch = c_pname.match(/plate_(\d+)\.gcode/);
+        if (plateMatch) {
+          firstActivePlateIndex = parseInt(plateMatch[1], 10);
+          console.log(`First active plate found: plate_${firstActivePlateIndex} (from filename ${c_pname})`);
+          break;
+        } else {
+          console.warn(`Could not extract plate number from filename: ${c_pname}`);
+        }
+      }
+    }
+    
+    // Update plate_1 PNG files from first active plate (if it's not already plate_1)
+    if (firstActivePlateIndex > 1) {
+      try {
+        // Remove existing plate_1 PNG files first
+        const targetFiles = [
+          "Metadata/plate_1.png",
+          "Metadata/plate_1_small.png", 
+          "Metadata/plate_no_light_1.png",
+          "Metadata/top_1.png",
+          "Metadata/pick_1.png"
+        ];
+        
+        targetFiles.forEach(targetFile => {
+          if (baseZip.file(targetFile)) {
+            baseZip.remove(targetFile);
+            console.log(`Removed existing ${targetFile}`);
+          }
+        });
+        
+        // Copy plate PNG files from first active plate to plate_1 (within same baseZip)
+        const pngFiles = [
+          `Metadata/plate_${firstActivePlateIndex}.png`,
+          `Metadata/plate_${firstActivePlateIndex}_small.png`, 
+          `Metadata/plate_no_light_${firstActivePlateIndex}.png`,
+          `Metadata/top_${firstActivePlateIndex}.png`,
+          `Metadata/pick_${firstActivePlateIndex}.png`
+        ];
+        
+        for (const sourceFile of pngFiles) {
+          const file = baseZip.file(sourceFile);
+          if (file) {
+            const content = await file.async("arraybuffer");
+            // Replace any occurrence of _X with _1 (works for plate_X, top_X, pick_X, etc.)
+            const targetFile = sourceFile.replace(`_${firstActivePlateIndex}`, "_1");
+            baseZip.file(targetFile, content);
+            console.log(`Copied ${sourceFile} to ${targetFile}`);
+          } else {
+            console.log(`Source file not found in baseZip: ${sourceFile}`);
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to copy PNG files from plate ${firstActivePlateIndex}:`, e);
+      }
+    } else if (firstActivePlateIndex === 1) {
+      console.log(`First active plate is already plate_1, no PNG copying needed`);
+    } else {
+      console.log(`No active plates found`);
     }
 
     // Remove unnecessary files (keep only plate_1.* and filament_settings_1.config)
