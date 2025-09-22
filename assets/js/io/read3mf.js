@@ -252,11 +252,35 @@ export function handleFile(f) {
           var icon_name = model_plates[i].querySelectorAll("[key='thumbnail_file']")[0].getAttribute("value");
           console.log("icon_name", icon_name);
 
+          // Also get the no-light version
+          var no_light_icon_name = null;
+          const no_light_element = model_plates[i].querySelectorAll("[key='thumbnail_no_light_file']")[0];
+          if (no_light_element) {
+            no_light_icon_name = no_light_element.getAttribute("value");
+            console.log("no_light_icon_name", no_light_icon_name);
+          }
+
           var img_file = zip.file(icon_name);
           console.log("img_file", img_file);
 
           img_file.async("blob").then(function (u8) {
-            p_icon.src = URL.createObjectURL(u8);
+            const litImageUrl = URL.createObjectURL(u8);
+            p_icon.src = litImageUrl;
+
+            // Store URLs for later color mapping
+            p_icon.dataset.litImageUrl = litImageUrl;
+
+            // Load no-light image if available
+            if (no_light_icon_name) {
+              const no_light_img_file = zip.file(no_light_icon_name);
+              if (no_light_img_file) {
+                no_light_img_file.async("blob").then(function (no_light_u8) {
+                  const unlitImageUrl = URL.createObjectURL(no_light_u8);
+                  p_icon.dataset.unlitImageUrl = unlitImageUrl;
+                  console.log("Stored unlit image URL for plate", i);
+                });
+              }
+            }
           });
 
           var queryBuf = "[key='index'][value='" + (i + 1) + "']";

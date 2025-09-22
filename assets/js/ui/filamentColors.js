@@ -2,6 +2,7 @@
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
+import { createRecoloredPlateImage, extractOriginalFilamentColors } from "../utils/imageColorMapping.js";
 
 // Add this helper function
 function ensureP0() {
@@ -216,6 +217,9 @@ export function applySlotSelectionToPlate(anchorEl, newIndex) {
   
   // Auto-enable/disable Override metadata basierend auf Slot-Änderungen
   checkAutoToggleOverrideMetadata();
+
+  // Update plate image colors when slot assignment changes
+  updatePlateImageColors(row.closest('li.list_item'));
 }
 
 // ===== Dropdown am Plate-Swatch ==================================
@@ -322,6 +326,7 @@ export function installFilamentTotalsAutoFix() {
       deriveGlobalSlotColorsFromPlates(); // zuerst aus Plates ableiten
       renderTotalsColors();               // dann oben neu setzen
       updateAllPlateSwatchColors();       // und Plates einfärben
+      updateAllPlateImages();             // und Plate-Bilder aktualisieren
     });
   });
   obs.observe(host, { childList: true, subtree: true });
@@ -352,6 +357,93 @@ export function wirePlateSwatches(li) {
     sw.dataset.slotIndex = String(idx);
     // Farbe absichtlich NICHT ändern – wir lesen sie beim Ableiten aus!
   });
+}
+
+/**
+ * Updates the plate image colors based on current slot assignments
+ * @param {Element} plateElement - The plate li element
+ */
+async function updatePlateImageColors(plateElement) {
+  if (!plateElement) return;
+
+  const plateIcon = plateElement.querySelector('.p_icon');
+  if (!plateIcon || !plateIcon.dataset.litImageUrl || !plateIcon.dataset.unlitImageUrl) {
+    console.log('Plate image update skipped: missing image URLs');
+    return;
+  }
+
+  try {
+    // Build color mapping from original colors to current slot colors
+    const colorMapping = {};
+
+    // Get current filament rows
+    const filamentRows = plateElement.querySelectorAll('.p_filaments .p_filament');
+    filamentRows.forEach(row => {
+      const swatch = row.querySelector('.f_color');
+      const slotSpan = row.querySelector('.f_slot');
+
+      if (swatch && slotSpan) {
+        // Get original color from dataset (stored during import)
+        const originalColor = swatch.dataset.f_color;
+
+        // Get current slot index
+        const slotIndex = parseInt(swatch.dataset.slotIndex || '0', 10);
+        const currentSlotColor = getSlotColor(slotIndex);
+
+        if (originalColor && currentSlotColor) {
+          colorMapping[originalColor] = currentSlotColor;
+        }
+      }
+    });
+
+    // Only update if we have color mappings
+    if (Object.keys(colorMapping).length === 0) {
+      console.log('No color mappings found for plate image update');
+      return;
+    }
+
+    console.log('Updating plate image with color mapping:', colorMapping);
+
+    // Create recolored image
+    const newImageUrl = await createRecoloredPlateImage(
+      plateIcon.dataset.litImageUrl,
+      plateIcon.dataset.unlitImageUrl,
+      colorMapping
+    );
+
+    // Update the displayed image
+    if (newImageUrl !== plateIcon.src) {
+      // Clean up old URL if it was dynamically generated
+      if (plateIcon.dataset.dynamicImageUrl) {
+        URL.revokeObjectURL(plateIcon.dataset.dynamicImageUrl);
+      }
+
+      plateIcon.src = newImageUrl;
+      plateIcon.dataset.dynamicImageUrl = newImageUrl;
+    }
+
+  } catch (error) {
+    console.error('Failed to update plate image colors:', error);
+  }
+}
+
+/**
+ * Updates all plate images with current color mappings
+ */
+async function updateAllPlateImages() {
+  const plateElements = document.querySelectorAll('#playlist_ol li.list_item:not(.hidden)');
+
+  // Process plates in parallel for better performance
+  const updatePromises = Array.from(plateElements).map(plateElement =>
+    updatePlateImageColors(plateElement)
+  );
+
+  try {
+    await Promise.all(updatePromises);
+    console.log(`Updated ${plateElements.length} plate images`);
+  } catch (error) {
+    console.error('Error updating some plate images:', error);
+  }
 }
 
 function getVendorMaterialMap(presetIndex) {
@@ -511,6 +603,9 @@ export function openStatsSlotDialog(slotIndex) {
     if (typeof updateAllPlateSwatchColors === "function") {
       updateAllPlateSwatchColors();
     }
+
+    // Plate-Bilder mit neuen Farben aktualisieren
+    updateAllPlateImages();
 
     backdrop.remove();
   };
