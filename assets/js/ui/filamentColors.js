@@ -212,14 +212,22 @@ export function applySlotSelectionToPlate(anchorEl, newIndex) {
 
   // WICHTIG: dataset.f_color NICHT setzen (Originalfarbe bleibt erhalten)!
 
+  // Prevent global slot color derivation during slot reassignment
+  _skipColorDerivation = true;
+
   // m/g in den Statistics auf den neuen Slot umbuchen
   update_statistics();
-  
+
   // Auto-enable/disable Override metadata basierend auf Slot-Änderungen
   checkAutoToggleOverrideMetadata();
 
   // Update plate image colors when slot assignment changes
   updatePlateImageColors(row.closest('li.list_item'));
+
+  // Reset flag after a short delay to allow other operations
+  setTimeout(() => {
+    _skipColorDerivation = false;
+  }, 100);
 }
 
 // ===== Dropdown am Plate-Swatch ==================================
@@ -312,6 +320,9 @@ export function renderTotalsColors() {
   });
 }
 
+// Flag to prevent color derivation during slot reassignments
+let _skipColorDerivation = false;
+
 // ===== Auto-Fix: wenn update_statistics() DOM neu schreibt =======
 export function installFilamentTotalsAutoFix() {
   const host = document.getElementById("filament_total");
@@ -323,7 +334,9 @@ export function installFilamentTotalsAutoFix() {
     pending = true;
     requestAnimationFrame(() => {
       pending = false;
-      deriveGlobalSlotColorsFromPlates(); // zuerst aus Plates ableiten
+      if (!_skipColorDerivation) {
+        deriveGlobalSlotColorsFromPlates(); // zuerst aus Plates ableiten
+      }
       renderTotalsColors();               // dann oben neu setzen
       updateAllPlateSwatchColors();       // und Plates einfärben
       updateAllPlateImages();             // und Plate-Bilder aktualisieren

@@ -245,6 +245,7 @@ body{
   width: calc(100% / 5 - 8px);
   /* Höhe dynamisch, keine Scrollbars */
   height:auto !important;
+  min-width: 215px;
   max-height:none !important;
   overflow:visible !important;
   background:#ccc;
@@ -468,6 +469,8 @@ details.tool_info summary::before{ content:'( ? )'; }
   display: flex;                 /* Flexbox mit 3 Spalten */
   justify-content: space-between;/* Links, Mitte, Rechts trennen */
   align-items: flex-start;       /* Alle Spalten oben beginnen */
+  gap: 20px;                     /* Mindestabstand zwischen Elementen */
+  flex-wrap: wrap;               /* Elemente umbrechen bei zu wenig Platz */
   width: 100%;
   padding: 0 0 10px 0;           /* nur unten Abstand */
   min-height: 120px;             /* Mindesthöhe für Statistics */
@@ -539,6 +542,7 @@ body.compact-mode #app_logo {
   display: flex;
   gap: 50px;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 #statistics>div{ margin:15px 0; }
@@ -846,6 +850,7 @@ body.compact-mode #app_logo {
   min-width: 300px;
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
 }
 
 .settings-col label {
@@ -1456,7 +1461,7 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
 .slot-dropdown-item.current { font-weight: 600; }
 .slot-dropdown-sep { height: 1px; background: rgba(0,0,0,.08); margin: 6px 4px; }
 
-.p_imgwrap{ position:relative; display:inline-block; }
+.p_imgwrap{ position:relative; display:block; margin: 0 auto; }
 .p_imgwrap .p_icon{ display:block; }
 
 .plate-duplicate{
@@ -1638,10 +1643,11 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
 /* Clickable plates with theme-colored borders */
 .list_item {
   transition: border 0.2s ease;
+  border: 5px solid transparent;
 }
 
 .list_item.plate-selected {
-  border: 3px solid var(--primary-color);
+  border: 5px solid var(--primary-color);
 }
 
 /* Theme-specific selected plate borders */
