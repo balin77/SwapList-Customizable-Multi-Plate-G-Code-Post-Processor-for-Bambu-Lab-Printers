@@ -14,7 +14,7 @@ import { handleFile } from "../io/read3mf.js";
 import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
 import { toggle_settings, custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
-import { compareProjectSettingsFiles } from "../utils/utils.js";
+import { compareProjectSettingsFiles, compareTemplateModifiedFiles } from "../utils/utils.js";
 import { initInfobox, showError, showWarning, showInfo, showSuccess } from "../ui/infobox.js";
 
 import {
@@ -45,8 +45,10 @@ export function initialize_page() {
 
   // Dev Mode: Show/Hide compare buttons based on DEV_MODE
   const btnCmp = document.getElementById("btn_compare_settings");
+  const btnCmpTemplateModified = document.getElementById("btn_compare_template_modified");
   const btnCmpGcode = document.getElementById("btn_compare_gcode");
   const compareSettingsHelp = document.getElementById("compare_settings_help");
+  const compareTemplateModifiedHelp = document.getElementById("compare_template_modified_help");
   const compareGcodeHelp = document.getElementById("compare_gcode_help");
   
   if (btnCmp) {
@@ -79,6 +81,36 @@ export function initialize_page() {
     }
   }
 
+  if (btnCmpTemplateModified) {
+    if (DEV_MODE) {
+      btnCmpTemplateModified.style.display = "block";
+      btnCmpTemplateModified.classList.remove("hidden");
+
+      btnCmpTemplateModified.addEventListener("click", async () => {
+        const origLabel = btnCmpTemplateModified.textContent;
+        btnCmpTemplateModified.disabled = true;
+        btnCmpTemplateModified.textContent = "Comparing…";
+        try {
+          const result = await compareTemplateModifiedFiles(); // loggt selbst in die Konsole
+          console.log("[compareTemplateModifiedFiles] finished", result);
+          showInfo("Template vs Modified Vergleich abgeschlossen. Details stehen in der Konsole.");
+        } catch (err) {
+          console.error("Fehler beim Template vs Modified Vergleich:", err);
+          showError("Template vs Modified Vergleich fehlgeschlagen: " + (err?.message || err));
+        } finally {
+          btnCmpTemplateModified.disabled = false;
+          btnCmpTemplateModified.textContent = origLabel;
+        }
+      });
+
+      // Optional: für manuelles Triggern über die DevTools
+      window.compareTemplateModifiedFiles = compareTemplateModifiedFiles;
+    } else {
+      btnCmpTemplateModified.style.display = "none";
+      btnCmpTemplateModified.classList.add("hidden");
+    }
+  }
+
   if (compareSettingsHelp) {
     if (DEV_MODE) {
       compareSettingsHelp.style.display = "block";
@@ -86,6 +118,16 @@ export function initialize_page() {
     } else {
       compareSettingsHelp.style.display = "none";
       compareSettingsHelp.classList.add("hidden");
+    }
+  }
+
+  if (compareTemplateModifiedHelp) {
+    if (DEV_MODE) {
+      compareTemplateModifiedHelp.style.display = "block";
+      compareTemplateModifiedHelp.classList.remove("hidden");
+    } else {
+      compareTemplateModifiedHelp.style.display = "none";
+      compareTemplateModifiedHelp.classList.add("hidden");
     }
   }
   
@@ -237,16 +279,16 @@ export function initialize_page() {
     logo3print.addEventListener('click', () => {
       if (selectedSwapLogo !== '3print') {
         selectedSwapLogo = '3print';
-        state.SELECTED_SWAP_LOGO = '3print';
+        state.SWAP_MODE = '3print';
         updateSwapModeLogos();
         updateFilenamePreview();
         // Apply appropriate theme based on current device mode
-        if (state.CURRENT_MODE === 'A1') {
+        if (state.PRINTER_MODEL === 'A1') {
           applyTheme('A1_SWAP'); // Gray theme for A1
         } else {
           applyTheme('A1M_SWAP'); // Yellow theme for A1M
         }
-        console.log('Selected 3Print logo and applied appropriate theme for', state.CURRENT_MODE);
+        console.log('Selected 3Print logo and applied appropriate theme for', state.PRINTER_MODEL);
       }
     });
   }
@@ -255,7 +297,7 @@ export function initialize_page() {
     logoPrintflow.addEventListener('click', () => {
       if (selectedSwapLogo !== 'printflow') {
         selectedSwapLogo = 'printflow';
-        state.SELECTED_SWAP_LOGO = 'printflow';
+        state.SWAP_MODE = 'printflow';
         updateSwapModeLogos();
         updateFilenamePreview();
         // Apply Printflow blue theme
@@ -269,16 +311,16 @@ export function initialize_page() {
     const appMode = isPushOffMode ? 'PUSHOFF' : 'SWAP';
 
     // Apply centralized visibility rules
-    applyVisibilityRules(appMode, state.CURRENT_MODE);
+    applyVisibilityRules(appMode, state.PRINTER_MODEL);
 
     // Apply themes - the theme system handles body classes automatically
     if (isPushOffMode) {
       applyTheme('PUSHOFF');
     } else {
       // Swap Mode: Apply appropriate theme based on device and selected logo
-      if (state.CURRENT_MODE === 'A1') {
+      if (state.PRINTER_MODEL === 'A1') {
         updateSwapModeLogos(); // Update 3Print/Printflow logo states
-        if (state.SELECTED_SWAP_LOGO === 'printflow') {
+        if (state.SWAP_MODE === 'printflow') {
           applyTheme('PRINTFLOW');
         } else {
           applyTheme('A1_SWAP');
@@ -296,9 +338,9 @@ export function initialize_page() {
     const extensionElement = document.getElementById("filename_extension_preview");
     if (!extensionElement) return;
 
-    const printerType = state.CURRENT_MODE || "unknown";
+    const printerType = state.PRINTER_MODEL || "unknown";
     const mode = state.APP_MODE || "swap";
-    const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+    const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
 
     const extension = submode
       ? ` .${printerType}.${mode}.${submode}.3mf`
@@ -321,7 +363,7 @@ export function initialize_page() {
       const isPushOffMode = modeToggleCheckbox.checked;
       
       // Prüfen ob SWAP Mode für aktuellen Drucker erlaubt ist
-      if (!isPushOffMode && state.CURRENT_MODE && state.CURRENT_MODE !== 'A1M' && state.CURRENT_MODE !== 'A1') {
+      if (!isPushOffMode && state.PRINTER_MODEL && state.PRINTER_MODEL !== 'A1M' && state.PRINTER_MODEL !== 'A1') {
         // SWAP Mode nur für A1M und A1 erlaubt - Toggle zurücksetzen und Fehlermeldung
         modeToggleCheckbox.checked = true; // Zurück zu Push Off Mode
         showWarning("SWAP Mode is only available for A1 Mini and A1 printers. For other printers, please use Push Off Mode.");
@@ -332,7 +374,7 @@ export function initialize_page() {
       updateAppModeDisplay(isPushOffMode);
       updateFilenamePreview();
       // Update printer mode UI to refresh settings visibility
-      setMode(state.CURRENT_MODE);
+      setMode(state.PRINTER_MODEL);
       console.log("APP_MODE changed to:", state.APP_MODE);
       console.log("Body classes:", document.body.className);
       console.log("Push off mode active:", isPushOffMode);

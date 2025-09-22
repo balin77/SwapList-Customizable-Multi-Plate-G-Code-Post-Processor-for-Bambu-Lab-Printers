@@ -30,9 +30,9 @@ export function getDisplayNameForMode(mode) {
   return displayMap[mode] || "Unknown";
 }
 
-// Prüft den GCode-Text auf einen erkennbaren Druckermodus und setzt/validiert CURRENT_MODE
+// Prüft den GCode-Text auf einen erkennbaren Druckermodus und setzt/validiert PRINTER_MODEL
 export function setMode(mode) {
-  state.CURRENT_MODE = mode;
+  state.PRINTER_MODEL = mode;
   document.body.setAttribute("data-mode", mode);
 
   // App-Mode automatisch basierend auf Drucker setzen
@@ -154,14 +154,14 @@ export function ensureModeOrReject(detectedMode, fileName) {
     return false;
   }
 
-  if (state.CURRENT_MODE == null) {
+  if (state.PRINTER_MODEL == null) {
     setMode(detectedMode);
     return true;
   }
 
-  if (state.CURRENT_MODE !== detectedMode) {
+  if (state.PRINTER_MODEL !== detectedMode) {
     showWarning(
-      `Printer mismatch. Loaded queue is ${state.CURRENT_MODE}, new file is ${detectedMode}. ` +
+      `Printer mismatch. Loaded queue is ${state.PRINTER_MODEL}, new file is ${detectedMode}. ` +
       `The new plate will not be added.`
     );
     return false;

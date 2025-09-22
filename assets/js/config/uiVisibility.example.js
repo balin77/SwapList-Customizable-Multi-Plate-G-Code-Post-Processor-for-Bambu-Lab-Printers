@@ -51,7 +51,7 @@ function exampleConditionalVisibility() {
   }
 
   // Show element only for specific logo selection
-  if (state.SELECTED_SWAP_LOGO === 'printflow') {
+  if (state.SWAP_MODE === 'printflow') {
     showElement('printflow_specific_option');
   } else {
     hideElement('printflow_specific_option');

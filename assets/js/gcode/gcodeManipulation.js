@@ -203,9 +203,9 @@ export function optimizeAMSBlocks(gcodeArray) {
   }
 
   // Only apply optimization for A1/A1M printers in swap mode
-  const isA1Mode = state.CURRENT_MODE === 'A1' || state.CURRENT_MODE === 'A1M';
+  const isA1Mode = state.PRINTER_MODEL === 'A1' || state.PRINTER_MODEL === 'A1M';
   if (!isA1Mode || state.APP_MODE !== 'swap') {
-    console.log(`AMS optimization skipped - only applies to A1/A1M in swap mode (current: ${state.CURRENT_MODE}, ${state.APP_MODE})`);
+    console.log(`AMS optimization skipped - only applies to A1/A1M in swap mode (current: ${state.PRINTER_MODEL}, ${state.APP_MODE})`);
     return gcodeArray;
   }
 
@@ -555,12 +555,14 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
       
       // Map each slot through the override system
       const newSlots = originalSlots.map(slot => {
-        const fromKey = `P0S${slot}`;
+        // Convert 1-based filament slot to 0-based AMS S-parameter
+        const fromKey = `P0S${slot - 1}`;
         const toKey = map[fromKey];
         if (!toKey) return slot; // keine Änderung
-        
+
         const m = /^P(\d+)S(\d+)$/.exec(toKey);
-        return m ? +m[2] : slot; // neuer Slot oder original falls Parse-Fehler
+        // Convert 0-based AMS S-parameter back to 1-based filament slot
+        return m ? +m[2] + 1 : slot; // neuer Slot oder original falls Parse-Fehler
       });
       
       // Remove duplicates and sort

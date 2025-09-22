@@ -1,6 +1,14 @@
 // src/utils/utils.js
-import { project_settings_modified } from "../testfiles/project_settings_modified"; 
-import { project_settings_original } from "../testfiles/project_settings_original";
+
+// Import JSON data as JavaScript modules to avoid CORS issues
+import { project_settings_original } from "../testfiles/project_settings_original_data.js";
+import { project_settings_template } from "../testfiles/project_settings_template_data.js";
+import { project_settings_modified } from "../testfiles/project_settings_modified_data.js";
+
+// Provide access to the imported data
+const getOriginalSettings = async () => project_settings_original;
+const getTemplateSettings = async () => project_settings_template;
+const getModifiedSettings = async () => project_settings_modified;
 
 /** interner Helper: nimmt Objekt ODER Pfad/URL und liefert ein Objekt */
 async function resolveSettingsInput(input) {
@@ -92,9 +100,12 @@ function diffObjects(a, b, path = "", out = []) {
  * Logs landen gruppiert in der Konsole. Liefert eine Zusammenfassung zurück.
  */
 export async function compareProjectSettingsFiles({
-  original = project_settings_original,
-  modified = project_settings_modified,
+  original = null,
+  modified = null,
 } = {}) {
+  // Use default JSON files if no parameters provided
+  if (!original) original = await getOriginalSettings();
+  if (!modified) modified = await getModifiedSettings();
   try {
     const origObj = await resolveSettingsInput(original);
     const modObj  = await resolveSettingsInput(modified);
@@ -117,6 +128,43 @@ export async function compareProjectSettingsFiles({
     return { ok: true, differences: diffs.length, diffs };
   } catch (err) {
     console.error("❌ compareProjectSettingsFiles failed:", err);
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
+
+/**
+ * Vergleicht template vs. modifiziert (Objekte ODER Pfade).
+ * Logs landen gruppiert in der Konsole. Liefert eine Zusammenfassung zurück.
+ */
+export async function compareTemplateModifiedFiles({
+  template = null,
+  modified = null,
+} = {}) {
+  // Use default JSON files if no parameters provided
+  if (!template) template = await getTemplateSettings();
+  if (!modified) modified = await getModifiedSettings();
+  try {
+    const templObj = await resolveSettingsInput(template);
+    const modObj  = await resolveSettingsInput(modified);
+
+    console.groupCollapsed("%ccompareTemplateModifiedFiles", "color:#0aa");
+    console.log("Template:", templObj);
+    console.log("Modified:", modObj);
+
+    const diffs = diffObjects(templObj, modObj);
+
+    if (diffs.length === 0) {
+      console.info("✅ Keine Unterschiede gefunden - Template und Modified sind identisch!");
+    } else {
+      console.groupCollapsed(`⚠️ Unterschiede (${diffs.length})`);
+      for (const line of diffs) console.log(line);
+      console.groupEnd();
+    }
+    console.groupEnd();
+
+    return { ok: true, differences: diffs.length, diffs };
+  } catch (err) {
+    console.error("❌ compareTemplateModifiedFiles failed:", err);
     return { ok: false, error: err?.message || String(err) };
   }
 }

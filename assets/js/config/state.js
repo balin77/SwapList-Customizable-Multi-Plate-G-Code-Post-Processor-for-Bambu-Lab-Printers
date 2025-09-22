@@ -4,9 +4,9 @@ export const state = {
   // globale Flags
   USE_PURGE_START: false,
   USE_BEDLEVEL_COOLING: false,
-  CURRENT_MODE: null,            // "A1M" | "X1" | "P1" | null
+  PRINTER_MODEL: null,            // "A1M" | "X1" | "P1" | null
   APP_MODE: "pushoff",           // "swap" | "pushoff"
-  SELECTED_SWAP_LOGO: "3print",  // "3print" | "printflow"
+  SWAP_MODE: "3print",  // "3print" | "printflow"
 
   // File Handling
   my_files: [],

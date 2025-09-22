@@ -37,7 +37,7 @@ export function readPlateXCoordsSorted(li) {
 }
 
 export async function validatePlateXCoords() {
-  if (!(state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')) {
+  if (!(state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1')) {
     return true; // Im A1M-Modus keine Prüfung nötig
   }
 
@@ -142,7 +142,7 @@ export function removePlate(btn) {
   // Wenn keine Platten mehr vorhanden → volle Rücksetzung
   const remaining = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)").length;
   if (remaining === 0) {
-    // kompletter Reset (lädt Seite neu, setzt CURRENT_MODE usw. zurück)
+    // kompletter Reset (lädt Seite neu, setzt PRINTER_MODEL usw. zurück)
     location.reload();
   }
 }
@@ -246,7 +246,7 @@ export function renderPlateCoordInputs(li, count) {
   }
 
   // Add auto-populate button BELOW the object list for X1/P1 modes
-  if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+  if (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1') {
     const autoBtn = document.createElement('button');
     autoBtn.type = 'button';
     autoBtn.className = 'btn-auto-coords';
@@ -264,7 +264,7 @@ export function renderPlateCoordInputs(li, count) {
 export function initPlateX1P1UI(li) {
   const box = li.querySelector('.plate-x1p1-settings');
   if (box) {
-    const isX1P1 = (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1');
+    const isX1P1 = (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1');
     box.classList.toggle('hidden', !isX1P1);   // <- Sichtbarkeit korrekt setzen
   }
 
@@ -352,7 +352,7 @@ export function duplicatePlate(li){
   updatePlateSelector();
 
   // Auto-populate coordinates for duplicated plate (same as original)
-  if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+  if (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1') {
     setTimeout(() => {
       autoPopulatePlateCoordinates(clone).catch(error => {
         console.error("Failed to auto-populate duplicated plate coordinates:", error);

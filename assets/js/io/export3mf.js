@@ -7,6 +7,7 @@ import { model_settings_xml } from "../config/xmlConfig.js";
 import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 import { showError, showWarning } from "../ui/infobox.js";
+import { _parseAmsParams } from "../utils/amsUtils.js";
 
 // Generate combined plate_1.json data from all plates
 async function generatePlateJsonData() {
@@ -481,8 +482,23 @@ export async function export_3mf() {
 
     // Generate plate_1.json with filament data
     if (state.OVERRIDE_METADATA) {
+      console.log('=== OVERRIDE_METADATA is enabled, generating plate_1.json ===');
       const plateJsonData = await generatePlateJsonData();
+      console.log('Original plateJsonData.first_extruder:', plateJsonData.first_extruder);
+
+      // Update first_extruder based on the first M620 command in the final GCODE
+      const finalGcodeText = await finalGcodeBlob.text();
+      console.log('Final GCODE preview (first 1000 chars):');
+      console.log(finalGcodeText.substring(0, 1000));
+
+      const correctFirstExtruder = extractFirstExtruderFromGcode(finalGcodeText);
+      plateJsonData.first_extruder = correctFirstExtruder;
+
+      console.log(`Updated first_extruder from ${plateJsonData.first_extruder} to ${correctFirstExtruder} based on first M620 command`);
+
       baseZip.file("Metadata/plate_1.json", JSON.stringify(plateJsonData, null, 2));
+    } else {
+      console.log('=== OVERRIDE_METADATA is disabled, skipping plate_1.json generation ===');
     }
 
     // MD5 & packen
@@ -500,9 +516,9 @@ export async function export_3mf() {
       const baseName = (fnField.value || fnField.placeholder || "output").trim();
 
       // Build filename with printer type, mode, and submode (only for swap mode)
-      const printerType = state.CURRENT_MODE || "unknown";
+      const printerType = state.PRINTER_MODEL || "unknown";
       const mode = state.APP_MODE || "swap";
-      const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+      const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
       const fileName = submode
         ? `${baseName}.${printerType}.${mode}.${submode}.3mf`
         : `${baseName}.${printerType}.${mode}.3mf`;
@@ -518,4 +534,34 @@ export async function export_3mf() {
     showError("Export fehlgeschlagen: " + (err && err.message ? err.message : err));
     update_progress(-1);
   }
+}
+
+// Function to extract first_extruder from the first M620 command in GCODE
+export function extractFirstExtruderFromGcode(gcodeText) {
+
+  // Split into header and body to avoid processing header commands
+  const headerEndIndex = gcodeText.indexOf('; CONFIG_BLOCK_END');
+  let bodyPart = gcodeText;
+
+  if (headerEndIndex !== -1) {
+    const headerEndPos = headerEndIndex + '; CONFIG_BLOCK_END'.length;
+    bodyPart = gcodeText.substring(headerEndPos);
+  }
+
+  // Find first M620 command with S parameter (not M620.1 or M620.3 or M620 M)
+  const m620Match = bodyPart.match(/^\s*M620(?!\.)\s+([^M\n\r]*S[^\n\r]*)/m);
+
+  if (m620Match) {
+    const params = m620Match[1];
+    const { s } = _parseAmsParams(params);
+
+    console.log(`Found first M620 command: M620${params}`);
+    console.log(`Extracted S parameter: ${s}, returning first_extruder: ${s}`);
+
+    // S parameter is 0-based, first_extruder is also 0-based
+    return s !== 255 ? s : 0; // 255 means auto/unspecified, default to 0
+  }
+
+  console.log('No M620 command found in GCODE body, defaulting first_extruder to 0');
+  return 0; // Default to extruder 0 if no M620 found
 }

@@ -362,10 +362,10 @@ export function handleFile(f) {
         makeListSortable(state.playlist_ol);
 
         // Auto-populate coordinates for X1/P1 modes after ALL plates are completely processed
-        if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+        if (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1') {
           setTimeout(async () => {
             const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
-            console.log(`Auto-populating coordinates for ${plates.length} plates in ${state.CURRENT_MODE} mode`);
+            console.log(`Auto-populating coordinates for ${plates.length} plates in ${state.PRINTER_MODEL} mode`);
 
             // Auto-populate all plates
             const promises = Array.from(plates).map(async (li, index) => {

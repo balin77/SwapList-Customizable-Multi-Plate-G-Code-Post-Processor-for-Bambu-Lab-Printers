@@ -320,7 +320,7 @@ function renderPlateCoordinatesInSettings(plateIndex) {
   coordsContainer.appendChild(gridContainer);
 
   // Add auto-populate button for X1/P1 modes only (X-coordinates irrelevant for A1/A1M)
-  if (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1') {
+  if (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1') {
     const autoBtn = document.createElement('button');
     autoBtn.type = 'button';
     autoBtn.className = 'btn-auto-coords';
@@ -461,7 +461,7 @@ window.getSoundRemovalMode = getSoundRemovalMode;
 // Function to hide/show settings sections based on current app mode
 function updateSettingsVisibilityForMode() {
   const isSwapMode = state.APP_MODE === 'swap';
-  const isA1Mode = state.CURRENT_MODE === 'A1' || state.CURRENT_MODE === 'A1M';
+  const isA1Mode = state.PRINTER_MODEL === 'A1' || state.PRINTER_MODEL === 'A1M';
 
   // Global settings sections - find cooling section by looking for all h4 elements
   const globalSection = document.getElementById('global_settings_section');
@@ -525,7 +525,7 @@ function updateSettingsVisibilityForMode() {
     }
   }
 
-  console.log(`Settings visibility updated - SWAP: ${isSwapMode}, A1: ${isA1Mode}, Mode: ${state.CURRENT_MODE}`);
+  console.log(`Settings visibility updated - SWAP: ${isSwapMode}, A1: ${isA1Mode}, Mode: ${state.PRINTER_MODEL}`);
 }
 
 // Function to setup sound settings event listeners

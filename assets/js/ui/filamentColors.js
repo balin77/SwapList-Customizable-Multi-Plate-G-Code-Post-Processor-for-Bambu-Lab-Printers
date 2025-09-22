@@ -381,7 +381,7 @@ function printerAliasesForMode(mode) {
 
 /** Liefert die passenden Presets für das aktuelle Setup. */
 export function catalogForCurrentPrinterAndNozzle() {
-  const mode = state.CURRENT_MODE;                // "X1" | "P1" | "A1M"
+  const mode = state.PRINTER_MODEL;                // "X1" | "P1" | "A1M"
   const allow = printerAliasesForMode(mode);
   const want02 = !!state.NOZZLE_IS_02;            // true, wenn 0.2mm
 

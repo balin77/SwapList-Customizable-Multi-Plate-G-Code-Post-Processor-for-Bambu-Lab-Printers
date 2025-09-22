@@ -32,8 +32,8 @@ export async function export_gcode_txt() {
 
     const file_name_field = document.getElementById("file_name");
     const base = (file_name_field.value || file_name_field.placeholder || "output_file_name").trim();
-    const modeTag = (state.CURRENT_MODE || "A1M");
-    const purgeTag = (state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')
+    const modeTag = (state.PRINTER_MODEL || "A1M");
+    const purgeTag = (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1')
       ? (state.USE_PURGE_START ? "_purge" : "_standard")
       : "";
 
@@ -68,7 +68,7 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   // Build filename with printer type, mode, and submode (only for swap mode)
   const mode = state.APP_MODE || "swap";
-  const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+  const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
   const filenamePart = submode ? `${modeTag}.${mode}.${submode}` : `${modeTag}.${mode}`;
 
   const zip = new JSZip();
@@ -125,7 +125,7 @@ async function exportNormalMode(base, modeTag, modifiedCombined) {
 
   // Build filename with printer type, mode, and submode (only for swap mode)
   const mode = state.APP_MODE || "swap";
-  const submode = mode === "swap" ? (state.SELECTED_SWAP_LOGO || "3print") : null;
+  const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
   const filename = submode
     ? `${base}.${modeTag}.${mode}.${submode}.gcode`
     : `${base}.${modeTag}.${mode}.gcode`;

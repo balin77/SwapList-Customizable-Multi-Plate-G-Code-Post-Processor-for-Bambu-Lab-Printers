@@ -49,12 +49,12 @@ import { showWarning } from "../ui/infobox.js";
 function getDynamicPayload(originalPayload, ctx) {
   // Handle A1 start sequence selection based on logo
   if (originalPayload === A1_3Print_START && ctx.mode === "A1") {
-    return state.SELECTED_SWAP_LOGO === "printflow" ? A1_PRINTFLOW_START : A1_3Print_START;
+    return state.SWAP_MODE === "printflow" ? A1_PRINTFLOW_START : A1_3Print_START;
   }
 
   // Handle A1 end sequence selection based on logo
   if (originalPayload === A1_3Print_END && ctx.mode === "A1") {
-    return state.SELECTED_SWAP_LOGO === "printflow" ? A1_PRINTFLOW_END : A1_3Print_END;
+    return state.SWAP_MODE === "printflow" ? A1_PRINTFLOW_END : A1_3Print_END;
   }
 
   return originalPayload;

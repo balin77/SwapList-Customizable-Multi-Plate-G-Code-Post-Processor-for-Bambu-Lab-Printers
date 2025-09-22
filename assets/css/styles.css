@@ -594,6 +594,7 @@ body.compact-mode #app_logo {
 
 /* Compare buttons styling - similar to #export but in desaturated light blue */
 #btn_compare_settings,
+#btn_compare_template_modified,
 #btn_compare_gcode {
   background-color: #B8D4E3;  /* desaturated light blue */
   border: #555 2px solid;
@@ -609,11 +610,13 @@ body.compact-mode #app_logo {
 }
 
 #btn_compare_settings:hover,
+#btn_compare_template_modified:hover,
 #btn_compare_gcode:hover {
   background-color: #C8E1EE;  /* lighter on hover */
 }
 
 #btn_compare_settings:disabled,
+#btn_compare_template_modified:disabled,
 #btn_compare_gcode:disabled {
   opacity: 0.6;
   cursor: not-allowed;

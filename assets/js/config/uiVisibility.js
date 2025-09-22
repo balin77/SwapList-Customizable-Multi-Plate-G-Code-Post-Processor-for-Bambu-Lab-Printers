@@ -33,7 +33,7 @@ export const UI_ELEMENTS = {
   PRINTER_MODEL_INFO: 'printer_model_info'
 };
 
-// Visibility rules based on APP_MODE and CURRENT_MODE
+// Visibility rules based on APP_MODE and PRINTER_MODEL
 export const VISIBILITY_RULES = {
   // Push Off Mode Rules
   PUSHOFF: {
@@ -44,15 +44,15 @@ export const VISIBILITY_RULES = {
       UI_ELEMENTS.EXPORT_GCODE_BUTTON,  // GCODE export always available
       UI_ELEMENTS.BEDLEVEL_COOLING,
       UI_ELEMENTS.SECURE_PUSHOFF,
-      UI_ELEMENTS.EXTRA_PUSHOFF_CONTAINER
+      UI_ELEMENTS.EXTRA_PUSHOFF_CONTAINER,
+      UI_ELEMENTS.OVERRIDE_METADATA
     ],
     // Always hidden in Push Off Mode
     hidden: [
       UI_ELEMENTS.TEST_FILE_EXPORT,
       UI_ELEMENTS.SWAP_LOGO,
       UI_ELEMENTS.SWAP_MODE_LOGOS,
-      UI_ELEMENTS.AMS_OPTIMIZATION,
-      UI_ELEMENTS.OVERRIDE_METADATA
+      UI_ELEMENTS.AMS_OPTIMIZATION
     ],
     // Device-specific rules for Push Off Mode
     deviceRules: {

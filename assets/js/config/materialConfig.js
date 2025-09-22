@@ -1,6 +1,8 @@
 // /src/config/materialConfig.js
 import { buildFlushVolumesMatrixFromColors, buildFlushVolumesVector } from "../utils/flush.js";
 import { colorToHex } from "../utils/colors.js";
+import { printerTemplates } from "./printerTemplates.js";
+import { state } from "./state.js";
 
 /** Lese verwendete Slots & Farben aus #filament_total (nur Slots mit m/g > 0) */
 function readUsedSlotsAndColors() {
@@ -37,9 +39,10 @@ function replicateTemplateArrays(template, n) {
 
 /**
  * Baut ein neues project_settings.config JSON (String),
- * basierend auf originalText + PLAPolyTerra + den verwendeten Slots/Farben.
+ * basierend auf originalText und den verwendeten Slots/Farben.
+ * Verwendet printer-spezifische Templates für präzise Feld-Duplikation.
  */
-export function buildProjectSettingsForUsedSlots(originalText, templates = [PLAPolyTerra]) {
+export function buildProjectSettingsForUsedSlots(originalText) {
   let original;
   try { original = JSON.parse(originalText); }
   catch (e) { console.warn("project_settings original parse failed, fallback to {}:", e); original = {}; }
@@ -54,21 +57,42 @@ export function buildProjectSettingsForUsedSlots(originalText, templates = [PLAP
   // 1) Basis: Original klonen
   const out = structuredClone ? structuredClone(original) : JSON.parse(JSON.stringify(original));
 
-  // NEU: Für jedes Feld, das ein Array ist, die Werte aus dem jeweiligen Template übernehmen
-  for (const key of Object.keys(templates[0] || {})) {
-    // Array-Feld: pro Slot aus dem jeweiligen Template übernehmen
-    if (Array.isArray(templates[0][key])) {
-      out[key] = Array(n).fill("").map((_, i) => {
-        const tpl = templates[i] || templates[0];
-        return tpl[key]?.[0] ?? "";
-      });
-    } else {
-      // Skalar: Wert aus erstem Template übernehmen
-      out[key] = templates[0][key];
+  // 2) Printer-spezifische Template-Behandlung
+  const printerMode = state.PRINTER_MODEL;
+  const template = printerTemplates[printerMode];
+
+  if (template) {
+    // Nur spezifische Felder duplizieren (basierend auf Analyse)
+    for (const fieldName of template.duplicateFields) {
+      const value = original[fieldName];
+      if (Array.isArray(value) && value.length > 0) {
+        const baseValue = String(value[0] ?? "");
+        out[fieldName] = Array(n).fill(baseValue);
+      }
+    }
+
+    // Spezielle Behandlung für Felder mit besonderen Regeln
+    if (template.specialFields) {
+      for (const [fieldName, rule] of Object.entries(template.specialFields)) {
+        if (original[fieldName] && Array.isArray(original[fieldName])) {
+          if (rule === "sequential") {
+            // Aufsteigend nummeriert: 0, 1, 2, 3, ...
+            out[fieldName] = Array.from({length: n}, (_, i) => String(i));
+          }
+        }
+      }
+    }
+  } else {
+    // Fallback: alle Array-Felder duplizieren (alte Methode)
+    for (const [key, value] of Object.entries(original)) {
+      if (Array.isArray(value) && value.length > 0) {
+        const baseValue = String(value[0] ?? "");
+        out[key] = Array(n).fill(baseValue);
+      }
     }
   }
 
-  // Farben und Spezialfelder wie gehabt
+  // 3) User-spezifische Overrides anwenden (immer erforderlich)
   out["filament_colour"]       = colors.slice();
   out["filament_multi_colour"] = colors.slice();
   out["filament_self_index"]   = Array.from({length: n}, (_, i) => String(i+1));

@@ -104,11 +104,11 @@ export async function calculateObjectCoordinatesFromBbox(li) {
  * @param {HTMLElement} li - The plate list item element
  */
 export async function autoPopulatePlateCoordinates(li) {
-  console.log('autoPopulatePlateCoordinates called, mode:', state.CURRENT_MODE);
+  console.log('autoPopulatePlateCoordinates called, mode:', state.PRINTER_MODEL);
 
   // Only for X1/P1 modes (X-coordinates are irrelevant for A1/A1M in push-off mode)
-  if (!(state.CURRENT_MODE === 'X1' || state.CURRENT_MODE === 'P1')) {
-    console.log('Skipping auto-populate - X-coordinates not needed for', state.CURRENT_MODE, 'mode');
+  if (!(state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1')) {
+    console.log('Skipping auto-populate - X-coordinates not needed for', state.PRINTER_MODEL, 'mode');
     return;
   }
 
