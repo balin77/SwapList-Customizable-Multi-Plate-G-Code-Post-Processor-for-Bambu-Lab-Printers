@@ -43,162 +43,116 @@ export function initialize_page() {
   document.getElementById("export_gcode")?.addEventListener("click", export_gcode_txt);
   document.getElementById("reset")?.addEventListener("click", () => location.reload());
 
-  // Dev Mode: Show/Hide compare buttons based on DEV_MODE
+  // Dev Mode: Show/Hide dev controls container based on DEV_MODE
+  const devControlsContainer = document.getElementById("dev_controls_container");
   const btnCmp = document.getElementById("btn_compare_settings");
   const btnCmpTemplateModified = document.getElementById("btn_compare_template_modified");
   const btnCmpGcode = document.getElementById("btn_compare_gcode");
-  const compareSettingsHelp = document.getElementById("compare_settings_help");
-  const compareTemplateModifiedHelp = document.getElementById("compare_template_modified_help");
-  const compareGcodeHelp = document.getElementById("compare_gcode_help");
-  
-  if (btnCmp) {
-    if (DEV_MODE) {
-      btnCmp.style.display = "block";
-      btnCmp.classList.remove("hidden");
-      
-      btnCmp.addEventListener("click", async () => {
-        const origLabel = btnCmp.textContent;
-        btnCmp.disabled = true;
-        btnCmp.textContent = "Comparing…";
-        try {
-          const result = await compareProjectSettingsFiles(); // loggt selbst in die Konsole
-          console.log("[compareProjectSettingsFiles] finished", result);
-          showInfo("Vergleich abgeschlossen. Details stehen in der Konsole.");
-        } catch (err) {
-          console.error("Fehler beim Vergleich:", err);
-          showError("Vergleich fehlgeschlagen: " + (err?.message || err));
-        } finally {
-          btnCmp.disabled = false;
-          btnCmp.textContent = origLabel;
-        }
-      });
 
-      // Optional: für manuelles Triggern über die DevTools
-      window.compareProjectSettingsFiles = compareProjectSettingsFiles;
+  if (devControlsContainer) {
+    if (DEV_MODE) {
+      devControlsContainer.style.display = "block";
+      devControlsContainer.classList.remove("hidden");
     } else {
-      btnCmp.style.display = "none";
-      btnCmp.classList.add("hidden");
+      devControlsContainer.style.display = "none";
+      devControlsContainer.classList.add("hidden");
     }
   }
 
-  if (btnCmpTemplateModified) {
-    if (DEV_MODE) {
-      btnCmpTemplateModified.style.display = "block";
-      btnCmpTemplateModified.classList.remove("hidden");
+  if (btnCmp && DEV_MODE) {
+    btnCmp.addEventListener("click", async () => {
+      const origLabel = btnCmp.textContent;
+      btnCmp.disabled = true;
+      btnCmp.textContent = "Comparing…";
+      try {
+        const result = await compareProjectSettingsFiles(); // loggt selbst in die Konsole
+        console.log("[compareProjectSettingsFiles] finished", result);
+        showInfo("Vergleich abgeschlossen. Details stehen in der Konsole.");
+      } catch (err) {
+        console.error("Fehler beim Vergleich:", err);
+        showError("Vergleich fehlgeschlagen: " + (err?.message || err));
+      } finally {
+        btnCmp.disabled = false;
+        btnCmp.textContent = origLabel;
+      }
+    });
 
-      btnCmpTemplateModified.addEventListener("click", async () => {
-        const origLabel = btnCmpTemplateModified.textContent;
-        btnCmpTemplateModified.disabled = true;
-        btnCmpTemplateModified.textContent = "Comparing…";
-        try {
-          const result = await compareTemplateModifiedFiles(); // loggt selbst in die Konsole
-          console.log("[compareTemplateModifiedFiles] finished", result);
-          showInfo("Template vs Modified Vergleich abgeschlossen. Details stehen in der Konsole.");
-        } catch (err) {
-          console.error("Fehler beim Template vs Modified Vergleich:", err);
-          showError("Template vs Modified Vergleich fehlgeschlagen: " + (err?.message || err));
-        } finally {
-          btnCmpTemplateModified.disabled = false;
-          btnCmpTemplateModified.textContent = origLabel;
-        }
-      });
-
-      // Optional: für manuelles Triggern über die DevTools
-      window.compareTemplateModifiedFiles = compareTemplateModifiedFiles;
-    } else {
-      btnCmpTemplateModified.style.display = "none";
-      btnCmpTemplateModified.classList.add("hidden");
-    }
+    // Optional: für manuelles Triggern über die DevTools
+    window.compareProjectSettingsFiles = compareProjectSettingsFiles;
   }
 
-  if (compareSettingsHelp) {
-    if (DEV_MODE) {
-      compareSettingsHelp.style.display = "block";
-      compareSettingsHelp.classList.remove("hidden");
-    } else {
-      compareSettingsHelp.style.display = "none";
-      compareSettingsHelp.classList.add("hidden");
-    }
+  if (btnCmpTemplateModified && DEV_MODE) {
+    btnCmpTemplateModified.addEventListener("click", async () => {
+      const origLabel = btnCmpTemplateModified.textContent;
+      btnCmpTemplateModified.disabled = true;
+      btnCmpTemplateModified.textContent = "Comparing…";
+      try {
+        const result = await compareTemplateModifiedFiles(); // loggt selbst in die Konsole
+        console.log("[compareTemplateModifiedFiles] finished", result);
+        showInfo("Template vs Modified Vergleich abgeschlossen. Details stehen in der Konsole.");
+      } catch (err) {
+        console.error("Fehler beim Template vs Modified Vergleich:", err);
+        showError("Template vs Modified Vergleich fehlgeschlagen: " + (err?.message || err));
+      } finally {
+        btnCmpTemplateModified.disabled = false;
+        btnCmpTemplateModified.textContent = origLabel;
+      }
+    });
+
+    // Optional: für manuelles Triggern über die DevTools
+    window.compareTemplateModifiedFiles = compareTemplateModifiedFiles;
   }
 
-  if (compareTemplateModifiedHelp) {
-    if (DEV_MODE) {
-      compareTemplateModifiedHelp.style.display = "block";
-      compareTemplateModifiedHelp.classList.remove("hidden");
-    } else {
-      compareTemplateModifiedHelp.style.display = "none";
-      compareTemplateModifiedHelp.classList.add("hidden");
-    }
-  }
-  
-  if (btnCmpGcode) {
-    if (DEV_MODE) {
-      btnCmpGcode.style.display = "block";
-      btnCmpGcode.classList.remove("hidden");
-      
-      btnCmpGcode.addEventListener("click", async () => {
-        const origLabel = btnCmpGcode.textContent;
-        btnCmpGcode.disabled = true;
-        btnCmpGcode.textContent = "Comparing…";
-        try {
-          // Import GCODE test files directly as modules
-          const gcode1Module = await import('../testfiles/gcode1.gcode');
-          const gcode2Module = await import('../testfiles/gcode2.gcode');
-          
-          const file1Content = gcode1Module.default;
-          const file2Content = gcode2Module.default;
-          
-          console.log("[GCODE Compare] File 1 size:", file1Content.length, "chars");
-          console.log("[GCODE Compare] File 2 size:", file2Content.length, "chars");
-          
-          // Simple line-by-line comparison
-          const lines1 = file1Content.split('\n');
-          const lines2 = file2Content.split('\n');
-          
-          let differences = 0;
-          const maxLines = Math.max(lines1.length, lines2.length);
-          
-          console.log("[GCODE Compare] Lines in file 1:", lines1.length);
-          console.log("[GCODE Compare] Lines in file 2:", lines2.length);
-          
-          for (let i = 0; i < maxLines; i++) {
-            const line1 = lines1[i] || '';
-            const line2 = lines2[i] || '';
-            
-            if (line1 !== line2) {
-              differences++;
-              if (differences <= 300) { // Only log first 300 differences
-                console.log(`[GCODE Compare] Diff at line ${i+1}:`);
-                console.log(`  File 1: "${line1}"`);
-                console.log(`  File 2: "${line2}"`);
-              }
+  if (btnCmpGcode && DEV_MODE) {
+    btnCmpGcode.addEventListener("click", async () => {
+      const origLabel = btnCmpGcode.textContent;
+      btnCmpGcode.disabled = true;
+      btnCmpGcode.textContent = "Comparing…";
+      try {
+        // Import GCODE test files directly as modules
+        const gcode1Module = await import('../testfiles/gcode1.gcode');
+        const gcode2Module = await import('../testfiles/gcode2.gcode');
+
+        const file1Content = gcode1Module.default;
+        const file2Content = gcode2Module.default;
+
+        console.log("[GCODE Compare] File 1 size:", file1Content.length, "chars");
+        console.log("[GCODE Compare] File 2 size:", file2Content.length, "chars");
+
+        // Simple line-by-line comparison
+        const lines1 = file1Content.split('\n');
+        const lines2 = file2Content.split('\n');
+
+        let differences = 0;
+        const maxLines = Math.max(lines1.length, lines2.length);
+
+        console.log("[GCODE Compare] Lines in file 1:", lines1.length);
+        console.log("[GCODE Compare] Lines in file 2:", lines2.length);
+
+        for (let i = 0; i < maxLines; i++) {
+          const line1 = lines1[i] || '';
+          const line2 = lines2[i] || '';
+
+          if (line1 !== line2) {
+            differences++;
+            if (differences <= 300) { // Only log first 300 differences
+              console.log(`[GCODE Compare] Diff at line ${i+1}:`);
+              console.log(`  File 1: "${line1}"`);
+              console.log(`  File 2: "${line2}"`);
             }
           }
-          
-          console.log(`[GCODE Compare] Total differences: ${differences}`);
-          showInfo(`GCODE comparison complete. Found ${differences} differences. Check console for details.`);
-        } catch (err) {
-          console.error("Error comparing GCODE files:", err);
-          showError("GCODE comparison failed: " + (err?.message || err));
-        } finally {
-          btnCmpGcode.disabled = false;
-          btnCmpGcode.textContent = origLabel;
         }
-      });
-    } else {
-      btnCmpGcode.style.display = "none";
-      btnCmpGcode.classList.add("hidden");
-    }
-  }
-  
-  if (compareGcodeHelp) {
-    if (DEV_MODE) {
-      compareGcodeHelp.style.display = "block";
-      compareGcodeHelp.classList.remove("hidden");
-    } else {
-      compareGcodeHelp.style.display = "none";
-      compareGcodeHelp.classList.add("hidden");
-    }
+
+        console.log(`[GCODE Compare] Total differences: ${differences}`);
+        showInfo(`GCODE comparison complete. Found ${differences} differences. Check console for details.`);
+      } catch (err) {
+        console.error("Error comparing GCODE files:", err);
+        showError("GCODE comparison failed: " + (err?.message || err));
+      } finally {
+        btnCmpGcode.disabled = false;
+        btnCmpGcode.textContent = origLabel;
+      }
+    });
   }
 
 

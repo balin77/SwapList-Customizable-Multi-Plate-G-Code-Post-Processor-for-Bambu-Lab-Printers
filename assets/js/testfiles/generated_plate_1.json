@@ -1,0 +1,37 @@
+{
+  "bbox_all": [
+    115.19998000000001,
+    141.79999,
+    140.79998,
+    167.39999
+  ],
+  "bbox_objects": [
+    {
+      "area": 655.3599853515625,
+      "bbox": [
+        115.19998000000001,
+        141.79999,
+        140.79998,
+        167.39999
+      ],
+      "id": 226,
+      "layer_height": 0.20000000298023224,
+      "name": "Würfel"
+    }
+  ],
+  "bed_type": "textured_plate",
+  "filament_colors": [
+    "#FFFFFF",
+    "#e14747",
+    "#3cb460"
+  ],
+  "filament_ids": [
+    0,
+    1,
+    2
+  ],
+  "first_extruder": 0,
+  "is_seq_print": false,
+  "nozzle_diameter": 0.4000000059604645,
+  "version": 2
+}

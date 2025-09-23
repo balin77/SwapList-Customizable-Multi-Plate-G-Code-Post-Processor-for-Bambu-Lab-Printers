@@ -591,7 +591,6 @@ body.compact-mode #app_logo {
   vertical-align:middle;
   font-weight:600;
   cursor:pointer;
-  margin-top: auto;
 }
 
 #show_set_cont {
@@ -1142,6 +1141,50 @@ details.tool_info summary::before {
   width:100%;
   max-width: 1110px;
   margin: 0 auto;
+}
+
+/* ========================================= */
+/* Dev Controls Container */
+/* ========================================= */
+
+#dev_controls_container {
+  width: calc(100% - 40px);
+  max-width: 1110px;
+  margin: 20px auto 30px auto;
+  padding: 15px 20px;
+  background: #f8f8f8;
+  border: 1px solid #544;
+  border-radius: 8px;
+}
+
+#dev_buttons_wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+#dev_buttons_wrapper button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#dev_buttons_wrapper button:hover {
+  background-color: #5a6268;
+}
+
+#dev_buttons_wrapper button:disabled {
+  background-color: #6c757d;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#dev_buttons_wrapper .tool_info {
+  margin-top: 5px;
 }
 
 #plates_wrapper {
