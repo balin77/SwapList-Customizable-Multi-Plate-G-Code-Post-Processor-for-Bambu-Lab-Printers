@@ -163,6 +163,14 @@ export function handleFile(f) {
       // Eine GCODE-Datei öffnen (reicht für Modelldetektion)
       const firstPlateText = await firstPlateEntry.async("text");
 
+      // Check for clearbed comment at the beginning of GCODE (fallback method)
+      const clearbedCommentMatch = firstPlateText.match(/^\s*;\s*clearbed\s+printer:/mi);
+      if (clearbedCommentMatch) {
+        console.warn("[read3mf] File contains clearbed comment:", clearbedCommentMatch[0]);
+        reject_file("This file has already been processed by Clearbed and cannot be imported again.");
+        return;
+      }
+
       // Printer-Modell erkennen
       const detectedMode = parsePrinterModelFromGcode(firstPlateText);
 
@@ -214,6 +222,14 @@ export function handleFile(f) {
 
       var slice_config_file = zip.file("Metadata/slice_info.config").async("text");
       var slicer_config_xml = parser.parseFromString(await slice_config_file, "text/xml");
+
+      // Check for custom header that marks this as already processed
+      const clearbedProcessedHeader = slicer_config_xml.querySelector("header_item[key='X-BBL-Clearbed-Processed']");
+      if (clearbedProcessedHeader) {
+        console.warn("[read3mf] File already processed by Clearbed:", clearbedProcessedHeader.getAttribute("value"));
+        reject_file("This file has already been processed by Clearbed and cannot be imported again.");
+        return;
+      }
 
       for (var i = 0; i < model_plates.length; i++) {
         (function () {

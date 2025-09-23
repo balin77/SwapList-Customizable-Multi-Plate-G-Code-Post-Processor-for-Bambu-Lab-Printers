@@ -302,6 +302,23 @@ export async function export_3mf() {
     const parser = new DOMParser();
     const slicer_config_xml = parser.parseFromString(sliceInfoStr, "text/xml");
 
+    // Add custom header to mark this as a processed SWAP file
+    const configElement = slicer_config_xml.querySelector("config");
+    if (configElement) {
+      const headerElement = configElement.querySelector("header") || slicer_config_xml.createElement("header");
+      if (!configElement.querySelector("header")) {
+        configElement.insertBefore(headerElement, configElement.firstChild);
+      }
+
+      // Add custom header item to mark this as processed
+      const customHeaderItem = slicer_config_xml.createElement("header_item");
+      customHeaderItem.setAttribute("key", "X-BBL-Clearbed-Processed");
+      customHeaderItem.setAttribute("value", new Date().toISOString());
+      headerElement.appendChild(customHeaderItem);
+
+      console.log("Added X-BBL-Clearbed-Processed header to slice_info.config");
+    }
+
     // auf eine Plate reduzieren
     const platesXML = slicer_config_xml.getElementsByTagName("plate");
     while (platesXML.length > 1) platesXML[platesXML.length - 1].remove();

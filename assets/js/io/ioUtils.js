@@ -14,6 +14,65 @@ import { showError, showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
 import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, HOMING_All_AXES, HOMING_XY_AXES, GCODE_WAIT_30SECONDS, START_SOUND_A1M, END_SOUND_A1M } from "../commands/swapRules.js";
 
+// Function to add clearbed processing comment at the beginning of GCODE
+function addClearbedComment(gcode, plateIndex = 0, totalPlates = 1) {
+  const currentDate = new Date().toISOString();
+  const printerModel = state.PRINTER_MODEL || "unknown";
+  const appMode = state.APP_MODE || "swap";
+
+  // Get active settings info
+  const settingsInfo = [];
+
+  // Check common settings that might be active
+  if (state.OVERRIDE_METADATA) {
+    settingsInfo.push("metadata_override");
+  }
+
+  // Get settings from UI elements if available
+  const securePushOff = document.getElementById("opt_secure_pushoff")?.checked;
+  if (securePushOff) {
+    const levels = document.getElementById("extra_pushoff_levels")?.value || "1";
+    settingsInfo.push(`secure_pushoff_${levels}x`);
+  }
+
+  const cooldownEnabled = document.getElementById("opt_cooldown_fans_wait")?.checked;
+  if (cooldownEnabled) {
+    const temp = document.getElementById("cooldown_target_bed_temp")?.value || "40";
+    const time = document.getElementById("cooldown_max_time")?.value || "5";
+    settingsInfo.push(`cooldown_${temp}C_${time}min`);
+  }
+
+  const raiseBed = document.getElementById("opt_raise_bed_after_cooldown")?.checked;
+  if (raiseBed) {
+    const offset = document.getElementById("user_bed_raise_offset")?.value || "30";
+    settingsInfo.push(`bed_raise_${offset}mm`);
+  }
+
+  const testFileExport = document.getElementById("opt_test_file_export")?.checked;
+  if (testFileExport) {
+    settingsInfo.push("test_file_mode");
+  }
+
+  const loops = document.getElementById("loops")?.value || "1";
+  if (parseInt(loops) > 1) {
+    settingsInfo.push(`loops_${loops}x`);
+  }
+
+  const settingsStr = settingsInfo.length > 0 ? ` settings:[${settingsInfo.join(",")}]` : "";
+
+  // Only include submode for swap mode
+  let modeStr = `mode:${appMode}`;
+  if (appMode === "swap") {
+    const subMode = state.SWAP_MODE || "3print";
+    modeStr += ` submode:${subMode}`;
+  }
+
+  const comment = `; clearbed printer:${printerModel} ${modeStr} plates:${totalPlates}${settingsStr} date:${currentDate}`;
+
+  // Add comment at the very beginning
+  return comment + '\n' + gcode;
+}
+
 
 function buildRuleContext(plateIndex, extra = {}) {
   return {
@@ -202,14 +261,14 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
     empty: false,
     platesOnce,
     modifiedPerPlate,
-    modifiedLooped,
+    modifiedLooped: modifiedLooped.map((gcode, index) => addClearbedComment(gcode, index, totalPlates)), // Add clearbed comment to each plate
     get originalCombined() {
       // Only create the string when accessed
       return safeJoinArray(originalFlat);
     },
     get modifiedCombined() {
-      // Only create the string when accessed  
-      return safeJoinArray(modifiedLooped);
+      // Only create the string when accessed
+      return safeJoinArray(this.modifiedLooped); // Use this.modifiedLooped which already has comments
     }
   };
   
