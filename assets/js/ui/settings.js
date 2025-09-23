@@ -554,6 +554,45 @@ function toggleSoundOptions() {
   }
 }
 
+// Function to reorder plate settings when plates are moved via drag and drop
+export function reorderPlateSettings(fromIndex, toIndex) {
+  console.log(`Reordering plate settings from index ${fromIndex} to ${toIndex}`);
+
+  // Create a new Map to store the reordered settings
+  const newSettings = new Map();
+  const settingsArray = [];
+
+  // Convert current settings to an array, preserving order
+  const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+  for (let i = 0; i < plates.length; i++) {
+    settingsArray.push(currentPlateSettings.get(i) || null);
+  }
+
+  // Perform the move operation on the array
+  if (fromIndex >= 0 && fromIndex < settingsArray.length &&
+      toIndex >= 0 && toIndex < settingsArray.length &&
+      fromIndex !== toIndex) {
+
+    const [movedSettings] = settingsArray.splice(fromIndex, 1);
+    settingsArray.splice(toIndex, 0, movedSettings);
+
+    // Rebuild the settings map with new indices
+    for (let i = 0; i < settingsArray.length; i++) {
+      if (settingsArray[i] !== null) {
+        newSettings.set(i, settingsArray[i]);
+      }
+    }
+
+    // Replace the old settings map
+    currentPlateSettings.clear();
+    for (const [index, settings] of newSettings) {
+      currentPlateSettings.set(index, settings);
+    }
+
+    console.log(`Plate settings reordered successfully. Settings now available for ${currentPlateSettings.size} plates`);
+  }
+}
+
 // Export the function for external use
 export { updateSettingsVisibilityForMode };
 

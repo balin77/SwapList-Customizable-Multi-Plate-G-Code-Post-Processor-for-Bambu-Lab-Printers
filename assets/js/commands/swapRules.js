@@ -458,7 +458,7 @@ export const SWAP_RULES = [
     enabled: true,
     order: 40,
     action: "insert_after",
-    anchor: ";>>> INSERT:raise_bed_after_cooldown END",  // direkt an die vorige Regel anhängen
+    anchor:  ";>>> Raise_bed_after_cooldown END",  // neuer eindeutiger Anchor aus buildGcode.js
     occurrence: "last",
     useRegex: false,
     scope: "endseq",

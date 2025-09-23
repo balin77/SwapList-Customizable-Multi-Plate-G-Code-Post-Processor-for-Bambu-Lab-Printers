@@ -107,7 +107,11 @@ export function buildPushOffPayload(gcode, ctx) {
     staircaseSeq = buildFixedPushOffMultiZ(maxZ, levels);
   }
 
-  return [perObjectSeq, staircaseSeq].filter(Boolean).join("\n");
+  return [
+    "",
+    perObjectSeq,
+    staircaseSeq
+  ].filter(Boolean).join("\n") + "\n";
 }
 
 export function buildRaiseBedAfterCooldownPayload(gcodeSection, ctx) {
@@ -127,10 +131,13 @@ export function buildRaiseBedAfterCooldownPayload(gcodeSection, ctx) {
   console.log("[raiseBedAfterCooldown] maxZ=", maxZ, "offset=", offset, "→ Z=", targetZ);
 
   return [
+    "",
     ";=== Raise Bed Level (after cooldown) ===",
     "M400",
     `G1 Z${targetZ} F600`,
-    "M400 P100"
+    "M400 P100",
+    ";>>> Raise_bed_after_cooldown END",
+    ""
   ].join("\n");
 }
 

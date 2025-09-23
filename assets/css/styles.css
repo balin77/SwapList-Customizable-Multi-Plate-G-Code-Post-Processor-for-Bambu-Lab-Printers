@@ -500,24 +500,15 @@ body.compact-mode #app_logo {
   gap: 10px;
 }
 
-/* Mittlerer Block (Mode Column) */
-#mode_column {
-  display: flex;
-  flex-direction: column; /* Mode Toggle + Printer Selection untereinander */
-  align-items: center;    /* Mittig ausrichten */
-  justify-content: flex-start; /* Oben beginnen für alignment */
-  gap: 15px;
-  min-width: 180px;       /* Breite für Toggle */
-  margin-top: 10px;    /* Etwas Abstand nach oben */
-}
 
 /* Rechter Block (Buttons + Show settings) */
 #app_header > div:last-child {
   display: flex;
-  flex-direction: column; /* Buttons untereinander */
-  align-items: flex-end;  /* Rechts ausrichten */
+  flex-direction: row; /* Buttons untereinander */
+  align-items: center;  
   justify-content: flex-start; /* Oben beginnen für alignment */
-  gap: 10px;
+  gap: 30px;
+  height: 162px; /* Höhe an Statistics anpassen */
 }
 
 /* ---------- Queue/Stats ---------- */
@@ -533,16 +524,44 @@ body.compact-mode #app_logo {
   font-weight:600;
 }
 
-#statistics {
+#statistics, #controls_box {
   padding: 3px 10px;
   background: #f5f5f5;
   border-radius: 10px;
   margin: 8px 0;
   border: 1px solid #554;
   display: flex;
-  gap: 50px;
   align-items: flex-start;
   flex-wrap: wrap;
+  height: 162px;
+}
+
+#statistics {
+  gap: 50px;
+}
+
+#controls_box {
+  gap: 20px;
+  justify-content: space-between;
+}
+
+#controls_box #mode_controls {
+  height: 160px;
+  margin: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 180px;
+}
+
+#controls_box #action_buttons {
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 170px;
+  margin: 5px;
 }
 
 #statistics>div{ margin:15px 0; }
@@ -1181,15 +1200,6 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   pointer-events: none;   /* verhindert Klicks */
 }
 
-/* Aktionsbereich vertikal anordnen */
-#action_buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;         /* gleichmäßiger Abstand */
-  width: 170px;
-  margin-top: 10px;   /* statt großem Abstand nach unten */
-}
 
 .coord-error {
   background-color: #ffcccc !important;

@@ -130,8 +130,8 @@ async function exportNormalMode(base, modeTag, modifiedCombined) {
     ? `${base}.${modeTag}.${mode}.${submode}.gcode`
     : `${base}.${modeTag}.${mode}.gcode`;
 
-  // Create GCODE file directly from array - avoids string length issues
-  const gcodeBlob = new Blob(modifiedCombined.map(line => line + '\n'), { type: "text/x-gcode" });
+  // Create GCODE file directly from string - avoids string length issues
+  const gcodeBlob = new Blob([modifiedCombined], { type: "text/x-gcode" });
   const gcodeUrl = URL.createObjectURL(gcodeBlob);
 
   download(filename, gcodeUrl);

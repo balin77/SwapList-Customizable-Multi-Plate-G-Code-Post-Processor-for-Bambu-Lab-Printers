@@ -53,6 +53,7 @@ function reject_file(message) {
     document.getElementById("action_buttons")?.classList.add("hidden");
     document.getElementById("printer_model_info")?.classList.add("hidden");
     document.getElementById("statistics")?.classList.add("hidden");
+    document.getElementById("controls_box")?.classList.add("hidden");
     document.getElementById("app_header")?.classList.add("compact");
     document.body.classList.add("compact-mode");
   }
@@ -207,6 +208,7 @@ export function handleFile(f) {
       document.getElementById("printer_model_info").classList.remove("hidden");   // Printer model info
       document.getElementById("app_mode_toggle").classList.remove("hidden");      // App mode toggle
       document.getElementById("statistics").classList.remove("hidden");
+      document.getElementById("controls_box").classList.remove("hidden");
       document.getElementById("app_header")?.classList.remove("compact");
       document.body.classList.remove("compact-mode");
 

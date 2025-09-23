@@ -187,6 +187,9 @@ export function makeListSortable(target) {
     i.ondrop = (evt) => {
       evt.preventDefault();
       if (i != current) {
+        // Check if the current item was selected before moving
+        const wasCurrentSelected = current.classList.contains("plate-selected");
+
         let currentpos = 0, droppedpos = 0;
         for (let it = 0; it < items.length; it++) {
           if (current == items[it]) { currentpos = it; }
@@ -197,6 +200,29 @@ export function makeListSortable(target) {
           i.parentNode.insertBefore(current, i.nextSibling);
         } else {
           i.parentNode.insertBefore(current, i);
+        }
+
+        // If the moved item was selected, keep it selected after moving
+        if (wasCurrentSelected) {
+          // Remove selection from all plates first
+          const allPlates = target.querySelectorAll("li.list_item:not(.hidden)");
+          allPlates.forEach(plate => plate.classList.remove("plate-selected"));
+
+          // Re-add selection to the moved plate
+          current.classList.add("plate-selected");
+
+          // Update the selectedPlateIndex and reorder settings to match the new position
+          const newIndex = Array.from(allPlates).indexOf(current);
+          if (newIndex >= 0) {
+            // Import and update the selectedPlateIndex and reorder settings
+            import('./settings.js').then(settingsModule => {
+              // Reorder the plate settings to match the new positions
+              settingsModule.reorderPlateSettings(currentpos, droppedpos);
+              settingsModule.selectPlate(newIndex);
+            }).catch(error => {
+              console.warn("Could not update selected plate index after reordering:", error);
+            });
+          }
         }
       }
     };
@@ -350,6 +376,9 @@ export function duplicatePlate(li){
 
   // Update plate selector after adding new plate
   updatePlateSelector();
+
+  // Re-apply sortable functionality to include the new duplicated plate
+  makeListSortable(li.parentNode);
 
   // Auto-populate coordinates for duplicated plate (same as original)
   if (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1') {

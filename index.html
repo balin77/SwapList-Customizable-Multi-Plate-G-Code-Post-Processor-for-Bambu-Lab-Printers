@@ -53,34 +53,37 @@
           </div>
         </div>
       </div>
-      <div id="mode_column">
-        <!-- App Mode Toggle -->
-        <div id="app_mode_toggle" class="hidden">
-          <label class="mode-switch">
-            <input type="checkbox" id="mode_toggle_checkbox">
-            <span class="mode-slider">
-              <span class="mode-label mode-swap">SWAP Mode</span>
-              <span class="mode-label mode-pushoff">Push Off Mode</span>
-            </span>
-          </label>
+      <div id="controls_box" class="hidden">
+        <div id="mode_controls">
+          <!-- App Mode Toggle -->
+          <div id="app_mode_toggle" class="hidden">
+            <label class="mode-switch">
+              <input type="checkbox" id="mode_toggle_checkbox">
+              <span class="mode-slider">
+                <span class="mode-label mode-swap">SWAP Mode</span>
+                <span class="mode-label mode-pushoff">Push Off Mode</span>
+              </span>
+            </label>
+          </div>
+          <!-- Printer Model Info -->
+          <div id="printer_model_info" class="printer-info hidden">
+            <span class="info-label">Printer Model:</span>
+            <span id="current_printer_model" class="info-value">Unknown</span>
+          </div>
         </div>
-        <!-- Printer Model Info -->
-        <div id="printer_model_info" class="printer-info hidden">
-          <span class="info-label">Printer Model:</span>
-          <span id="current_printer_model" class="info-value">Unknown</span>
-        </div>
-      </div>
-      <div>
         <div id="action_buttons" class="hidden">
           <!-- Generate + Export Buttons -->
           <button id="export">Generate SWAP file</button>
 
           <button id="export_gcode">Export GCODE</button>
-          <!-- Reset Button -->
-          <button id="reset">Reset</button>
+
           <div id="progress_bar" style="opacity: 0; width: 100%;">
             <div id="progress_scale" style="width: 0%; display: flex;"> </div>
           </div>
+
+          <!-- Reset Button -->
+          <button id="reset">Reset</button>
+
 
           <button id="btn_compare_settings" class="btn btn-secondary" type="button"
             title="Vergleicht original vs. modifiziertes project_settings und loggt Unterschiede in die Konsole">
@@ -443,11 +446,11 @@
   <div id="site-info">
 
     <details id="app-info-container">
-      <summary>App Information & Resources</summary>
+      <summary>App Information</summary>
       <div id="app-info-content">
         <div class="version-info">
-          <p><strong>Multiprinter Version V1.3</strong></p>
-          <p>Based on V00-24</p>
+          <p><strong>Clearbed Version V1.3</strong></p>
+          <p>Inspired by Swaplist.app</p>
         </div>
 
         <details open>
@@ -536,7 +539,7 @@
               <li><strong>Printer sounds:</strong> Disable all sounds or only sounds between plates (A1/A1M only)</li>
               <li><strong>AMS optimization:</strong> Remove redundant filament swaps between plates (A1/A1M only)</li>
             </ul>
-            
+
           </div>
         </details>
 
