@@ -19,7 +19,10 @@
       "Bash(del \"C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\test_first_extruder.js\")",
       "Bash(del \"C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\test_new_build_function.js\")",
       "Bash(del test_t_command_fix.js)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
