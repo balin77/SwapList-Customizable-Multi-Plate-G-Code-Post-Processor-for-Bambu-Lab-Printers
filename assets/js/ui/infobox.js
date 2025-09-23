@@ -22,7 +22,7 @@ export function initInfobox() {
 }
 
 // Show message in infobox
-export function showMessage(message, type = 'info', duration = 20000) {
+export function showMessage(message, type = 'info', duration = 20000, allowHTML = false) {
   if (!infoboxContainer) {
     initInfobox();
   }
@@ -30,11 +30,16 @@ export function showMessage(message, type = 'info', duration = 20000) {
   // Create infobox element
   const infobox = document.createElement('div');
   infobox.className = `infobox infobox-${type}`;
-  
+
   // Message content
   const messageContent = document.createElement('div');
   messageContent.className = 'infobox-content';
-  messageContent.textContent = message;
+
+  if (allowHTML) {
+    messageContent.innerHTML = message;
+  } else {
+    messageContent.textContent = message;
+  }
   
   // Close button
   const closeBtn = document.createElement('button');
@@ -82,18 +87,18 @@ export function clearAllMessages() {
 }
 
 // Convenience methods
-export function showError(message, duration = 20000) {
-  return showMessage(message, 'error', duration);
+export function showError(message, duration = 20000, allowHTML = false) {
+  return showMessage(message, 'error', duration, allowHTML);
 }
 
-export function showWarning(message, duration = 20000) {
-  return showMessage(message, 'warning', duration);
+export function showWarning(message, duration = 20000, allowHTML = false) {
+  return showMessage(message, 'warning', duration, allowHTML);
 }
 
-export function showInfo(message, duration = 20000) {
-  return showMessage(message, 'info', duration);
+export function showInfo(message, duration = 20000, allowHTML = false) {
+  return showMessage(message, 'info', duration, allowHTML);
 }
 
-export function showSuccess(message, duration = 20000) {
-  return showMessage(message, 'success', duration);
+export function showSuccess(message, duration = 20000, allowHTML = false) {
+  return showMessage(message, 'success', duration, allowHTML);
 }

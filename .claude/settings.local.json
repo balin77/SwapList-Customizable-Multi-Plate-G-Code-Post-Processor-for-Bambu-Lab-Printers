@@ -17,7 +17,8 @@
       "Bash(del test_sound_settings.js)",
       "Bash(del test_consumption.js)",
       "Bash(del \"C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\test_first_extruder.js\")",
-      "Bash(del \"C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\test_new_build_function.js\")"
+      "Bash(del \"C:\\Users\\guble\\OneDrive\\3d Print\\Diverse Utility für Printer\\Swapmod\\Swapmod Website\\test_new_build_function.js\")",
+      "Bash(del test_t_command_fix.js)"
     ],
     "deny": [],
     "ask": []

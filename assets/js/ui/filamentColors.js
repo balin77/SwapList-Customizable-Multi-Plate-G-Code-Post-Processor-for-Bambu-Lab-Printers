@@ -3,6 +3,28 @@ import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 import { createRecoloredPlateImage, extractOriginalFilamentColors } from "../utils/imageColorMapping.js";
+import { showWarning } from "./infobox.js";
+
+// Helper function to calculate luminance and determine contrasting background
+function getContrastingBackground(hexColor) {
+  // Convert hex to RGB
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+
+  // Calculate relative luminance (WCAG formula)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // Only black or white background based on luminance
+  if (luminance > 0.5) {
+    // Light color - use black background
+    return '#000000';
+  } else {
+    // Dark color - use white background
+    return '#ffffff';
+  }
+}
 
 // Add this helper function
 function ensureP0() {
@@ -91,6 +113,8 @@ export function deriveGlobalSlotColorsFromPlates() {
   const dev = ensureP0();
 
   const derived = [null, null, null, null];
+  const slotColorConflicts = new Map(); // Track conflicts: slot -> [color1, color2, ...]
+
   const list = document.getElementById("playlist_ol");
   if (list) {
     list.querySelectorAll("li.list_item .p_filament").forEach(row => {
@@ -105,9 +129,18 @@ export function deriveGlobalSlotColorsFromPlates() {
       const hex = getSwatchHex(sw);
       if (!hex) return;
 
-      if (!derived[idx]) derived[idx] = hex; // „erste gewinnt“
+      // Track all colors found for each slot
+      if (!slotColorConflicts.has(idx)) {
+        slotColorConflicts.set(idx, new Set());
+      }
+      slotColorConflicts.get(idx).add(hex);
+
+      if (!derived[idx]) derived[idx] = hex; // „erste gewinnt"
     });
   }
+
+  // Check for color conflicts and show warning
+  checkForSlotColorConflicts(slotColorConflicts);
 
   for (let i = 0; i < 4; i++) {
     const sl = dev.slots[i];
@@ -117,6 +150,69 @@ export function deriveGlobalSlotColorsFromPlates() {
   }
 
   renderTotalsColors();
+}
+
+// ===== Color Conflict Detection ====================================
+
+// Debounce mechanism to prevent multiple warnings
+let _conflictWarningTimeout = null;
+let _lastConflictHash = null;
+
+/**
+ * Checks for color conflicts between plates for the same slots and shows warnings
+ * @param {Map} slotColorConflicts - Map of slot index to Set of colors found
+ */
+function checkForSlotColorConflicts(slotColorConflicts) {
+  const conflictedSlots = [];
+
+  slotColorConflicts.forEach((colors, slotIndex) => {
+    if (colors.size > 1) {
+      conflictedSlots.push({
+        slot: slotIndex + 1, // Convert to 1-based slot number
+        colors: Array.from(colors).sort() // Sort for consistent hashing
+      });
+    }
+  });
+
+  if (conflictedSlots.length > 0) {
+    // Create a hash of the current conflicts to avoid duplicate warnings
+    const conflictHash = JSON.stringify(conflictedSlots);
+
+    if (conflictHash === _lastConflictHash) {
+      return; // Same conflicts already shown
+    }
+
+    // Clear any pending warning
+    if (_conflictWarningTimeout) {
+      clearTimeout(_conflictWarningTimeout);
+    }
+
+    // Debounce the warning display
+    _conflictWarningTimeout = setTimeout(() => {
+      _lastConflictHash = conflictHash;
+
+      const conflictMessages = conflictedSlots.map(conflict => {
+        const colorList = conflict.colors.map(color => {
+          const backgroundColor = getContrastingBackground(color);
+          return `<span style="color: ${color}; background-color: ${backgroundColor}; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px solid ${color};">${color}</span>`;
+        }).join(', ');
+        return `Slot ${conflict.slot}: ${colorList}`;
+      }).join('<br>');
+
+      const message = `⚠️ Color conflicts detected! Multiple plates use different colors for the same slots:<br><br>${conflictMessages}<br><br>The slot colors will be adjusted to match the first loaded plate.`;
+
+      // Show as warning with 20 second auto-hide and HTML enabled
+      showWarning(message, 20000, true);
+
+      // Ensure PNG images are updated with the correct colors after conflict resolution
+      setTimeout(() => {
+        updateAllPlateImages();
+      }, 100);
+    }, 200); // 200ms debounce
+  } else {
+    // No conflicts - clear the last hash
+    _lastConflictHash = null;
+  }
 }
 
 // ===== Auto-enable/disable Override Metadata =========================

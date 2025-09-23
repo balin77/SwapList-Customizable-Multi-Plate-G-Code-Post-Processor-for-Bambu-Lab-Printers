@@ -3,7 +3,7 @@ import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
 import { download, collectAndTransform, chunked_md5 } from "./ioUtils.js";
-import { model_settings_xml } from "../config/xmlConfig.js";
+import { generateModelSettingsXml } from "../config/xmlConfig.js";
 import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 import { showError, showWarning } from "../ui/infobox.js";
@@ -296,7 +296,7 @@ export async function export_3mf() {
     baseZip.file("Metadata/project_settings.config", finalProjSettingsText);
 
     // model_settings + slice_info
-    baseZip.file("Metadata/model_settings.config", model_settings_xml);
+    baseZip.file("Metadata/model_settings.config", generateModelSettingsXml());
 
     const sliceInfoStr = await baseZip.file("Metadata/slice_info.config").async("text");
     const parser = new DOMParser();

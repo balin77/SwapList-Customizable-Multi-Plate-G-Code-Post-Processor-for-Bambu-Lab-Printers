@@ -437,10 +437,18 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
     const fromKey = `P${origP}S${origS}`;
     const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
     const toKey = map[fromKey];
-    if (!toKey) return `${cmd}${blob}`; // nichts zu tun
+    if (!toKey) {
+      // Preserve original spacing even when no changes are made
+      const originalSpacing = /^(\s*)/.exec(blob)?.[1] || ' ';
+      return `${cmd}${originalSpacing}${blob.trim()}`;
+    }
 
     const m = /^P(\d+)S(\d+)$/.exec(toKey);
-    if (!m) return `${cmd}${blob}`;
+    if (!m) {
+      // Preserve original spacing for invalid toKey format
+      const originalSpacing = /^(\s*)/.exec(blob)?.[1] || ' ';
+      return `${cmd}${originalSpacing}${blob.trim()}`;
+    }
     const toP = +m[1];
     const toS = +m[2];
 
@@ -465,86 +473,145 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
     }
     // Falls weder vorher P vorhanden noch toP != 0 → kein P ausgeben (A1M-Style)
 
-    return `${cmd}${outRest}`;
+    // Preserve original spacing between command and parameters
+    const originalSpacing = /^(\s*)/.exec(blob)?.[1] || ' ';
+    return `${cmd}${originalSpacing}${outRest.trim()}`;
   }
 
 
-  // Nur M620/M621 ohne Suffix (.1/.11) anfassen
-  let out = gcode.replace(
-    /^\s*(M620)(?!\.)\b([^\n\r]*)$/gmi,
-    (_, cmd, rest) => rewrite(cmd, rest)
-  );
-  out = out.replace(
-    /^\s*(M621)(?!\.)\b([^\n\r]*)$/gmi,
-    (_, cmd, rest) => rewrite(cmd, rest)
-  );
-
-  // T commands zwischen M620/M621 Paaren auch anpassen - nur im Body, nicht im Header
-  console.log('Starting T-Command search and replace...');
-  
   // Split GCode into header and body (header ends at CONFIG_BLOCK_END)
-  const headerEndIndex = out.indexOf('; CONFIG_BLOCK_END');
+  const headerEndIndex = gcode.indexOf('; CONFIG_BLOCK_END');
   let headerPart = '';
-  let bodyPart = out;
-  
+  let bodyPart = gcode;
+
   if (headerEndIndex !== -1) {
     const headerEndPos = headerEndIndex + '; CONFIG_BLOCK_END'.length;
-    headerPart = out.substring(0, headerEndPos);
-    bodyPart = out.substring(headerEndPos);
-    console.log('Found CONFIG_BLOCK_END, processing only body part for T-Commands');
-    console.log('Header length:', headerPart.length);
-    console.log('Body sample:', bodyPart.substring(0, 500));
+    headerPart = gcode.substring(0, headerEndPos);
+    bodyPart = gcode.substring(headerEndPos);
+    console.log('Found CONFIG_BLOCK_END, processing only body part');
   } else {
     console.log('No CONFIG_BLOCK_END found, processing entire GCode');
-    console.log('GCode sample:', bodyPart.substring(0, 500));
   }
-  
-  // Apply T-Command remapping only to body part
-  const modifiedBody = bodyPart.replace(
-    /(M620\s+[^\n\r]*S(\d+)[\s\S]*?)(\bT)(\d+)\b([\s\S]*?M621\s+[^\n\r]*S\2)/gmi,
-    (match, beforeT, originalSlot, tCmd, tSlot, afterT) => {
-      console.log('T-Command RegEx Match found!');
-      console.log('Full match:', match);
-      console.log('beforeT:', beforeT);
-      console.log('originalSlot:', originalSlot);
-      console.log('tCmd:', tCmd);
-      console.log('tSlot:', tSlot);
-      console.log('afterT:', afterT);
-      
-      // Das T-Command sollte basierend auf dem M620 S-Parameter gemappt werden, nicht dem aktuellen T-Wert
-      // Denn der Slicer generiert oft falsche T-Commands (immer T0)
-      // M620 S0A sollte mit T0 verwendet werden
-      // M620 S1A sollte mit T1 verwendet werden
-      // etc.
-      const correctTSlot = parseInt(originalSlot);  // S-Parameter von M620
-      const uiSlot = correctTSlot + 1;  // Slot zu UI-Slot konvertieren (S0 -> Slot 1)
-      const fromKey = `P0S${uiSlot}`;
-      const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
-      const toKey = map[fromKey];
-      
-      console.log(`T-Command Debug: M620 S${originalSlot} should use T${correctTSlot}, plateOriginIndex=${plateOriginIndex}, fromKey=${fromKey}, map=`, map, `toKey=${toKey}`);
-      
-      if (!toKey) {
-        // Auch wenn kein Mapping vorhanden ist, sollten wir den T-Command korrigieren
-        if (correctTSlot !== parseInt(tSlot)) {
-          console.log(`T-Command: Correcting ${tCmd}${tSlot} to ${tCmd}${correctTSlot} (no mapping, but fixing slicer error)`);
-          return beforeT + tCmd + correctTSlot + afterT;
-        }
-        return match; // nichts zu tun
-      }
-      
-      const m = /^P(\d+)S(\d+)$/.exec(toKey);
-      if (!m) return match;
-      const newUiSlot = +m[2];
-      const newTCommand = newUiSlot - 1;  // UI-Slot zurück zu T-Command konvertieren
-      
-      console.log(`T-Command: Changing ${tCmd}${tSlot} to ${tCmd}${newTCommand} (M620 S${originalSlot} -> S${newTCommand}, UI-Slot ${uiSlot} -> ${newUiSlot})`);
-      return beforeT + tCmd + newTCommand + afterT;
+
+  // Process M620...M621 blocks in body part (including T-commands)
+  let modifiedBody = bodyPart;
+
+  // Find all M620 commands and process complete blocks
+  const m620Pattern = /^(\s*)(M620)(?!\.)\s+([^\n\r]*S(\d+)[^\n\r]*)(\r?\n|$)/gmi;
+  let m620Match;
+  const processedRanges = [];
+
+  // Reset regex
+  m620Pattern.lastIndex = 0;
+
+  while ((m620Match = m620Pattern.exec(bodyPart)) !== null) {
+    const m620Start = m620Match.index;
+    const m620End = m620Start + m620Match[0].length;
+    const originalSlot = parseInt(m620Match[4]);
+    const m620Indent = m620Match[1];
+    const m620Cmd = m620Match[2];
+    const m620Rest = m620Match[3];
+    const m620LineEnd = m620Match[5];
+
+    console.log(`Processing M620 S${originalSlot} block starting at ${m620Start}`);
+
+    // Find corresponding M621 with same S parameter
+    const m621Pattern = new RegExp(`^(\\s*)(M621)(?!\\.\\d)\\s+([^\\n\\r]*S${originalSlot}[^\\n\\r]*)(\\r?\\n|$)`, 'mi');
+    const remainingGcode = bodyPart.substring(m620End);
+    const m621Match = remainingGcode.match(m621Pattern);
+
+    if (!m621Match) {
+      console.log(`No matching M621 S${originalSlot} found`);
+      continue;
+    }
+
+    const m621Start = m620End + m621Match.index;
+    const m621End = m621Start + m621Match[0].length;
+    const m621Indent = m621Match[1];
+    const m621Cmd = m621Match[2];
+    const m621Rest = m621Match[3];
+    const m621LineEnd = m621Match[4];
+
+    // Check if this range was already processed
+    const rangeStart = m620Start;
+    const rangeEnd = m621End;
+    const alreadyProcessed = processedRanges.some(range =>
+      (rangeStart >= range.start && rangeStart < range.end) ||
+      (rangeEnd > range.start && rangeEnd <= range.end)
+    );
+
+    if (alreadyProcessed) {
+      console.log(`Range ${rangeStart}-${rangeEnd} already processed, skipping`);
+      continue;
+    }
+
+    processedRanges.push({ start: rangeStart, end: rangeEnd });
+
+    // Extract the complete block content
+    const blockContent = bodyPart.substring(rangeStart, rangeEnd);
+    const middleContent = bodyPart.substring(m620End, m621Start);
+
+    console.log(`Block content preview:`, blockContent.substring(0, 200).replace(/\n/g, '\\n'));
+
+    // Apply rewrite function to M620 and M621 commands
+    const newM620 = rewrite(m620Cmd, m620Rest);
+    const newM621 = rewrite(m621Cmd, m621Rest);
+
+    // Extract new slot from rewritten M620 command
+    const newSlotMatch = newM620.match(/S(\d+)/);
+    const newSlot = newSlotMatch ? parseInt(newSlotMatch[1]) : originalSlot;
+
+    // Process T commands in the middle content if slot changed
+    let processedMiddle = middleContent;
+    if (newSlot !== originalSlot) {
+      console.log(`Slot changed from ${originalSlot} to ${newSlot}, updating T commands`);
+      // Only match T commands that are standalone on their own line (not part of other commands like M620.1)
+      processedMiddle = middleContent.replace(/^(\s*)(T)(\d+)\s*$/gmi, (tMatch, indent, tCmd, tSlot) => {
+        console.log(`Found standalone T-Command ${tCmd}${tSlot} in block, changing to ${tCmd}${newSlot}`);
+        return indent + tCmd + newSlot;
+      });
+    } else {
+      console.log(`No slot change (${originalSlot} -> ${newSlot}), T commands unchanged`);
+    }
+
+    // Reconstruct the complete block with proper spacing
+    const processedBlock = m620Indent + newM620 + m620LineEnd + processedMiddle + m621Indent + newM621 + m621LineEnd;
+
+    // Apply the change to modifiedBody
+    modifiedBody = modifiedBody.substring(0, rangeStart) + processedBlock + modifiedBody.substring(rangeEnd);
+
+    // Adjust the regex position due to potential content length changes
+    const lengthDiff = processedBlock.length - (rangeEnd - rangeStart);
+    m620Pattern.lastIndex = rangeEnd + lengthDiff;
+  }
+
+  // Also handle standalone M620/M621 commands that weren't part of blocks
+  modifiedBody = modifiedBody.replace(
+    /^(\s*)(M620)(?!\.)\b([^\n\r]*)(\r?\n|$)/gmi,
+    (match, indent, cmd, rest, lineEnd) => {
+      // Only process if not already processed as part of a block
+      const wasProcessed = processedRanges.some(range => {
+        const matchStart = modifiedBody.indexOf(match);
+        return matchStart >= range.start && matchStart < range.end;
+      });
+      return wasProcessed ? match : indent + rewrite(cmd, rest) + lineEnd;
+    }
+  );
+
+  modifiedBody = modifiedBody.replace(
+    /^(\s*)(M621)(?!\.)\b([^\n\r]*)(\r?\n|$)/gmi,
+    (match, indent, cmd, rest, lineEnd) => {
+      // Only process if not already processed as part of a block
+      const wasProcessed = processedRanges.some(range => {
+        const matchStart = modifiedBody.indexOf(match);
+        return matchStart >= range.start && matchStart < range.end;
+      });
+      return wasProcessed ? match : indent + rewrite(cmd, rest) + lineEnd;
     }
   );
 
   // Combine header and modified body back together
-  out = headerPart + modifiedBody;
+  let out = headerPart + modifiedBody;
 
   // Filament header line aktualisieren ("; filament: 1,2,3" -> neue Slots)
   out = out.replace(

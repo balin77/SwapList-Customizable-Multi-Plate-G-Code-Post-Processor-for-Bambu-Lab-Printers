@@ -1,3 +1,7 @@
+/* ========================================= */
+/* Root Variables & Theme Colors */
+/* ========================================= */
+
 :root {
   --ci_1:#00BBDC;
   --ci_2:#00eeff;
@@ -7,7 +11,11 @@
   --printflow-color:#7270ccff; /* Blau für Printflow Mode */
 }
 
-/* Push Off Mode Farbschema - alle Elemente direkt überschreiben */
+/* ========================================= */
+/* Mode-Specific Color Schemes */
+/* ========================================= */
+
+/* Push Off Mode Farbschema */
 body.pushoff-mode #export {
   background-color: var(--pushoff-color) !important;
 }
@@ -32,7 +40,11 @@ body.pushoff-mode .plate-duplicate {
   background: var(--pushoff-color) !important;
 }
 
-/* A1 Swap Mode Farbschema - Grau statt Gelb */
+body.pushoff-mode .list_item.plate-selected {
+  border-color: var(--pushoff-color);
+}
+
+/* A1 Swap Mode Farbschema */
 body.a1-swap-mode #export {
   background-color: var(--a1-swap-color) !important;
 }
@@ -57,7 +69,11 @@ body.a1-swap-mode .plate-duplicate {
   background: var(--a1-swap-color) !important;
 }
 
-/* Printflow Mode Farbschema - blaue Farben */
+body.a1-swap-mode .list_item.plate-selected {
+  border-color: var(--a1-swap-color);
+}
+
+/* Printflow Mode Farbschema */
 body.printflow-mode #export {
   background-color: var(--printflow-color) !important;
 }
@@ -86,20 +102,223 @@ body.printflow-mode .list_item.plate-selected {
   border-color: var(--printflow-color);
 }
 
-/* Standard SWAP Mode (A1M) - ensure primary color is applied */
+/* Standard SWAP Mode (A1M) */
 body:not(.pushoff-mode):not(.a1-swap-mode):not(.printflow-mode) #export {
   background-color: var(--primary-color) !important;
 }
 
-*{ font-family:'Noto Sans','Arial',sans-serif; }
+/* ========================================= */
+/* Base Typography & Layout */
+/* ========================================= */
 
-body{
-  font-size:14px;
-  margin:0;
-  overflow-y: scroll; /* Always show vertical scrollbar */
+* {
+  font-family:'Noto Sans','Arial',sans-serif;
 }
 
-/* Printer Model Info Styling */
+body {
+  font-size:14px;
+  margin:0;
+  overflow-y: scroll;
+}
+
+#app_wrapper {
+  max-width:1110px;
+  margin:0 auto;
+  padding:10px 20px;
+}
+
+/* ========================================= */
+/* App Logo Section */
+/* ========================================= */
+
+#app_logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  height: 62px;
+}
+
+#app_logo img {
+  padding: 0;
+}
+
+#swap_mode_logos {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.swap-logo {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.swap-logo.active {
+  height: 42px;
+  opacity: 1;
+}
+
+.swap-logo.inactive {
+  height: 32px;
+  opacity: 0.6;
+}
+
+.swap-logo.inactive:hover {
+  opacity: 0.8;
+}
+
+/* ========================================= */
+/* App Header & Layout */
+/* ========================================= */
+
+#app_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 0 0 10px 0;
+  min-height: 120px;
+}
+
+#app_header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+#app_header > div:last-child {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 30px;
+  height: 162px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#app_header.compact {
+  min-height: 10px !important;
+}
+
+body.compact-mode #app_logo {
+  min-height: 10px;
+  padding: 5px 0;
+}
+
+/* ========================================= */
+/* Statistics & Controls */
+/* ========================================= */
+
+#statistics, #controls_box {
+  padding: 3px 10px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  margin: 8px 0;
+  border: 1px solid #554;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  height: 162px;
+}
+
+#statistics {
+  gap: 50px;
+}
+
+#statistics > div {
+  margin:15px 0;
+  padding: 15px 0;
+}
+
+#statistics h3 {
+  margin:0 0 10px 0;
+  font-size: 16px;
+}
+
+#controls_box {
+  gap: 20px;
+  justify-content: space-between;
+}
+
+#controls_box #mode_controls {
+  height: 160px;
+  margin: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 180px;
+}
+
+#controls_box #action_buttons {
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 170px;
+  margin: 5px;
+}
+
+#queue_statistics {
+  border-right:#777 1px solid;
+  padding-right:40px !important;
+  flex-shrink: 0;
+  width: 250px;
+}
+
+#queue_statistics > * > *:nth-child(1) {
+  display:inline-block;
+  width:9ch;
+  font-size:10pt;
+}
+
+#queue_statistics > div {
+  margin: 20px 0 0;
+}
+
+#filament_statistics {
+  padding-left:25px;
+  flex-shrink: 0;
+  width: 280px;
+}
+
+#filament_statistics > div {
+  margin: 20px 0 0;
+}
+
+#filament_statistics > div:not(#filament_total) {
+  margin-top: 12px;
+}
+
+#filament_total {
+  margin-bottom: 15px;
+}
+
+#filament_total > div {
+  margin-right:10px;
+  display:inline-block;
+  width: 55px;
+}
+
+#total_time, #used_plates {
+  font-size:16pt;
+  font-weight:600;
+}
+
+/* ========================================= */
+/* Printer Model Info */
+/* ========================================= */
+
 .printer-info {
   display: flex;
   align-items: center;
@@ -131,16 +350,12 @@ body{
   font-size: 13px;
 }
 
-#app_wrapper{
-  max-width:1110px;
-  margin:0 auto;
-  padding:10px 20px;
-}
-
-/* ---------- Infobox ---------- */
+/* ========================================= */
+/* Infobox Components */
+/* ========================================= */
 
 .infobox-container {
-  width: 100%; /* Same width as drop_zones_wrapper */
+  width: 100%;
   margin: 0 auto 10px auto;
 }
 
@@ -177,10 +392,9 @@ body{
   transition: background-color 0.2s ease;
 }
 
-/* Info (Blue) - using existing blue tones */
 .infobox-info {
-  background-color: #C8E1EE; /* lighter blue from existing CSS */
-  border-color: #B8D4E3; /* darker blue from existing CSS */
+  background-color: #C8E1EE;
+  border-color: #B8D4E3;
   color: #2d3748;
 }
 
@@ -192,9 +406,8 @@ body{
   background-color: rgba(49, 130, 206, 0.1);
 }
 
-/* Success (Green) */
 .infobox-success {
-  background-color: #A8E6A3; /* using the existing green from drop_zone_active */
+  background-color: #A8E6A3;
   border-color: #85D17E;
   color: #2d3748;
 }
@@ -207,154 +420,39 @@ body{
   background-color: rgba(56, 161, 105, 0.1);
 }
 
-/* Warning/Error (Red) - using existing red tones */
-.infobox-warning,
-.infobox-error {
-  background-color: #ffcccc; /* using existing red background */
-  border-color: var(--pushoff-color); /* using existing red tone from pushoff mode */
+.infobox-warning {
+  background-color: #ffeaa7;
+  border-color: #fdcb6e;
   color: #2d3748;
 }
 
-.infobox-warning .infobox-close,
+.infobox-warning .infobox-close {
+  color: #d63031;
+}
+
+.infobox-warning .infobox-close:hover {
+  background-color: rgba(253, 203, 110, 0.3);
+}
+
+.infobox-error {
+  background-color: #ffcccc;
+  border-color: var(--pushoff-color);
+  color: #2d3748;
+}
+
 .infobox-error .infobox-close {
   color: #e53e3e;
 }
 
-.infobox-warning .infobox-close:hover,
 .infobox-error .infobox-close:hover {
   background-color: rgba(229, 62, 62, 0.1);
 }
 
-/* ---------- Playlist / Plates ---------- */
+/* ========================================= */
+/* Progress Bar & Loading */
+/* ========================================= */
 
-#playlist_ol{
-  padding-top: 15px;
-  padding-left: 0px;
-  padding-right: 0px;
-  counter-reset:list-number;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-flex-start;
-  gap: 10px;
-}
-
-#logo{ padding:0; }
-#logo_pushoff{ padding:0; }
-
-.list_item{
-  width: calc(100% / 5 - 8px);
-  /* Höhe dynamisch, keine Scrollbars */
-  height:auto !important;
-  min-width: 215px;
-  max-height:none !important;
-  overflow:visible !important;
-  background:#ccc;
-  border:#999 1px solid;
-  border-radius:8px;
-  opacity:1;
-  padding:5px;
-  margin-top:5px;
-  margin-bottom:5px;
-  display:inline-block;
-}
-
-/* Nummerierung voranstellen */
-.list_item::before{
-  display:inline-block;
-  width:30px;
-  text-align:center;
-  counter-increment:list-number;
-  content:counter(list-number);
-  font-size:16pt;
-  font-weight:600;
-  vertical-align:top;
-  margin-top:5px;
-  color:#777;
-}
-
-/* Single-line Truncation */
-.single-line{
-  width:100%;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  display:inline-block;
-}
-
-/* Plate-Elemente */
-.p_icon{
-  width:100%;
-  max-width: 200px; 
-  background-color:#ddd;
-  border-radius:4px;
-}
-.p_info{
-  display:inline-block;
-  width:190px;
-  padding:10px 5px;
-}
-.p_title{
-  width:150px;
-  display:inline-block;
-  margin-bottom:8px;
-  overflow:hidden;
-}
-.p_name{ display:inline-block; color:#888; }
-.f_id{ display:none; }
-
-.p_time{
-  display:inline-block;
-  vertical-align:middle;
-  font-size:14pt;
-  color:#777;
-}
-
-.p_rep{
-  width:40px;
-  height:17px;
-  background:#ddd;
-  border-radius:4px;
-  font-size:11pt;
-  font-weight:500;
-  float:right;
-  text-align:center;
-  padding:2px 4px;
-  vertical-align:baseline;
-  margin-top:2px;
-}
-
-/* Filamente in der Plate */
-.p_filaments{ margin-top:5px; width:200px; }
-.f_color{
-  height:20px; width:20px;
-  border-radius:11px;
-  border:1px solid #888;
-  display:inline-block;
-}
-.p_filament{
-  display:inline-block;
-  font-size:6pt;
-  text-align:center;
-  width:40px;
-}
-.p_filament_prototype{ display:none; }
-
-/* Drag&Drop States */
-#playlist_ol li.targeted{ background:#C3E1ED; opacity:.3; }
-#playlist_ol li.active{
-  background:#f5f5f5;
-  border-right:5px solid var(--ci_1);
-  margin:5px 0 -5px 0;
-}
-#playlist_ol li.active .file-input,
-#playlist_ol li.active ._p_rep,
-.p_time,
-li.active .p_info,
-.p_icon{ pointer-events:none; }
-
-/* ---------- Header / Progress / Stats ---------- */
-
-#total_size_label{
+#total_size_label {
   font-weight:600;
   font-size:16px;
   text-align:center;
@@ -365,29 +463,41 @@ li.active .p_info,
   color:#aaa;
 }
 
-#progress_bar{
+#progress_bar {
   background-color:#eee;
   display:block;
   height:5px;
-  width:170px;    
+  width:170px;
   border:1px solid #ccc;
 }
-#progress_scale{
+
+#progress_scale {
   height:100%;
   background:linear-gradient(90deg,var(--ci_1),var(--ci_1),var(--ci_2),var(--ci_1),var(--ci_1));
   background-size:300% 100%;
   animation:move 2s ease infinite;
   width:50%;
 }
-@keyframes move{
+
+@keyframes move {
   0%{background-position:100% 50%}
   100%{background-position:0% 50%}
 }
 
-.inactive{ color:#aaa; opacity:.5; }
+.inactive {
+  color:#aaa;
+  opacity:.5;
+}
 
-#file_name, #file_name~span{ font-family:'Courier New',Courier,monospace; }
-#file_name{
+/* ========================================= */
+/* File Input & Name Display */
+/* ========================================= */
+
+#file_name, #file_name~span {
+  font-family:'Courier New',Courier,monospace;
+}
+
+#file_name {
   width:260px;
   height:17px;
   background:#fafafa;
@@ -398,212 +508,20 @@ li.active .p_info,
   margin-top:2px;
   border:1px solid #cbd5e0;
 }
-#file_name~span{ color:#777; }
 
-::placeholder{ color:#888; }
-
-details summary{ cursor:pointer; }
-.tool_info, details.tool_info summary{ display:inline; }
-.tool_info[open]{ padding:8px; background-color:#eee; }
-details[open].tool_info{ display:block; margin:5px auto; }
-details[open].tool_info summary::before{
-  content:'X';
-  background-color:var(--primary-color);
-  width:30px;
-  border-radius:3px;
-  display:inline-block;
-  text-align:center;
-}
-details.tool_info summary::before{ content:'( ? )'; }
-.tool_info>summary{ color:#777; }
-
-#debug_outline:checked ~ * *{ border:#00BBDC 1px solid; }
-#debug_outline:checked ~ * *:hover{ border:#f00 1px dotted; }
-
-/* Logo Section - Left Aligned */
-#app_logo {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  width: 100%;
-  padding: 10px 0;
-  margin-bottom: 10px;
-  height: 62px; /* Fixed height to prevent animation jumping */
+#file_name~span {
+  color:#777;
 }
 
-#app_logo img {
-  padding: 0;
+::placeholder {
+  color:#888;
 }
 
-/* Swap Mode Logo Container */
-#swap_mode_logos {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
+/* ========================================= */
+/* Buttons & Actions */
+/* ========================================= */
 
-/* Swap Logo Base Styles */
-.swap-logo {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0;
-}
-
-/* Active Logo Styling */
-.swap-logo.active {
-  height: 42px;
-  opacity: 1;
-}
-
-/* Inactive Logo Styling */
-.swap-logo.inactive {
-  height: 32px;
-  opacity: 0.6;
-}
-
-.swap-logo.inactive:hover {
-  opacity: 0.8;
-}
-
-#app_header {
-  display: flex;                 /* Flexbox mit 3 Spalten */
-  justify-content: space-between;/* Links, Mitte, Rechts trennen */
-  align-items: flex-start;       /* Alle Spalten oben beginnen */
-  gap: 20px;                     /* Mindestabstand zwischen Elementen */
-  flex-wrap: wrap;               /* Elemente umbrechen bei zu wenig Platz */
-  width: 100%;
-  padding: 0 0 10px 0;           /* nur unten Abstand */
-  min-height: 120px;             /* Mindesthöhe für Statistics */
-}
-
-/* Unsichtbare Elemente sollen keinen Platz einnehmen */
-.hidden {
-  display: none !important;
-}
-
-/* Reduzierte Höhe wenn Inhalte versteckt sind */
-#app_header.compact {
-  min-height: 10px !important;
-}
-
-/* Logo auch kompakter wenn Inhalte versteckt sind */
-body.compact-mode #app_logo {
-  min-height: 10px;
-  padding: 5px 0;
-}
-
-/* Linker Block (Logo + Stats) */
-#app_header > div:first-child {
-  display: flex;
-  flex-direction: column;  /* Statt nebeneinander jetzt untereinander */
-  align-items: flex-start; /* Links ausrichten */
-  gap: 10px;
-}
-
-
-/* Rechter Block (Buttons + Show settings) */
-#app_header > div:last-child {
-  display: flex;
-  flex-direction: row; /* Buttons untereinander */
-  align-items: center;  
-  justify-content: flex-start; /* Oben beginnen für alignment */
-  gap: 30px;
-  height: 162px; /* Höhe an Statistics anpassen */
-}
-
-/* ---------- Queue/Stats ---------- */
-
-#queue_statistics>* > *:nth-child(1){
-  display:inline-block;
-  width:9ch;
-  font-size:10pt;
-}
-
-#total_time, #used_plates{
-  font-size:16pt;
-  font-weight:600;
-}
-
-#statistics, #controls_box {
-  padding: 3px 10px;
-  background: #f5f5f5;
-  border-radius: 10px;
-  margin: 8px 0;
-  border: 1px solid #554;
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  height: 162px;
-}
-
-#statistics {
-  gap: 50px;
-}
-
-#controls_box {
-  gap: 20px;
-  justify-content: space-between;
-}
-
-#controls_box #mode_controls {
-  height: 160px;
-  margin: 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  min-width: 180px;
-}
-
-#controls_box #action_buttons {
-  height: 160px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 170px;
-  margin: 5px;
-}
-
-#statistics>div{ margin:15px 0; }
-#queue_statistics{
-  border-right:#777 1px solid;
-  padding-right:40px !important;
-  flex-shrink: 0;
-  width: 250px;
-}
-#filament_statistics{
-  padding-left:25px;
-  flex-shrink: 0;
-  width: 280px;
-}
-#filament_total>div{
-  margin-right:10px;
-  display:inline-block;
-  width: 55px;
-}
-
-/* More spacing in filament statistics */
-#filament_total {
-  margin-bottom: 15px;
-}
-
-#filament_statistics > div:not(#filament_total) {
-  margin-top: 12px;
-}
-#statistics h3{ margin:0 0 10px 0; font-size: 16px; }
-#statistics>div{ padding: 15px 0; }
-
-/* More spacing for statistics content */
-#queue_statistics > div {
-  margin: 20px 0 0;
-}
-#filament_statistics > div {
-  margin: 20px 0 0;
-}
-
-/* ---------- Buttons / Actions ---------- */
-
-#export{
+#export {
   background-color:var(--primary-color) !important;
   border:#555 2px solid;
   border-radius:5px;
@@ -613,13 +531,31 @@ body.compact-mode #app_logo {
   font-weight:600;
   cursor:pointer;
 }
-#export:hover{ background-color:#fdffbf; }
 
-/* Compare buttons styling - similar to #export but in desaturated light blue */
+#export:hover {
+  background-color:#fdffbf;
+}
+
+#export_gcode {
+  background-color:#eee;
+  color:#333;
+  border:#555 2px solid;
+  border-radius:5px;
+  width:170px;
+  height:30px;
+  vertical-align:middle;
+  font-weight:600;
+  cursor:pointer;
+}
+
+#export_gcode:hover {
+  background-color:#f5f5f5;
+}
+
 #btn_compare_settings,
 #btn_compare_template_modified,
 #btn_compare_gcode {
-  background-color: #B8D4E3;  /* desaturated light blue */
+  background-color: #B8D4E3;
   border: #555 2px solid;
   border-radius: 5px;
   height: 40px;
@@ -635,7 +571,7 @@ body.compact-mode #app_logo {
 #btn_compare_settings:hover,
 #btn_compare_template_modified:hover,
 #btn_compare_gcode:hover {
-  background-color: #C8E1EE;  /* lighter on hover */
+  background-color: #C8E1EE;
 }
 
 #btn_compare_settings:disabled,
@@ -645,9 +581,7 @@ body.compact-mode #app_logo {
   cursor: not-allowed;
 }
 
-#show_set_cont{ margin-top:20px; }
-
-#reset{
+#reset {
   background-color:#555;
   color:var(--primary-color);
   border:#555 2px solid;
@@ -657,21 +591,35 @@ body.compact-mode #app_logo {
   vertical-align:middle;
   font-weight:600;
   cursor:pointer;
-  margin-top: auto; /* Reset ganz nach unten drücken */
+  margin-top: auto;
 }
 
+#show_set_cont {
+  margin-top:20px;
+}
 
+#action_buttons.hidden {
+  display: none;
+  pointer-events: none;
+}
 
-/* Segmented mode toggle */
-.mode-toggle{
+/* ========================================= */
+/* Mode Toggle Controls */
+/* ========================================= */
+
+.mode-toggle {
   display:inline-flex;
   border:1px solid #555;
   border-radius:8px;
   overflow:hidden;
-  width: 183px; /* 15px breiter für mehr Platz */
+  width: 183px;
 }
-.mode-toggle input{ display:none; }
-.mode-toggle label{
+
+.mode-toggle input {
+  display:none;
+}
+
+.mode-toggle label {
   padding:5px 12px;
   cursor:pointer;
   user-select:none;
@@ -679,16 +627,23 @@ body.compact-mode #app_logo {
   background:#eee;
   flex:1
 }
-.mode-toggle label + input + label{ border-left:1px solid #555; }
-.mode-toggle input:checked + label{ background:var(--primary-color); }
 
-.mode-toggle:hover{
-  background-color:#f5f5f5;     /* dezentes Hover wie die anderen */
+.mode-toggle label + input + label {
+  border-left:1px solid #555;
 }
 
-#mode_switch.hidden{ display:none !important; }
+.mode-toggle input:checked + label {
+  background:var(--primary-color);
+}
 
-/* App Mode Toggle (Swap/Push Off) */
+.mode-toggle:hover {
+  background-color:#f5f5f5;
+}
+
+#mode_switch.hidden {
+  display:none !important;
+}
+
 .mode-switch {
   position: relative;
   display: inline-block;
@@ -715,7 +670,6 @@ body.compact-mode #app_logo {
   transition: .3s;
   overflow: hidden;
 }
-
 
 .mode-label {
   position: absolute;
@@ -764,20 +718,21 @@ body.compact-mode #app_logo {
   transform: translateX(146px);
 }
 
-/* Printer Mode Toggle umbenennen für Klarheit */
-#printer_mode_switch.hidden{ display:none !important; }
+#printer_mode_switch.hidden {
+  display:none !important;
+}
 
+/* ========================================= */
+/* Drop Zones */
+/* ========================================= */
 
-
-
-/* ---------- Dropzones ---------- */
-
-#drop_zones_wrapper{
+#drop_zones_wrapper {
   width:100%;
   height:200px;
   margin-bottom:30px;
 }
-#drop_zone{
+
+#drop_zone {
   border:3px solid #9DB0CC;
   border-radius:10px;
   border-style:dashed;
@@ -794,46 +749,416 @@ body.compact-mode #app_logo {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-#drop_zone:hover{
+#drop_zone:hover {
   background-color:#E2EBE8;
   border-color:#8BA3BD;
 }
 
-#drop_zone.drop_zone_active{ background-color:#A8E6A3; }
+#drop_zone.drop_zone_active {
+  background-color:#A8E6A3;
+}
 
-#drop_zones_wrapper.mini_drop_zone{ height:50px; }
-#drop_zones_wrapper.mini_drop_zone p{ font-size:16pt; }
-#drop_zones_wrapper.mini_drop_zone #drop_zone{ padding-bottom:5px; }
+#drop_zones_wrapper.mini_drop_zone {
+  height:50px;
+}
 
-#drop_zones_wrapper.focused{ height:500px; }
+#drop_zones_wrapper.mini_drop_zone p {
+  font-size:16pt;
+}
 
-#drop_zone>p, #drop_zone>i{
+#drop_zones_wrapper.mini_drop_zone #drop_zone {
+  padding-bottom:5px;
+}
+
+#drop_zones_wrapper.focused {
+  height:500px;
+}
+
+#drop_zone > p, #drop_zone > i {
   text-align:center;
   color:#9DB0CC;
 }
-#drop_zone>p{
+
+#drop_zone > p {
   font-weight:800;
   font-size:24pt;
   margin:0;
 }
-#drop_zone>i{ display:block; font-size:16pt; }
 
-/* ---------- Layout: Settings / Plates ---------- */
+#drop_zone > i {
+  display:block;
+  font-size:16pt;
+}
 
-#app_content{
+/* ========================================= */
+/* Plates & Playlist */
+/* ========================================= */
+
+#playlist_ol {
+  padding-top: 15px;
+  padding-left: 0px;
+  padding-right: 0px;
+  counter-reset:list-number;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.list_item {
+  position: relative;
+  width: calc(100% / 5 - 8px);
+  height:auto !important;
+  min-width: 215px;
+  max-height:none !important;
+  overflow:visible !important;
+  background:#ccc;
+  border:#999 1px solid;
+  border-radius:8px;
+  opacity:1;
+  padding:5px;
+  margin-top:5px;
+  margin-bottom:5px;
+  display:inline-block;
+  transition: border 0.2s ease;
+  border: 5px solid transparent;
+  box-sizing: border-box;
+}
+
+.list_item.plate-selected {
+  border: 5px solid var(--primary-color);
+}
+
+.list_item::before {
+  display:inline-block;
+  width:30px;
+  text-align:center;
+  counter-increment:list-number;
+  content:counter(list-number);
+  font-size:16pt;
+  font-weight:600;
+  vertical-align:top;
+  margin-top:5px;
+  color:#777;
+}
+
+#playlist_ol li.targeted {
+  background:#C3E1ED;
+  opacity:.3;
+}
+
+#playlist_ol li.active {
+  background:#f5f5f5;
+  border-right:5px solid var(--ci_1);
+  margin:5px 0 -5px 0;
+}
+
+#playlist_ol li.active .file-input,
+#playlist_ol li.active ._p_rep,
+.p_time,
+li.active .p_info,
+.p_icon {
+  pointer-events:none;
+}
+
+.plate-remove {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: #f55;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.plate-remove:hover {
+  opacity: 1;
+  background: #d00;
+}
+
+/* ========================================= */
+/* Plate Elements */
+/* ========================================= */
+
+.p_icon {
+  width:100%;
+  max-width: 200px;
+  background-color:#ddd;
+  border-radius:4px;
+}
+
+.p_info {
+  display:inline-block;
+  width:190px;
+  padding:10px 5px;
+}
+
+.p_title {
+  width:150px;
+  display:inline-block;
+  margin-bottom:8px;
+  overflow:hidden;
+}
+
+.p_name {
+  display:inline-block;
+  color:#888;
+}
+
+.f_id {
+  display:none;
+}
+
+.p_time {
+  display:inline-block;
+  vertical-align:middle;
+  font-size:14pt;
+  color:#777;
+}
+
+.p_rep {
+  width:40px;
+  height:17px;
+  background:#ddd;
+  border-radius:4px;
+  font-size:11pt;
+  font-weight:500;
+  float:right;
+  text-align:center;
+  padding:2px 4px;
+  vertical-align:baseline;
+  margin-top:2px;
+}
+
+.single-line {
+  width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  display:inline-block;
+}
+
+.p_imgwrap {
+  position:relative;
+  display:block;
+  margin: 0 auto;
+}
+
+.p_imgwrap .p_icon {
+  display:block;
+}
+
+.plate-duplicate {
+  position:absolute;
+  right:6px;
+  bottom:6px;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:var(--primary-color);
+  color:#000;
+  border:none;
+  font-size:18px;
+  line-height:26px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+
+.plate-duplicate:hover {
+  filter:brightness(1.1);
+}
+
+/* ========================================= */
+/* Filament & Color Management */
+/* ========================================= */
+
+.p_filaments {
+  margin-top:5px;
+  width:200px;
+}
+
+.f_color,
+.p_filaments .f_color,
+#filament_total .f_color {
+  height:20px;
+  width:20px;
+  border-radius:11px;
+  border:1px solid #888;
+  display:inline-block;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.p_filament {
+  display:inline-block;
+  font-size:6pt;
+  text-align:center;
+  width:40px;
+}
+
+.p_filament_prototype {
+  display:none;
+}
+
+.slot-dropdown {
+  position: absolute;
+  z-index: 9999;
+  min-width: 160px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 13px;
+}
+
+.slot-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.slot-dropdown-item .dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(0,0,0,.2);
+  border-radius: 3px;
+}
+
+.slot-dropdown-item:hover {
+  background: rgba(0,0,0,.05);
+}
+
+.slot-dropdown-item.current {
+  font-weight: 600;
+}
+
+.slot-dropdown-sep {
+  height: 1px;
+  background: rgba(0,0,0,.08);
+  margin: 6px 4px;
+}
+
+.slot-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.slot-modal {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 280px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.25);
+}
+
+.slot-modal h4 {
+  margin: 0 0 10px;
+}
+
+.slot-modal .row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:8px 0;
+}
+
+.slot-modal .actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:12px;
+}
+
+/* ========================================= */
+/* Tool Info & Debug */
+/* ========================================= */
+
+details summary {
+  cursor:pointer;
+}
+
+.tool_info, details.tool_info summary {
+  display:inline;
+}
+
+.tool_info[open] {
+  padding:8px;
+  background-color:#eee;
+}
+
+details[open].tool_info {
+  display:block;
+  margin:5px auto;
+}
+
+details[open].tool_info summary::before {
+  content:'X';
+  background-color:var(--primary-color);
+  width:30px;
+  border-radius:3px;
+  display:inline-block;
+  text-align:center;
+}
+
+details.tool_info summary::before {
+  content:'( ? )';
+}
+
+.tool_info > summary {
+  color:#777;
+}
+
+#debug_outline:checked ~ * * {
+  border:#00BBDC 1px solid;
+}
+
+#debug_outline:checked ~ * *:hover {
+  border:#f00 1px dotted;
+}
+
+/* ========================================= */
+/* App Content & Layout */
+/* ========================================= */
+
+#app_content {
   width:100%;
   max-width: 1110px;
   margin: 0 auto;
 }
 
-#plates_wrapper{ 
+#plates_wrapper {
   width: 100%;
   max-width: 1110px;
   margin: 0 20px 0 auto;
 }
-#spacer_cell{ display:table-cell; min-width:20px; }
 
-/* New Settings Panel Below Plates */
+#spacer_cell {
+  display:table-cell;
+  min-width:20px;
+}
+
+/* ========================================= */
+/* Settings Panel */
+/* ========================================= */
+
 #settings_panel {
   width: 100%;
   margin: 30px 0 15px 0;
@@ -879,26 +1204,17 @@ body.compact-mode #app_logo {
   color: #4a5568;
 }
 
-/* Special case for loops label to stay inline */
 .settings-col label[for="loops"] {
   display: inline;
   margin: 0;
   vertical-align: middle;
 }
 
-
-#x1p1-settings {
-  margin-top: 25px;
-  padding-top: 20px;
-  border-top: 2px solid #e2e8f0;
-}
-
-#advanced-cooldown-settings {
-  background: #fff;
-  padding: 25px 30px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  margin-top: 15px;
+.settings-col input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+  vertical-align: baseline;
+  margin-top: 2px;
 }
 
 .settings-group {
@@ -946,29 +1262,63 @@ body.compact-mode #app_logo {
   padding-bottom: 8px;
 }
 
-#version{ color:#bbb; text-align:right; }
-
-/* ---------- Global X1/P1 Settings (rechts) ---------- */
-
-#x1p1-settings{
-  margin-top:10px;
-  padding:8px 10px;
-  border-top:1px solid #e9edf3;
+.settings-instruction {
+  color: #666;
+  font-style: italic;
+  margin: 0 0 16px 0;
 }
-#x1p1-settings label[for="object-count"]{
+
+/* ========================================= */
+/* X1/P1 Settings */
+/* ========================================= */
+
+#x1p1-settings {
+  margin: 18px 0;
+  padding: 0;
+}
+
+#x1p1-settings label,
+#advanced-cooldown-settings label {
+  display: block;
+  margin: 14px 0 4px 0;
+  font-weight: normal;
+  color: #2b3a49;
+}
+
+#x1p1-settings label[for="object-count"] {
   display:block;
   margin:10px 0 6px;
 }
-#object-count{ margin-bottom:12px; }
 
-/* Globale Koordinaten (falls genutzt) */
-#object-coords{
+#x1p1-settings input[type="number"],
+#advanced-cooldown-settings input[type="number"] {
+  margin: 2px 0 8px 8px;
+  padding: 2px 4px;
+  width: 55px;
+  height: 17px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  vertical-align: baseline;
+}
+
+#x1p1-settings input[type="checkbox"] {
+  margin-right: 6px;
+  vertical-align: baseline;
+  margin-top: 2px;
+}
+
+#object-count {
+  margin-bottom:12px;
+}
+
+#object-coords {
   display:grid;
   grid-template-columns:1fr;
   gap:10px;
   margin-top:6px;
 }
-.obj-coord{
+
+.obj-coord {
   display:flex;
   align-items:center;
   gap:12px;
@@ -977,137 +1327,100 @@ body.compact-mode #app_logo {
   border:1px solid #e6e8ee;
   border-radius:8px;
 }
-.obj-coord b{ min-width:90px; }
-.obj-coord label{
+
+.obj-coord b {
+  min-width:90px;
+}
+
+.obj-coord label {
   display:inline-flex;
   align-items:center;
   gap:6px;
   margin:0;
 }
-.obj-coord input[type="number"]{
+
+.obj-coord input[type="number"] {
   width:8ch;
   padding:4px 6px;
 }
 
-/* Checkbox-Bereich (unter Trennlinie) */
-#mode_options{
+#mode_options {
   margin-top:14px;
   padding-top:10px;
-
 }
-#mode_options label{ margin-left:6px; }
 
-/* ---------- Per-Plate X1/P1 Settings ---------- */
+#mode_options label {
+  margin-left:6px;
+}
 
-.plate-x1p1-settings{
+#advanced-cooldown-settings {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin: 18px 0;
+}
+
+/* ========================================= */
+/* Per-Plate Settings */
+/* ========================================= */
+
+.plate-x1p1-settings {
   margin-top:14px;
-  padding-top:12px;
+  padding: 10px 8px 0;
   border-top:1px solid #e9edf3;
-
-  /* stellt sicher, dass die Box mitwächst */
   height:auto;
   max-height:none;
   overflow:visible;
+  box-sizing: border-box;
 }
-.plate-x1p1-header{
+
+.plate-x1p1-header {
   font-weight:600;
   margin-bottom:8px;
   color:#2b3a49;
 }
-.obj-count-label{
+
+.obj-count-label {
   display:inline-flex;
   align-items:center;
   gap:8px;
   margin-bottom:10px;
 }
-.obj-coords{
+
+.obj-coords {
   display:grid;
   gap:8px;
 }
 
-/* Titel oben, X/Y kompakt in 1 Zeile */
-.obj-coord-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:6px 8px;
-  background:#fafbfc;
-  border:1px solid #eef2f6;
-  border-radius:8px;
-}
-.obj-coord-row b{ min-width:82px; }
-.obj-coord-row label{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-}
-.obj-coord-row input[type="number"]{ width:8ch; }
-
-/* ---------- Inputs / Loops ---------- */
-
-#loops{
-  width:40px;
-  height:17px;
-  border-radius:4px;
-  font-weight:500;
-  text-align:center;
-  padding:2px 4px;
-  vertical-align:middle;
-  margin-right:8px;
-  margin-top:2px;
-  border:1px solid #cbd5e0;
-}
-
-.loops{
-  width:45px;
-  height:20px;
-  background:#fafafa;
-  border-radius:4px;
-}
-
-/* ---------- Utility ---------- */
-
-.hidden{ display:none !important; }
-
-/* Optional: visuelle Andeutung für X1/P1 (falls globaler state so gesetzt würde)
-body[data-mode="X1P1"] #export { background-color:#d9f7ff; }
-body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
-
-/* Box-Modell stabilisieren – Padding zählt zur Breite */
-.list_item,
-.plate-x1p1-settings,
-.obj-coord-row { box-sizing: border-box; }
-
-/* Per‑Plate Settings leicht schmaler innen, damit alles sicher reinpasst */
-.plate-x1p1-settings { padding: 10px 8px 0; }
-
-/* Name oben, X/Y darunter in einer kompakten Zeile */
-.obj-coord-row{
+.obj-coord-row {
   display: flex;
-  flex-wrap: wrap;        /* erlaubt Umbruch nach der Überschrift */
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;               /* etwas enger, damit es in 200px passt */
+  gap: 8px;
   padding: 6px 8px;
   background: #fafbfc;
   border: 1px solid #eef2f6;
   border-radius: 8px;
-  width: 100%;            /* niemals breiter als die Karte */
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.obj-coord-row b{
-  flex: 0 0 100%;         /* eigene Zeile */
+.obj-coord-row b {
+  flex: 0 0 100%;
   margin-bottom: 4px;
+  min-width:82px;
 }
 
-.obj-coord-row label{
+.obj-coord-row label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   margin: 0;
 }
 
-.obj-coord-row input[type="number"]{
-  width: 10ch;            /* vergrößert von 4ch auf 10ch */
+.obj-coord-row input[type="number"] {
+  width: 10ch;
   height: 15px;
   padding: 2px 4px;
   vertical-align: baseline;
@@ -1117,7 +1430,6 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   border-radius: 4px;
 }
 
-/* Auto-coordinate button styling */
 .btn-auto-coords {
   display: inline-flex;
   align-items: center;
@@ -1144,12 +1456,10 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   transform: translateY(1px);
 }
 
-/* Auto-filled coordinate inputs have light gray background */
 .obj-coord-row input[type="number"][style*="background-color: rgb(248, 249, 250)"] {
   border-color: #e2e8f0 !important;
 }
 
-/* Object count dropdown styling - match other input fields */
 .obj-count {
   background-color: #f8f9fa;
   border: 1px solid #e2e8f0;
@@ -1166,7 +1476,6 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   background-color: #fff;
 }
 
-/* Error highlighting for invalid coordinates */
 .obj-coord-row input.coord-error {
   background-color: #fed7d7 !important;
   border-color: #fc8181 !important;
@@ -1179,87 +1488,184 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   75% { transform: translateX(2px); }
 }
 
-/* 1) Export-GCODE-Button: gleiches Styling wie #export, aber grau */
-#export_gcode{
-  background-color:#eee;        /* grau lassen */
-  color:#333;
-  border:#555 2px solid;
-  border-radius:5px;
-  width:170px;
-  height:30px;                  /* wie #export */
-  vertical-align:middle;
-  font-weight:600;
-  cursor:pointer;
-}
-#export_gcode:hover{
-  background-color:#f5f5f5;     /* dezentes Hover wie die anderen */
-}
-
-#action_buttons.hidden {
-  display: none;        /* unsichtbar, aber Platz bleibt */
-  pointer-events: none;   /* verhindert Klicks */
-}
-
-
 .coord-error {
   background-color: #ffcccc !important;
   border: 2px solid #ff0000 !important;
 }
 
-/* Einheitlicher Block für alle globalen Optionen */
-#x1p1-settings label,
-#advanced-cooldown-settings label {
-  display: block;
-  margin: 14px 0 4px 0;   /* schöner Abstand oben/unten */
-  font-weight: normal;    /* kein Fett */
-  color: #2b3a49;         /* gleiche Farbe wie Texte */
+#plate_settings_section {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
 }
 
-/* Eingabefelder für Zahlen */
-#x1p1-settings input[type="number"],
-#advanced-cooldown-settings input[type="number"] {
-  margin: 2px 0 8px 8px;    /* margin-top zurück für bessere Ausrichtung */
-  padding: 2px 4px;
-  width: 55px;
-  height: 17px;
-  border: 1px solid #cbd5e0;
+#plate_settings_section h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 8px;
+}
+
+#global_settings_section {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f5f5f5;
+}
+
+#global_settings_section h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 8px;
+}
+
+#plate_selector_wrapper {
+  margin-bottom: 16px;
+}
+
+#plate_selector {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+}
+
+#plate_specific_settings {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 16px;
+  background-color: white;
+}
+
+.plate-settings-content .settings-group {
+  margin-bottom: 20px;
+}
+
+.plate-settings-content h5 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+}
+
+.plate-nozzle-settings,
+.plate-pushoff-settings {
+  background-color: #fafafa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.purge-off-wrapper {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.settings-separator {
+  height: 1px;
+  background-color: #eee;
+  margin: 12px 0;
+}
+
+.obj-coords-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 16px;
+  margin-top: 12px;
+}
+
+.obj-coord-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #fafafa;
+}
+
+.obj-coord-item b {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.obj-coord-item label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.obj-coord-item input {
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  vertical-align: baseline;
+  font-size: 13px;
 }
 
-/* Checkboxen */
-#x1p1-settings input[type="checkbox"] {
-  margin-right: 6px;      /* etwas Platz zum Labeltext */
-  vertical-align: baseline; /* zurück zu baseline */
-  margin-top: 2px;        /* leichte Korrektur nach unten */
+#loop_repeats_section {
+  margin-bottom: 20px;
 }
 
-.settings-col input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
-  vertical-align: baseline; /* zurück zu baseline */
-  margin-top: 2px;        /* leichte Korrektur nach unten */
+#loop_repeats_section .settings-col {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Abstände um den ganzen Block */
-#x1p1-settings {
-  margin: 18px 0;
-  padding: 0;
+#test_file_export_container {
+  display: none;
 }
 
-/* Keep custom padding for advanced-cooldown-settings */
-#advanced-cooldown-settings {
-  margin: 18px 0;
+body:not(.pushoff-mode) #test_file_export_container {
+  display: block;
 }
 
-/* Site Info Container */
+/* ========================================= */
+/* Input Controls */
+/* ========================================= */
+
+#loops {
+  width:40px;
+  height:17px;
+  border-radius:4px;
+  font-weight:500;
+  text-align:center;
+  padding:2px 4px;
+  vertical-align:middle;
+  margin-right:8px;
+  margin-top:2px;
+  border:1px solid #cbd5e0;
+}
+
+.loops {
+  width:45px;
+  height:20px;
+  background:#fafafa;
+  border-radius:4px;
+}
+
+/* ========================================= */
+/* Site Info & App Info */
+/* ========================================= */
+
 #site-info {
   max-width: 1110px;
   margin: 0px auto 20px;
-  padding: 0 20px;         
+  padding: 0 20px;
 }
 
-/* Main collapsible container */
 #app-info-container {
   background: #eee;
   border: 1px solid #cbd5e0;
@@ -1356,7 +1762,10 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   text-decoration: underline;
 }
 
-/* Usage Guide Styling */
+.usage-guide {
+  padding: 15px;
+}
+
 .usage-guide h3 {
   color: #2d3748;
   margin: 20px 0 10px 0;
@@ -1366,19 +1775,15 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   padding-bottom: 5px;
 }
 
+.usage-guide h3:first-child {
+  margin-top: 0;
+}
+
 .usage-guide h4 {
   color: #4a5568;
   margin: 15px 0 8px 0;
   font-size: 15px;
   font-weight: 500;
-}
-
-.usage-guide h3:first-child {
-  margin-top: 0;
-}
-
-.usage-guide {
-  padding: 15px;
 }
 
 .usage-guide ol,
@@ -1404,295 +1809,27 @@ body[data-mode="X1P1"] #export:hover { background-color:#effbff; } */
   color: #2d3748;
 }
 
-.plate-remove {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  background: #f55;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-  line-height: 18px;
-  text-align: center;
-  cursor: pointer;
-  opacity: 0.8;
-}
-.plate-remove:hover {
-  opacity: 1;
-  background: #d00;
-}
-.list_item {
-  position: relative; /* wichtig, damit .plate-remove absolut dazu steht */
+/* ========================================= */
+/* Logos */
+/* ========================================= */
+
+#logo, #logo_pushoff {
+  padding:0;
 }
 
+/* ========================================= */
+/* Version Info */
+/* ========================================= */
 
-/* Farbfelder */
-.p_filaments .f_color,
-#filament_total .f_color {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 1px solid rgba(0,0,0,.2);
-  border-radius: 4px;
-  cursor: pointer;
-  vertical-align: middle;
+#version {
+  color:#bbb;
+  text-align:right;
 }
 
-/* Dropdown */
-.slot-dropdown {
-  position: absolute;
-  z-index: 9999;
-  min-width: 160px;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.1);
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  border-radius: 8px;
-  padding: 6px;
-  font-size: 13px;
-}
-.slot-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.slot-dropdown-item .dot {
-  display: inline-block;
-  width: 14px; height: 14px;
-  border: 1px solid rgba(0,0,0,.2);
-  border-radius: 3px;
-}
-.slot-dropdown-item:hover { background: rgba(0,0,0,.05); }
-.slot-dropdown-item.current { font-weight: 600; }
-.slot-dropdown-sep { height: 1px; background: rgba(0,0,0,.08); margin: 6px 4px; }
+/* ========================================= */
+/* Utility Classes */
+/* ========================================= */
 
-.p_imgwrap{ position:relative; display:block; margin: 0 auto; }
-.p_imgwrap .p_icon{ display:block; }
-
-.plate-duplicate{
-  position:absolute; right:6px; bottom:6px;
-  width:26px; height:26px; border-radius:50%;
-  background:var(--primary-color); color:#000; border:none;
-  font-size:18px; line-height:26px; text-align:center;
-  cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.25);
-}
-.plate-duplicate:hover{ filter:brightness(1.1); }
-
-.slot-modal-backdrop{
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 99999;
-}
-.slot-modal{
-  background: #fff;
-  border-radius: 10px;
-  padding: 16px;
-  min-width: 280px;
-  box-shadow: 0 10px 40px rgba(0,0,0,.25);
-}
-.slot-modal h4{ margin: 0 0 10px; }
-.slot-modal .row{ display:flex; align-items:center; gap:8px; margin:8px 0; }
-.slot-modal .actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
-
-/* New Per-Plate Settings Styling */
-#plate_settings_section {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  background-color: #f9f9f9;
-}
-
-#plate_settings_section h4 {
-  margin: 0 0 16px 0;
-  color: #333;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 8px;
-}
-
-#global_settings_section {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f5f5f5;
-}
-
-#global_settings_section h4 {
-  margin: 0 0 16px 0;
-  color: #333;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 8px;
-}
-
-#plate_selector_wrapper {
-  margin-bottom: 16px;
-}
-
-#plate_selector {
-  width: 100%;
-  max-width: 300px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: white;
-}
-
-#plate_specific_settings {
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 16px;
-  background-color: white;
-}
-
-.plate-settings-content .settings-group {
-  margin-bottom: 20px;
-}
-
-.plate-settings-content h5 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #444;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 6px;
-}
-
-.plate-nozzle-settings,
-.plate-pushoff-settings {
-  background-color: #fafafa;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-}
-
-.obj-coord-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 8px 0;
-}
-
-.obj-coord-row b {
-  min-width: 80px;
-  font-size: 14px;
-}
-
-.obj-coord-row label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.obj-coord-row input {
-  width: 80px;
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.purge-off-wrapper {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #eee;
-}
-
-/* Settings separator lines */
-.settings-separator {
-  height: 1px;
-  background-color: #eee;
-  margin: 12px 0;
-}
-
-/* Object coordinates grid layout */
-.obj-coords-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px 16px;
-  margin-top: 12px;
-}
-
-.obj-coord-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background-color: #fafafa;
-}
-
-.obj-coord-item b {
-  font-size: 12px;
-  color: #666;
-  margin: 0;
-}
-
-.obj-coord-item label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-}
-
-.obj-coord-item input {
-  width: 60px;
-  padding: 4px 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-/* Clickable plates with theme-colored borders */
-.list_item {
-  transition: border 0.2s ease;
-  border: 5px solid transparent;
-}
-
-.list_item.plate-selected {
-  border: 5px solid var(--primary-color);
-}
-
-/* Theme-specific selected plate borders */
-body.pushoff-mode .list_item.plate-selected {
-  border-color: var(--pushoff-color);
-}
-
-body.a1-swap-mode .list_item.plate-selected {
-  border-color: var(--a1-swap-color);
-}
-
-/* Top-level loop repeats styling */
-#loop_repeats_section {
-  margin-bottom: 20px;
-}
-
-#loop_repeats_section .settings-col {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Settings instruction text */
-.settings-instruction {
-  color: #666;
-  font-style: italic;
-  margin: 0 0 16px 0;
-}
-
-/* Test file export container - hidden by default (for Push Off Mode start) */
-#test_file_export_container {
-  display: none;
-}
-
-/* Show in Swap Mode - when pushoff-mode class is not present */
-body:not(.pushoff-mode) #test_file_export_container {
-  display: block;
+.hidden {
+  display:none !important;
 }
