@@ -1,14 +1,10 @@
 // /src/config/xmlConfig.js
 import { state } from "./state.js";
+import { generateFilenameFormat } from "../io/ioUtils.js";
 
 export function generateModelSettingsXml() {
-  // Generate dynamic plater_name using same pattern as filename
-  const printerType = state.PRINTER_MODEL || "unknown";
-  const mode = state.APP_MODE || "swap";
-  const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
-  const platerName = submode
-    ? `${printerType}.${mode}.${submode}`
-    : `${printerType}.${mode}`;
+  // Generate dynamic plater_name using same pattern as filename (without extension and basename)
+  const platerName = generateFilenameFormat("", false).substring(1); // Remove leading dot
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <config>

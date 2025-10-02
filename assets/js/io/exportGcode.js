@@ -2,8 +2,7 @@ import JSZip from "jszip";
 import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
-import { download } from "./ioUtils.js";
-import { collectAndTransform } from "./ioUtils.js";
+import { download, collectAndTransform, generateFilenameFormat } from "./ioUtils.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 import { DEV_MODE } from "../index.js";
@@ -66,10 +65,8 @@ export async function export_gcode_txt() {
 
 async function exportDevMode(base, modeTag, purgeTag, data) {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  // Build filename with printer type, mode, and submode (only for swap mode)
-  const mode = state.APP_MODE || "swap";
-  const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
-  const filenamePart = submode ? `${modeTag}.${mode}.${submode}` : `${modeTag}.${mode}`;
+  // Generate filename part with new format including loop count
+  const filenamePart = generateFilenameFormat(modeTag, false);
 
   const zip = new JSZip();
   const root = zip.folder(`${base}_gcode_exports_${filenamePart}${purgeTag}_${stamp}`);
@@ -123,12 +120,9 @@ async function exportDevMode(base, modeTag, purgeTag, data) {
 async function exportNormalMode(base, modeTag, modifiedCombined) {
   update_progress(60);
 
-  // Build filename with printer type, mode, and submode (only for swap mode)
-  const mode = state.APP_MODE || "swap";
-  const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
-  const filename = submode
-    ? `${base}.${modeTag}.${mode}.${submode}.gcode`
-    : `${base}.${modeTag}.${mode}.gcode`;
+  // Generate filename with new format including loop count
+  const filenameWithoutExt = generateFilenameFormat(`${base}.${modeTag}`, false);
+  const filename = `${filenameWithoutExt}.gcode`;
 
   // Create GCODE file directly from string - avoids string length issues
   const gcodeBlob = new Blob([modifiedCombined], { type: "text/x-gcode" });

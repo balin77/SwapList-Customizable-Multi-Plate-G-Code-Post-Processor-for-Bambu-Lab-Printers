@@ -2,7 +2,7 @@ import JSZip from "jszip";
 import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
-import { download, collectAndTransform, chunked_md5 } from "./ioUtils.js";
+import { download, collectAndTransform, chunked_md5, generateFilenameFormat } from "./ioUtils.js";
 import { generateModelSettingsXml } from "../config/xmlConfig.js";
 import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
@@ -532,13 +532,8 @@ export async function export_3mf() {
       const fnField = document.getElementById("file_name");
       const baseName = (fnField.value || fnField.placeholder || "output").trim();
 
-      // Build filename with printer type, mode, and submode (only for swap mode)
-      const printerType = state.PRINTER_MODEL || "unknown";
-      const mode = state.APP_MODE || "swap";
-      const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
-      const fileName = submode
-        ? `${baseName}.${printerType}.${mode}.${submode}.3mf`
-        : `${baseName}.${printerType}.${mode}.3mf`;
+      // Generate filename with new format including loop count
+      const fileName = generateFilenameFormat(baseName, true);
 
       const url = URL.createObjectURL(zipBlob);
       download(fileName, url);

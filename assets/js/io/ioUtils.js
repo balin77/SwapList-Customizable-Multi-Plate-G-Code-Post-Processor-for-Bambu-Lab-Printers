@@ -8,11 +8,46 @@ import { state } from "../config/state.js";
 import { readPlateXCoordsSorted } from "../ui/plates.js";
 import { applySwapRulesToGcode } from "../commands/applySwapRules.js";
 import { applyAmsOverridesToPlate } from "../gcode/gcodeManipulation.js";
+
+// Helper function to get correct submode based on printer model
+export function getSubmodeForExport() {
+  const mode = state.APP_MODE || "swap";
+  if (mode !== "swap") return null;
+
+  // A1M always uses "swaplist" submode
+  if (state.PRINTER_MODEL === "A1M") {
+    return "swaplist";
+  }
+
+  // For other printers, use the selected SWAP_MODE or default to "3print"
+  return state.SWAP_MODE || "3print";
+}
+
+// Helper function to generate complete filename format with loop count
+export function generateFilenameFormat(baseName = "output", includeExtension = true) {
+  const loops = document.getElementById("loops")?.value || "1";
+  const printerType = state.PRINTER_MODEL || "unknown";
+  const mode = state.APP_MODE || "swap";
+  const submode = getSubmodeForExport();
+
+  // Build filename: basename.loopsx.printer.mode.submode.3mf
+  let filename = `${baseName}.${loops}x.${printerType}.${mode}`;
+
+  if (submode) {
+    filename += `.${submode}`;
+  }
+
+  if (includeExtension) {
+    filename += ".3mf";
+  }
+
+  return filename;
+}
 import { optimizeAMSBlocks } from "../gcode/gcodeManipulation.js";
 import { SWAP_RULES } from "../commands/swapRules.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
-import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, HOMING_All_AXES, HOMING_XY_AXES, GCODE_WAIT_30SECONDS, START_SOUND_A1M, END_SOUND_A1M } from "../commands/swapRules.js";
+import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, HOMING_All_AXES, HOMING_XY_AXES, GCODE_WAIT_30SECONDS, generateWaitCommand, START_SOUND_A1M, END_SOUND_A1M } from "../commands/swapRules.js";
 
 // Function to add clearbed processing comment at the beginning of GCODE
 function addClearbedComment(gcode, plateIndex = 0, totalPlates = 1) {
@@ -63,7 +98,7 @@ function addClearbedComment(gcode, plateIndex = 0, totalPlates = 1) {
   // Only include submode for swap mode
   let modeStr = `mode:${appMode}`;
   if (appMode === "swap") {
-    const subMode = state.SWAP_MODE || "3print";
+    const subMode = getSubmodeForExport();
     modeStr += ` submode:${subMode}`;
   }
 
@@ -308,6 +343,10 @@ function createSwapTestFile(plateCount) {
     }
   }
 
+  // Get wait time from UI input
+  const waitTimeInput = document.getElementById("test_wait_time");
+  const waitSeconds = waitTimeInput ? parseInt(waitTimeInput.value) || 30 : 30;
+
   // Create test file content with new extended sequence
   const testFileContent = [
     '; SWAP TEST FILE - Start and End Sequences Only',
@@ -317,8 +356,8 @@ function createSwapTestFile(plateCount) {
     '; PRINT BODIES REMOVED FOR TEST FILE',
     `; (${plateCount} plates of actual printing code would be here)`,
     '',
-    '; Wait 30 seconds',
-    GCODE_WAIT_30SECONDS,
+    `; Wait ${waitSeconds} seconds`,
+    generateWaitCommand(waitSeconds).trim(),
     '',
     '; Start sound',
     START_SOUND_A1M,

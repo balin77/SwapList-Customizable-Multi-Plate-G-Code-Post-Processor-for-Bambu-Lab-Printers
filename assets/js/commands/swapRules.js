@@ -4,6 +4,11 @@ export const GCODE_WAIT_30SECONDS = `
 G4 P30000 ; wait 30 seconds
 `;
 
+export function generateWaitCommand(seconds = 30) {
+  const milliseconds = seconds * 1000;
+  return `G4 P${milliseconds} ; wait ${seconds} seconds\n`;
+}
+
 export const HOMING_All_AXES = `
 G28; home all axes
 `;
@@ -171,10 +176,10 @@ G0  Y150 F2000          ; safe park position
 
 export const A1_PRINTFLOW_START = `
 M17 X1.2 Y1.2 Z0.75 ; START
-G28 XY
-;G1 Y0 F2000 ; move the bed backward and grab a new plate
+G28           ; home all axes
+;G1 Y0 F2000  ; move the bed backward and grab a new plate
 G1 Y250 F3000 ; move the bed with the new plate
-G1 Y265.5 F1500 ; move the bed with the new plate
+G1 Y267 F1500 ; move the bed with the new plate
 G1 Y30 F3000; 
 G1 Y-1.8 F500; 
 G1 Y8.5 F100; 
@@ -199,7 +204,7 @@ G1 Y150 F2000 ; move the bed 150mm Forward
 G1 Y-1 Z190 F3000 ; move the bed backward and grab a new plate
 G28 Y
 G1 Y250 F3000 ; move the bed with the new plate
-G1 Y265.5 F1500 ; move the bed with the new plate
+G1 Y267 F1500 ; move the bed with the new plate
 G1 Y30 F3000; 
 M17 X0.8 Y0.8 Z0.5 ; lower motor current to 45% power
 G1 Y-2 F500; -1.8

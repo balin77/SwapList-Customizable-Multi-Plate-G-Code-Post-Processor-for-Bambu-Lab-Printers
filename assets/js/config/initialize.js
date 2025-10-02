@@ -8,6 +8,7 @@ import { applyVisibilityRules, UI_ELEMENTS, applyInitialState } from "./uiVisibi
 import { getSecurePushOffEnabled } from "../ui/settings.js";
 import { removePlate, duplicatePlate } from "../ui/plates.js";
 import { update_progress } from "../ui/progressbar.js";
+import { generateFilenameFormat } from "../io/ioUtils.js";
 import { update_statistics } from "../ui/statistics.js";
 import { dragOutHandler, dragOverHandler, dropHandler } from "../ui/dropzone.js";
 import { handleFile } from "../io/read3mf.js";
@@ -201,6 +202,17 @@ export function initialize_page() {
     });
   }
 
+  // Test file export checkbox - show/hide wait time input
+  const chkTestFile = document.getElementById("opt_test_file_export");
+  const waitTimeContainer = document.getElementById("test_wait_time_container");
+  if (chkTestFile && waitTimeContainer) {
+    function toggleWaitTimeVisibility() {
+      waitTimeContainer.style.display = chkTestFile.checked ? "block" : "none";
+    }
+    chkTestFile.addEventListener("change", toggleWaitTimeVisibility);
+    toggleWaitTimeVisibility(); // Set initial state
+  }
+
   // App Mode Toggle (Swap Mode / Push Off Mode)
   const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox");
   const swapLogo = document.getElementById("logo");
@@ -292,13 +304,8 @@ export function initialize_page() {
     const extensionElement = document.getElementById("filename_extension_preview");
     if (!extensionElement) return;
 
-    const printerType = state.PRINTER_MODEL || "unknown";
-    const mode = state.APP_MODE || "swap";
-    const submode = mode === "swap" ? (state.SWAP_MODE || "3print") : null;
-
-    const extension = submode
-      ? ` .${printerType}.${mode}.${submode}.3mf`
-      : ` .${printerType}.${mode}.3mf`;
+    // Generate filename format (without basename) and add space prefix
+    const extension = " ." + generateFilenameFormat("", false).substring(1); // Remove leading dot, add space
 
     extensionElement.textContent = extension;
   }
@@ -378,7 +385,10 @@ export function initialize_page() {
   // Loop repeats
   const loopsInput = document.getElementById("loops");
   if (loopsInput) {
-    loopsInput.addEventListener("change", update_statistics);
+    loopsInput.addEventListener("change", () => {
+      update_statistics();
+      updateFilenamePreview();
+    });
   }
 
   // Plate removal

@@ -1232,6 +1232,10 @@ details.tool_info summary::before {
   flex-wrap: wrap;
 }
 
+#test_wait_time_container {
+  margin-left: 20px;
+}
+
 .settings-col {
   flex: 1;
   min-width: 300px;
@@ -1242,7 +1246,6 @@ details.tool_info summary::before {
 
 .settings-col label {
   display: block;
-  margin: 15px 0 8px 0;
   font-weight: 500;
   color: #4a5568;
 }
