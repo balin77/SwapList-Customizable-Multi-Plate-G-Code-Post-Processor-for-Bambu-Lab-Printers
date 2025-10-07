@@ -232,7 +232,7 @@ export const SWAP_RULES = [
     when: {
       modes: ["X1", "P1"],
       appModes: ["pushoff"],
-      requireTrue: [],            // keine Checkbox
+      requireTrue: ["opt_disable_bed_leveling"],
       requireFalse: []
     },
     onlyIf: { plateIndexGreaterThan: 0 }, // <— Kontextbedingung
@@ -269,8 +269,8 @@ export const SWAP_RULES = [
     when: {
       modes: ["X1"],   // nur für diese Modi
       appModes: ["pushoff"],
-      requireTrue: [],     // keine Checkbox notwendig
-      requireFalse: []      // keine Ausschluss-Checkbox
+      requireTrue: ["opt_disable_first_layer_scan"],
+      requireFalse: []
     },
     action: "disable_between"
   },

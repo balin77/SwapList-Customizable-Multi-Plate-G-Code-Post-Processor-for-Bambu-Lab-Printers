@@ -91,6 +91,16 @@ export function getCooldownMaxTime() {
   return Number.isFinite(n) ? Math.max(5, Math.min(120, n)) : 40;
 }
 
+export function getDisableBedLeveling() {
+  const el = document.getElementById("opt_disable_bed_leveling");
+  return !!(el && el.checked);
+}
+
+export function getDisableFirstLayerScan() {
+  const el = document.getElementById("opt_disable_first_layer_scan");
+  return !!(el && el.checked);
+}
+
 // New plate settings management functions
 
 let currentPlateSettings = new Map(); // plateIndex -> settings object
@@ -457,11 +467,16 @@ export function getSettingForPlate(plateIndex, settingId) {
 window.getSettingForPlate = getSettingForPlate;
 window.getDisablePrinterSounds = getDisablePrinterSounds;
 window.getSoundRemovalMode = getSoundRemovalMode;
+window.getDisableBedLeveling = getDisableBedLeveling;
+window.getDisableFirstLayerScan = getDisableFirstLayerScan;
 
 // Function to hide/show settings sections based on current app mode
 function updateSettingsVisibilityForMode() {
   const isSwapMode = state.APP_MODE === 'swap';
   const isA1Mode = state.PRINTER_MODEL === 'A1' || state.PRINTER_MODEL === 'A1M';
+  const isPushoffMode = state.APP_MODE === 'pushoff';
+  const isX1 = state.PRINTER_MODEL === 'X1';
+  const isP1 = state.PRINTER_MODEL === 'P1';
 
   // Global settings sections - find cooling section by looking for all h4 elements
   const globalSection = document.getElementById('global_settings_section');
@@ -479,6 +494,27 @@ function updateSettingsVisibilityForMode() {
       // Hide Printer Sounds section for non-A1/A1M printers
       if (h4 && h4.textContent.includes('Printer Sounds')) {
         group.classList.toggle('hidden', !isA1Mode);
+      }
+      // Hide Startsequence section unless in pushoff mode with X1 or P1
+      if (h4 && h4.textContent.includes('Startsequence')) {
+        const shouldShow = isPushoffMode && (isX1 || isP1);
+        group.classList.toggle('hidden', !shouldShow);
+
+        // Within Startsequence, handle individual checkbox visibility
+        if (shouldShow) {
+          const bedLevelingLabel = group.querySelector('label:has(#opt_disable_bed_leveling)');
+          const firstLayerScanLabel = group.querySelector('label:has(#opt_disable_first_layer_scan)');
+
+          // Bed leveling: X1 and P1 in pushoff mode
+          if (bedLevelingLabel) {
+            bedLevelingLabel.style.display = (isX1 || isP1) ? 'block' : 'none';
+          }
+
+          // First layer scan: X1 only in pushoff mode
+          if (firstLayerScanLabel) {
+            firstLayerScanLabel.style.display = isX1 ? 'block' : 'none';
+          }
+        }
       }
     });
   }

@@ -258,6 +258,36 @@
               </label>
             </div>
 
+            <!-- Startsequence Settings (Global) -->
+            <div class="settings-group startsequence-settings">
+              <h4>Startsequence</h4>
+              <label class="opt">
+                <input type="checkbox" id="opt_disable_bed_leveling">
+                Disable bed leveling between plates
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>
+                    When <b>on</b>, bed leveling is skipped for all plates after the first one.
+                    This speeds up multi-plate printing by reusing the leveling data from the first plate.
+                    Only available for X1/P1 printers in push-off mode.
+                  </p>
+                </details>
+              </label>
+
+              <label class="opt">
+                <input type="checkbox" id="opt_disable_first_layer_scan">
+                Disable first layer scan
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>
+                    When <b>on</b>, the first layer inspection scan is disabled.
+                    This can speed up the print start but removes the automatic quality check.
+                    Only available for X1 printers in push-off mode.
+                  </p>
+                </details>
+              </label>
+            </div>
+
             <!-- Override Settings (Global) -->
             <div class="settings-group">
               <h4>Project Settings</h4>

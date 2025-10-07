@@ -281,13 +281,18 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
   const testFileCheckbox = document.getElementById("opt_test_file_export");
   const isTestFileExport = testFileCheckbox && testFileCheckbox.checked;
   if (isTestFileExport) {
-    // Check if we're in SWAP mode for special handling
-    const isSwapMode = state.APP_MODE === 'swap' && (state.PRINTER_MODEL === 'A1M' || state.PRINTER_MODEL === 'A1');
-
-    if (isSwapMode) {
-      modifiedLooped = createSwapTestFile(modifiedLooped.length);
+    // IMPORTANT: Test file mode is ONLY for SWAP mode, never for push-off mode
+    if (state.APP_MODE === 'pushoff') {
+      console.warn('Test file export is not supported in Push-off mode. Ignoring checkbox.');
     } else {
-      modifiedLooped = modifiedLooped.map(gcode => convertToTestFile(gcode));
+      // Check if we're in SWAP mode for special handling
+      const isSwapMode = state.APP_MODE === 'swap' && (state.PRINTER_MODEL === 'A1M' || state.PRINTER_MODEL === 'A1');
+
+      if (isSwapMode) {
+        modifiedLooped = createSwapTestFile(modifiedLooped.length);
+      } else {
+        modifiedLooped = modifiedLooped.map(gcode => convertToTestFile(gcode));
+      }
     }
   }
 
