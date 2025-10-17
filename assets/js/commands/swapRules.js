@@ -172,7 +172,42 @@ G4  P500
 G0  Y150 F2000          ; safe park position
 ; ==== Ende SWAP_FULL ====`;
 
+export const A1_JOBOX_START = `
+; ==== A1 JOBOX GRAB_ONLY ====
+G28 XY                      ; home XY axes
+G0 X-33 Z30                 ; position X and Z for plate grab
+G0 Y0 F2000                 ; move to grab position
+G0 Y256 F2000               ; initial pull
+G0 Y210 F2000               ; reposition
+G0 Y265 F2000               ; full pull
+G0 Y-2 F2000                ; push back slightly
+G0 Y15 F2000                ; small adjustment
+G0 Y-2 F2000                ; push back again
+G0 Y20 F2000                ; set position
+G0 Y100 F2000               ; park position
+G28                         ; home all axes
+G0 Z50                      ; lift Z for safety
+; ==== End JOBOX GRAB_ONLY ====`;
 
+export const A1_JOBOX_END = `
+; ==== A1 JOBOX PLATE_SWAP_FULL ====
+G0 Y265 F2000               ; initial position
+G0 X-33 F2000               ; move X to swap position
+G0 Z-12 F2000               ; lower Z for plate manipulation
+G0 Y250 F2000               ; position for old plate removal
+G0 Y240 Z250 F2000          ; lift old plate
+G0 Y100 F2000               ; move old plate to intermediate position
+G0 Y0 F2000                 ; move to grab new plate
+G0 Y256 F2000               ; initial pull of new plate
+G0 Y210 F2000               ; reposition new plate
+G0 Y20 F2000                ; move to set position
+G0 Y265 F2000               ; full positioning
+G0 Y-2 F2000                ; fine positioning
+G0 Y15 F2000                ; small adjustment
+G0 Y-2 F2000                ; final fine positioning
+G0 Y20 F2000                ; set position
+G0 Y100 F2000               ; park position
+; ==== End JOBOX SWAP_FULL ====`;
 
 export const A1_PRINTFLOW_START = `
 M17 X1.2 Y1.2 Z0.75 ; START

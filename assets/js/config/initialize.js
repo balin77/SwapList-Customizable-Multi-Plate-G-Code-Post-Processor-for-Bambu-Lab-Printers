@@ -218,29 +218,50 @@ export function initialize_page() {
   const swapLogo = document.getElementById("logo");
   const pushOffLogo = document.getElementById("logo_pushoff");
   const swapModeLogos = document.getElementById("swap_mode_logos");
+  const logoJobox = document.getElementById("logo_jobox");
   const logo3print = document.getElementById("logo_3print");
   const logoPrintflow = document.getElementById("logo_printflow");
 
   // State to track which logo is selected in swap mode
-  let selectedSwapLogo = '3print'; // '3print' or 'printflow'
+  let selectedSwapLogo = 'jobox'; // 'jobox' | '3print' | 'printflow'
 
   function updateSwapModeLogos() {
-    if (logo3print && logoPrintflow) {
-      if (selectedSwapLogo === '3print') {
+    if (logoJobox && logo3print && logoPrintflow) {
+      // Reset all logos to inactive
+      [logoJobox, logo3print, logoPrintflow].forEach(logo => {
+        logo.classList.remove('active');
+        logo.classList.add('inactive');
+      });
+
+      // Activate selected logo
+      if (selectedSwapLogo === 'jobox') {
+        logoJobox.classList.remove('inactive');
+        logoJobox.classList.add('active');
+      } else if (selectedSwapLogo === '3print') {
         logo3print.classList.remove('inactive');
         logo3print.classList.add('active');
-        logoPrintflow.classList.remove('active');
-        logoPrintflow.classList.add('inactive');
-      } else {
+      } else if (selectedSwapLogo === 'printflow') {
         logoPrintflow.classList.remove('inactive');
         logoPrintflow.classList.add('active');
-        logo3print.classList.remove('active');
-        logo3print.classList.add('inactive');
       }
     }
   }
 
   // Logo click handlers for swap mode
+  if (logoJobox) {
+    logoJobox.addEventListener('click', () => {
+      if (selectedSwapLogo !== 'jobox') {
+        selectedSwapLogo = 'jobox';
+        state.SWAP_MODE = 'jobox';
+        updateSwapModeLogos();
+        updateFilenamePreview();
+        // Apply Jobox blue theme
+        applyTheme('JOBOX');
+        console.log('Selected Jobox logo and applied blue theme');
+      }
+    });
+  }
+
   if (logo3print) {
     logo3print.addEventListener('click', () => {
       if (selectedSwapLogo !== '3print') {
@@ -285,11 +306,13 @@ export function initialize_page() {
     } else {
       // Swap Mode: Apply appropriate theme based on device and selected logo
       if (state.PRINTER_MODEL === 'A1') {
-        updateSwapModeLogos(); // Update 3Print/Printflow logo states
+        updateSwapModeLogos(); // Update Jobox/3Print/Printflow logo states
         if (state.SWAP_MODE === 'printflow') {
           applyTheme('PRINTFLOW');
+        } else if (state.SWAP_MODE === 'jobox') {
+          applyTheme('JOBOX');
         } else {
-          applyTheme('A1_SWAP');
+          applyTheme('A1_SWAP'); // For 3Print
         }
       } else {
         applyTheme('A1M_SWAP');

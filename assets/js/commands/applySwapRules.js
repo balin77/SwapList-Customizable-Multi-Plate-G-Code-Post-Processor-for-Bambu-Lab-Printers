@@ -15,7 +15,7 @@ import {
   _alreadyInserted,
 } from "../gcode/gcodeManipulation.js";
 
-import { A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END } from "../commands/swapRules.js";
+import { A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, A1_JOBOX_START, A1_JOBOX_END } from "../commands/swapRules.js";
 import { state } from "../config/state.js";
 import { DEV_MODE } from "../index.js";
 
@@ -49,12 +49,24 @@ import { showWarning } from "../ui/infobox.js";
 function getDynamicPayload(originalPayload, ctx) {
   // Handle A1 start sequence selection based on logo
   if (originalPayload === A1_3Print_START && ctx.mode === "A1") {
-    return state.SWAP_MODE === "printflow" ? A1_PRINTFLOW_START : A1_3Print_START;
+    if (state.SWAP_MODE === "printflow") {
+      return A1_PRINTFLOW_START;
+    } else if (state.SWAP_MODE === "jobox") {
+      return A1_JOBOX_START;
+    } else {
+      return A1_3Print_START;
+    }
   }
 
   // Handle A1 end sequence selection based on logo
   if (originalPayload === A1_3Print_END && ctx.mode === "A1") {
-    return state.SWAP_MODE === "printflow" ? A1_PRINTFLOW_END : A1_3Print_END;
+    if (state.SWAP_MODE === "printflow") {
+      return A1_PRINTFLOW_END;
+    } else if (state.SWAP_MODE === "jobox") {
+      return A1_JOBOX_END;
+    } else {
+      return A1_3Print_END;
+    }
   }
 
   return originalPayload;

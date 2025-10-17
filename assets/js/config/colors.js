@@ -6,7 +6,8 @@ export const COLORS = {
   THEME_YELLOW: '#EDF07A',      // A1M Swap Mode (default)
   THEME_GRAY: '#B0B0B0',        // 3Print A1 Swap Mode
   THEME_RED: '#E8A8A8',         // Push Off Mode
-  THEME_PRINTFLOW_BLUE: '#9493d6ff', // Printflow A1 Swap Mode
+  THEME_PRINTFLOW_BLUE: '#8892e0ff', // Printflow A1 Swap Mode
+  THEME_JOBOX_BLUE: '#8bd4e1ff',       // Jobox A1 Swap Mode (matches logo)
 
   // UI Colors
   CI_1: '#00BBDC',              // Primary blue
@@ -55,6 +56,12 @@ export const THEMES = {
     primary: COLORS.THEME_PRINTFLOW_BLUE,
     bodyClass: 'printflow-mode',
     cssVarName: '--printflow-color'
+  },
+  JOBOX: {
+    name: 'Jobox',
+    primary: COLORS.THEME_JOBOX_BLUE,
+    bodyClass: 'jobox-mode',
+    cssVarName: '--jobox-color'
   }
 };
 
@@ -70,7 +77,8 @@ export function applyTheme(themeName) {
   document.body.classList.remove(
     'a1-swap-mode',
     'pushoff-mode',
-    'printflow-mode'
+    'printflow-mode',
+    'jobox-mode'
   );
 
   // Add the theme's body class if it has one
@@ -95,6 +103,8 @@ export function getCurrentTheme() {
     return 'A1_SWAP';
   } else if (document.body.classList.contains('printflow-mode')) {
     return 'PRINTFLOW';
+  } else if (document.body.classList.contains('jobox-mode')) {
+    return 'JOBOX';
   }
   return 'A1M_SWAP'; // default
 }
@@ -112,6 +122,7 @@ export function initializeCSSVariables() {
   document.documentElement.style.setProperty('--a1-swap-color', COLORS.THEME_GRAY);
   document.documentElement.style.setProperty('--pushoff-color', COLORS.THEME_RED);
   document.documentElement.style.setProperty('--printflow-color', COLORS.THEME_PRINTFLOW_BLUE);
+  document.documentElement.style.setProperty('--jobox-color', COLORS.THEME_JOBOX_BLUE);
 
   // Update UI color variables
   document.documentElement.style.setProperty('--ci_1', COLORS.CI_1);

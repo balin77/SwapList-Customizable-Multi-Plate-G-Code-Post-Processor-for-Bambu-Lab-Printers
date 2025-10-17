@@ -6,7 +6,7 @@ export const state = {
   USE_BEDLEVEL_COOLING: false,
   PRINTER_MODEL: null,            // "A1M" | "X1" | "P1" | null
   APP_MODE: "pushoff",           // "swap" | "pushoff"
-  SWAP_MODE: "3print",  // "3print" | "printflow"
+  SWAP_MODE: "jobox",  // "jobox" | "3print" | "printflow"
 
   // File Handling
   my_files: [],

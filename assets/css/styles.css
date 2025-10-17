@@ -9,6 +9,7 @@
   --a1-swap-color:#B0B0B0; /* Grau für A1 Swap Mode */
   --pushoff-color:#E8A8A8; /* Rot für Push Off Mode */
   --printflow-color:#7270ccff; /* Blau für Printflow Mode */
+  --jobox-color:#00BBDC; /* Hellblau für Jobox Mode */
 }
 
 /* ========================================= */
@@ -102,8 +103,37 @@ body.printflow-mode .list_item.plate-selected {
   border-color: var(--printflow-color);
 }
 
+/* Jobox Mode Farbschema */
+body.jobox-mode #export {
+  background-color: var(--jobox-color) !important;
+}
+
+body.jobox-mode #reset {
+  color: var(--jobox-color) !important;
+}
+
+body.jobox-mode details[open].tool_info summary::before {
+  background-color: var(--jobox-color) !important;
+}
+
+body.jobox-mode .mode-toggle input:checked + label {
+  background: var(--jobox-color) !important;
+}
+
+body.jobox-mode .mode-slider {
+  background-color: var(--jobox-color) !important;
+}
+
+body.jobox-mode .plate-duplicate {
+  background: var(--jobox-color) !important;
+}
+
+body.jobox-mode .list_item.plate-selected {
+  border-color: var(--jobox-color);
+}
+
 /* Standard SWAP Mode (A1M) */
-body:not(.pushoff-mode):not(.a1-swap-mode):not(.printflow-mode) #export {
+body:not(.pushoff-mode):not(.a1-swap-mode):not(.printflow-mode):not(.jobox-mode) #export {
   background-color: var(--primary-color) !important;
 }
 
@@ -155,15 +185,24 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   padding: 0;
+  margin: 0 8px;
+}
+
+.swap-logo:first-child {
+  margin-left: 0;
+}
+
+.swap-logo:last-child {
+  margin-right: 0;
 }
 
 .swap-logo.active {
-  height: 42px;
+  height: 35px;
   opacity: 1;
 }
 
 .swap-logo.inactive {
-  height: 32px;
+  height: 20px;
   opacity: 0.6;
 }
 
