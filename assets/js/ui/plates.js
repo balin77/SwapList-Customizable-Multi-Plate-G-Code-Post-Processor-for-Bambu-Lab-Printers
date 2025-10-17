@@ -5,7 +5,7 @@ import { update_statistics } from "../ui/statistics.js";
 import { checkAutoToggleOverrideMetadata } from "./filamentColors.js";
 import { showWarning } from "./infobox.js";
 import { autoPopulatePlateCoordinates } from "../utils/plateUtils.js";
-import { updatePlateSelector, getObjectCoordsForPlate } from "./settings.js";
+import { updatePlateSelector, getObjectCoordsForPlate, duplicatePlateSettings } from "./settings.js";
 
 export function readPlateXCoordsSorted(li) {
   // Try to get plate index from the DOM
@@ -348,6 +348,15 @@ function deepCopyDatasets(sourceEl, targetEl) {
 }
 
 export function duplicatePlate(li){
+  // Find the index of the original plate
+  const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+  let originalIndex = -1;
+  plates.forEach((plate, index) => {
+    if (plate === li) {
+      originalIndex = index;
+    }
+  });
+
   const clone = li.cloneNode(true);
   clone.classList.remove('hidden');
 
@@ -370,6 +379,13 @@ export function duplicatePlate(li){
 
   // Am Ende der Liste einfügen statt direkt nach dem Original
   li.parentNode.appendChild(clone);
+
+  // Duplicate settings to the new plate index (will be at the end)
+  const newPlateIndex = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)").length - 1;
+  if (originalIndex >= 0) {
+    duplicatePlateSettings(originalIndex, newPlateIndex);
+    console.log(`Duplicating plate ${originalIndex} to new index ${newPlateIndex}`);
+  }
 
   // Statistik neu berechnen (Farblogik bleibt unverändert)
   update_statistics();

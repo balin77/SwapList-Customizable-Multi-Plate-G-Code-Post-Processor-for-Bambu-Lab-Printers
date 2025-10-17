@@ -17,7 +17,6 @@ import {
 
 import { A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, A1_JOBOX_START, A1_JOBOX_END } from "../commands/swapRules.js";
 import { state } from "../config/state.js";
-import { DEV_MODE } from "../index.js";
 
 import {
   bumpFirstExtrusionToE3,
@@ -130,15 +129,8 @@ export function applySwapRulesToGcode(gcode, rules, ctx) {
             let nextNewline = out.indexOf('\n', afterConfigEnd);
             if (nextNewline === -1) nextNewline = afterConfigEnd;
             
-            // In dev mode, add marker for removed header
-            if (DEV_MODE) {
-              const removedHeader = out.substring(0, nextNewline);
-              const headerMarker = `\n;<<< REMOVED HEADER BLOCK START >>>\n${removedHeader.split('\n').map(line => `; ${line}`).join('\n')}\n;>>> REMOVED HEADER BLOCK END >>>\n`;
-              out = headerMarker + out.substring(nextNewline);
-            } else {
-              // Remove header first
-              out = out.substring(nextNewline);
-            }
+            // Remove header first
+            out = out.substring(nextNewline);
             
             // Find EXECUTABLE_BLOCK_START and add plate marker after it
             const execStart = out.indexOf('; EXECUTABLE_BLOCK_START');

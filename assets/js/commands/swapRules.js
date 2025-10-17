@@ -230,6 +230,7 @@ G28 Z; Home z axis
 
 
 export const A1_PRINTFLOW_END = `
+; ==== A1 PRINTFLOW PLATE_SWAP_FULL ====
 M17 X1.2 Y1.2 Z0.75 ; START
 G1 Y264 Z235 F4000 ; move the bed all the way forward and hook
 G1 Y160 F1000
@@ -251,6 +252,7 @@ G1 Y-2 F500; -1.8
 M17 X1.2 Y1.2 Z0.75; motor current to 100% power
 G1 Z150 F1500 
 G1 Y150 F3000; END
+; ==== END PRINTFLOW PLATE_SWAP_FULL ====
 `;
 
 // commands.js

@@ -4,12 +4,7 @@ import { _escRe } from "../utils/regex.js";
 import { state } from "../config/state.js";
 import { _findRange } from "../gcode/gcodeUtils.js";
 import { _parseAmsParams } from "../utils/amsUtils.js";
-import { DEV_MODE } from "../index.js";
 
-// Helper function to check if dev mode is enabled
-function isDevModeEnabled() {
-  return DEV_MODE;
-}
 
 // ersetzt den Inhalt zwischen Start/End-Markern
 export function injectBetweenMarkers(gcode, startMark, endMark, content) {
@@ -47,12 +42,6 @@ export function disableBetweenMarkers(gcode, start, end, { useRegex = false } = 
   const eIdx = sIdx + (mEnd.index ?? 0);
 
   // → Inhalt komplett entfernen
-  if (isDevModeEnabled()) {
-    // In dev mode, add markers around the removed content
-    const removedContent = gcode.slice(sIdx, eIdx);
-    const marker = `\n;<<< REMOVED CONTENT START >>>\n${removedContent.split('\n').map(line => `; ${line}`).join('\n')}\n;>>> REMOVED CONTENT END >>>\n`;
-    return gcode.slice(0, sIdx) + marker + gcode.slice(eIdx);
-  }
   return gcode.slice(0, sIdx) + gcode.slice(eIdx);
 }
 
@@ -62,9 +51,6 @@ export function prependBlock(gcode, block, { guardId = "", wrapWithMarkers = tru
   if (wrapWithMarkers && guardId && _alreadyInserted(gcode, guardId)) return gcode;
 
   let payload = block.replace(/\r\n/g, "\n");
-  if (wrapWithMarkers && guardId && isDevModeEnabled()) {
-    payload = `;<<< INSERT:${guardId} START\n` + payload + `\n;>>> INSERT:${guardId} END\n`;
-  }
   const needsNL = (gcode[0] && gcode[0] !== '\n') ? "\n" : "";
   return payload + needsNL + gcode;
 }
@@ -94,10 +80,6 @@ export function insertBeforeAnchor(gcode, anchor, payload, {
 
   const insertPos = match.index; // ← VOR dem Anchor
   let block = payload.replace(/\r\n/g, "\n");
-  if (wrapWithMarkers && guardId && isDevModeEnabled()) {
-    if (_alreadyInserted(gcode, guardId)) return gcode;
-    block = `\n;<<< INSERT:${guardId} START\n${block}\n;>>> INSERT:${guardId} END\n`;
-  }
   return gcode.slice(0, insertPos) + block + gcode.slice(insertPos);
 }
 
@@ -128,10 +110,6 @@ export function insertAfterAnchor(gcode, anchor, payload, {
 
   const insertPos = match.index + match[0].length;
   let block = payload.replace(/\r\n/g, "\n");
-  if (wrapWithMarkers && guardId && isDevModeEnabled()) {
-    if (_alreadyInserted(gcode, guardId)) return gcode;
-    block = `\n;<<< INSERT:${guardId} START\n${block}\n;>>> INSERT:${guardId} END\n`;
-  }
   return gcode.slice(0, insertPos) + block + gcode.slice(insertPos);
 }
 
@@ -165,11 +143,6 @@ export function disableSpecificLinesInRange(gcode, start, end, lines, { useRegex
     }
   }
   
-  if (isDevModeEnabled() && removedLines.length > 0) {
-    // Add marker for removed lines in dev mode
-    const marker = `\n;<<< REMOVED LINES START >>>\n${removedLines.map(line => `; ${line}`).join('\n')}\n;>>> REMOVED LINES END >>>\n`;
-    middle = marker + middle;
-  }
   
   return before + middle + after;
 }
@@ -286,15 +259,6 @@ function disable_ams_block(str, index) {
 export function removeLinesMatching(gcode, pattern, flags = "gm") {
   const re = new RegExp(pattern, flags);
   
-  if (isDevModeEnabled()) {
-    // In dev mode, collect matches before removing
-    const matches = [...gcode.matchAll(re)];
-    if (matches.length > 0) {
-      const removedLines = matches.map(match => match[0].trim()).filter(line => line);
-      const marker = `\n;<<< REMOVED MATCHING LINES START >>>\n${removedLines.map(line => `; ${line}`).join('\n')}\n;>>> REMOVED MATCHING LINES END >>>\n`;
-      return marker + gcode.replace(re, "");
-    }
-  }
   
   return gcode.replace(re, "");
 }
@@ -366,14 +330,8 @@ export function disableNextLineAfterPattern(gcode, pattern, { useRegex = false }
       continue;
     }
 
-    // Ersetze die nächste Zeile durch eine auskommentierte Version
-    if (isDevModeEnabled()) {
-      const commentedLine = `; ${nextLine.trim()} ; DISABLED_NEXT_LINE_AFTER_PATTERN`;
-      result = result.slice(0, nextLineStart + 1) + commentedLine + result.slice(actualEnd);
-    } else {
-      // In production mode, remove the line completely
-      result = result.slice(0, nextLineStart + 1) + result.slice(actualEnd + 1);
-    }
+    // Remove the line completely
+    result = result.slice(0, nextLineStart + 1) + result.slice(actualEnd + 1);
 
     // Verhindere infinite loops bei zero-length matches
     if (match[0].length === 0) {
@@ -400,11 +358,8 @@ export function disableNextLineAfterPatternInRange(gcode, opts) {
 }
 
 export function _alreadyInserted(gcode, guardId) {
-  if (!guardId) return false;
-  // If dev mode is disabled, markers are not inserted, so never consider anything as already inserted
-  if (!isDevModeEnabled()) return false;
-  const re = new RegExp(`(^|\\n)[ \\t]*;<<< INSERT:${_escRe(guardId)} START[ \\t]*\\n`, "m");
-  return re.test(gcode);
+  // Since dev mode is removed, markers are never inserted, so always return false
+  return false;
 }
 
 // Ersetzung beim Export: pro Platte

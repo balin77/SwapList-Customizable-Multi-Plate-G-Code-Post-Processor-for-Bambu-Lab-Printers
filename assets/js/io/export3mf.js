@@ -15,30 +15,49 @@ async function generatePlateJsonData() {
     .getElementById("filament_total")
     ?.querySelectorAll(":scope > div[title]") || [];
 
-  const filament_colors = [];
-  const filament_ids = [];
+  // Build a map: slotIndex (0-3) -> {color, used}
+  const slotData = new Map();
+  let maxUsedSlot = -1;
 
   // Collect filament data from statistics
   for (let i = 0; i < slotDivs.length; i++) {
     const div = slotDivs[i];
 
+    // Get slot ID (1..4) and convert to 0-based index
+    const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
+    const slotIndex = slotId - 1; // Convert to 0-based for filament_ids (0-3)
+
+    if (slotIndex < 0 || slotIndex > 3) continue; // Skip invalid slots
+
     // Check if this slot is actually used
     const usedM = parseFloat(div.dataset.used_m || "0") || 0;
     const usedG = parseFloat(div.dataset.used_g || "0") || 0;
-    if (usedM <= 0 && usedG <= 0) continue;
 
-    // Get slot ID (1..4) and convert to 0-based index
-    const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
-    const slotIndex = slotId - 1; // Convert to 0-based for filament_ids
-
-    // Get color from swatch
+    // Get color from swatch (use CURRENT slot color, not original)
     const sw = div.querySelector(":scope > .f_color");
-    const colorRaw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
+    const colorRaw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
     const hex = colorToHex(colorRaw || "#cccccc");
 
-    filament_colors.push(hex);
-    filament_ids.push(slotIndex);
+    slotData.set(slotIndex, { color: hex, used: usedM > 0 || usedG > 0 });
+
+    if (usedM > 0 || usedG > 0) {
+      maxUsedSlot = Math.max(maxUsedSlot, slotIndex);
+    }
   }
+
+  // Build arrays from slot 0 to maxUsedSlot, filling gaps with gray
+  const filament_colors = [];
+  const filament_ids = [];
+
+  if (maxUsedSlot >= 0) {
+    for (let i = 0; i <= maxUsedSlot; i++) {
+      const data = slotData.get(i);
+      filament_colors.push(data?.color || "#CCCCCC");
+      filament_ids.push(i); // 0-based index
+    }
+  }
+
+  console.log(`generatePlateJsonData: maxUsedSlot=${maxUsedSlot}, filament_ids=`, filament_ids, 'filament_colors=', filament_colors);
 
   // Collect bbox objects from all active UI plates (considering repetitions)
   let allBboxObjects = [];
@@ -348,32 +367,54 @@ export async function export_3mf() {
       let filamentNodes = platesXML[0].getElementsByTagName("filament");
       while (filamentNodes.length > 0) filamentNodes[filamentNodes.length - 1].remove();
 
+      // Build a map: slotId (1-4) -> slot data
+      const slotMap = new Map();
+      let maxUsedSlot = 0;
+
       for (let i = 0; i < slotDivs.length; i++) {
         const div = slotDivs[i];
+        const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
+
+        if (slotId < 1 || slotId > 4) continue; // Skip invalid slots
 
         // Verbrauch lesen
         const usedM = parseFloat(div.dataset.used_m || "0") || 0;
         const usedG = parseFloat(div.dataset.used_g || "0") || 0;
-        if (usedM <= 0 && usedG <= 0) continue;
 
-        // Slot-ID (1..4)
-        const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
-
-        // Farbe vom Swatch
+        // Farbe vom Swatch (use CURRENT slot color, not original)
         const sw = div.querySelector(":scope > .f_color");
-        const colorRaw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
+        const colorRaw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
         const hex = colorToHex(colorRaw || "#cccccc");
 
-        // Typ (aktuell hart: PLA – du passt das später an)
-        const type = "PLA";
+        // Typ aus dataset lesen oder default PLA
+        const type = div.dataset.f_type || "PLA";
 
-        // Filament-Node schreiben
+        slotMap.set(slotId, { usedM, usedG, hex, type, used: usedM > 0 || usedG > 0 });
+
+        if (usedM > 0 || usedG > 0) {
+          maxUsedSlot = Math.max(maxUsedSlot, slotId);
+        }
+      }
+
+      console.log(`slice_info.config: Creating filament nodes 1-${maxUsedSlot}`);
+
+      // Create filament nodes from 1 to maxUsedSlot, filling gaps with defaults
+      for (let slotId = 1; slotId <= maxUsedSlot; slotId++) {
+        const data = slotMap.get(slotId) || {
+          usedM: 0,
+          usedG: 0,
+          hex: "#CCCCCC",
+          type: "PLA",
+          used: false
+        };
+
+        // Filament-Node schreiben (auch für leere Slots!)
         const filament_tag = slicer_config_xml.createElement("filament");
         filament_tag.id = String(slotId);
-        filament_tag.setAttribute("type", type);
-        filament_tag.setAttribute("color", hex);
-        filament_tag.setAttribute("used_m", String(usedM));
-        filament_tag.setAttribute("used_g", String(usedG));
+        filament_tag.setAttribute("type", data.type);
+        filament_tag.setAttribute("color", data.hex);
+        filament_tag.setAttribute("used_m", String(data.usedM));
+        filament_tag.setAttribute("used_g", String(data.usedG));
 
         platesXML[0].appendChild(filament_tag);
       }

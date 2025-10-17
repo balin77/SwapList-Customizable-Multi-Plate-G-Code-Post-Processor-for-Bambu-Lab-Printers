@@ -4,22 +4,57 @@ import { colorToHex } from "../utils/colors.js";
 import { printerTemplates } from "./printerTemplates.js";
 import { state } from "./state.js";
 
-/** Lese verwendete Slots & Farben aus #filament_total (nur Slots mit m/g > 0) */
+/**
+ * Lese verwendete Slots & Farben aus #filament_total.
+ * WICHTIG: Gibt Array von Slot 1 bis zum höchsten belegten Slot zurück.
+ * Leere Slots dazwischen werden mit #CCCCCC (grau) gefüllt.
+ *
+ * Beispiel: Nur Slot 3 belegt → ["#CCCCCC", "#CCCCCC", "#FF0000"]
+ * Beispiel: Slot 1 + 4 belegt → ["#FF0000", "#CCCCCC", "#CCCCCC", "#00FF00"]
+ */
 function readUsedSlotsAndColors() {
   const root = document.getElementById("filament_total");
   const divs = root?.querySelectorAll(":scope > div[title]") || [];
-  const used = [];
+
+  // Build a map: slotIndex (0-3) -> color
+  const slotColors = new Map();
+  let maxUsedSlot = -1;
+
   divs.forEach(div => {
+    const slotTitle = div.getAttribute("title");
+    const slotIndex = parseInt(slotTitle, 10) - 1; // Convert to 0-based (0-3)
+
+    if (slotIndex < 0 || slotIndex > 3) return; // Skip invalid slots
+
     const m = parseFloat(div.dataset.used_m || "0") || 0;
     const g = parseFloat(div.dataset.used_g || "0") || 0;
-    if (m <= 0 && g <= 0) return;
 
-    const sw = div.querySelector(":scope > .f_color");
-    const raw = (sw?.dataset?.f_color) || (sw ? getComputedStyle(sw).backgroundColor : "#cccccc");
-    const hex = (colorToHex(raw) || "#cccccc").toUpperCase();
-    used.push(hex);
+    // Only process slots that have actual usage
+    if (m > 0 || g > 0) {
+      const sw = div.querySelector(":scope > .f_color");
+      // Read the CURRENT slot color from style.background
+      const raw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
+      const hex = (colorToHex(raw) || "#cccccc").toUpperCase();
+
+      slotColors.set(slotIndex, hex);
+      maxUsedSlot = Math.max(maxUsedSlot, slotIndex);
+    }
   });
-  return used;
+
+  // If no slots used, return empty array
+  if (maxUsedSlot < 0) {
+    return [];
+  }
+
+  // Build array from slot 0 to maxUsedSlot, filling gaps with gray
+  const result = [];
+  for (let i = 0; i <= maxUsedSlot; i++) {
+    result.push(slotColors.get(i) || "#CCCCCC");
+  }
+
+  console.log(`readUsedSlotsAndColors: maxUsedSlot=${maxUsedSlot + 1}, result=`, result);
+
+  return result;
 }
 
 /** repliziere Template-Arrays auf Länge n (nimmt jeweils das erste Element als Basis) */

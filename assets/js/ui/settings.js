@@ -378,6 +378,32 @@ export function getAllPlateSettings() {
   return currentPlateSettings;
 }
 
+// Duplicate settings from one plate to a new index
+export function duplicatePlateSettings(sourcePlateIndex, targetPlateIndex) {
+  const sourceSettings = currentPlateSettings.get(sourcePlateIndex);
+
+  if (sourceSettings) {
+    // Deep clone the settings object
+    const clonedSettings = {
+      objectCount: sourceSettings.objectCount,
+      objectCoords: [...(sourceSettings.objectCoords || [])],
+      objects: sourceSettings.objects ? JSON.parse(JSON.stringify(sourceSettings.objects)) : [],
+      hidePurgeLoad: sourceSettings.hidePurgeLoad,
+      turnOffPurge: sourceSettings.turnOffPurge,
+      bedRaiseOffset: sourceSettings.bedRaiseOffset,
+      securePushoff: sourceSettings.securePushoff,
+      extraPushoffLevels: sourceSettings.extraPushoffLevels
+    };
+
+    currentPlateSettings.set(targetPlateIndex, clonedSettings);
+    console.log(`Duplicated settings from plate ${sourcePlateIndex} to plate ${targetPlateIndex}`, clonedSettings);
+  } else {
+    // If source doesn't have settings, initialize default settings for target
+    initializePlateSettings(targetPlateIndex);
+    console.log(`Source plate ${sourcePlateIndex} had no settings, initialized defaults for plate ${targetPlateIndex}`);
+  }
+}
+
 // Per-plate versions of existing functions
 export function getUserBedRaiseOffsetForPlate(plateIndex) {
   const settings = getPlateSettings(plateIndex);
