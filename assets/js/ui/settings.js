@@ -85,6 +85,30 @@ export function getSoundRemovalMode() {
   return "all"; // default
 }
 
+export function getLayerProgressMode() {
+  const perPlate = document.getElementById("layer_progress_per_plate");
+  const global = document.getElementById("layer_progress_global");
+
+  if (global && global.checked) {
+    return "global";
+  } else if (perPlate && perPlate.checked) {
+    return "per_plate";
+  }
+  return "per_plate"; // default
+}
+
+export function getPercentageProgressMode() {
+  const perPlate = document.getElementById("percentage_progress_per_plate");
+  const global = document.getElementById("percentage_progress_global");
+
+  if (global && global.checked) {
+    return "global";
+  } else if (perPlate && perPlate.checked) {
+    return "per_plate";
+  }
+  return "per_plate"; // default
+}
+
 export function getCooldownMaxTime() {
   const el = document.getElementById("cooldown_max_time");
   const n = el ? parseInt(el.value, 10) : 40;

@@ -48,6 +48,8 @@ import { SWAP_RULES } from "../commands/swapRules.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
 import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, A1_JOBOX_START, A1_JOBOX_END, HOMING_All_AXES, HOMING_XY_AXES, GCODE_WAIT_30SECONDS, generateWaitCommand, START_SOUND_A1M, END_SOUND_A1M } from "../commands/swapRules.js";
+import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal } from "../gcode/m73ProgressTransform.js";
+import { getLayerProgressMode, getPercentageProgressMode } from "../ui/settings.js";
 
 // Function to add clearbed processing comment at the beginning of GCODE
 function addClearbedComment(gcode, plateIndex = 0, totalPlates = 1) {
@@ -276,6 +278,20 @@ export async function collectAndTransform({ applyRules = true, applyOptimization
   const originalFlat = Array(loops).fill(platesOnce).flat();
   let modifiedLooped = Array(loops).fill(modifiedPerPlate).flat();
   if (applyOptimization) modifiedLooped = optimizeAMSBlocks(modifiedLooped);
+
+  // Apply M73 progress transformations based on user settings
+  const layerProgressMode = getLayerProgressMode();
+  const percentageProgressMode = getPercentageProgressMode();
+
+  if (layerProgressMode === 'global') {
+    console.log('[M73 Transform] Applying global layer progress transformation');
+    modifiedLooped = transformM73LayerProgressGlobal(modifiedLooped);
+  }
+
+  if (percentageProgressMode === 'global') {
+    console.log('[M73 Transform] Applying global percentage progress transformation');
+    modifiedLooped = transformM73PercentageProgressGlobal(modifiedLooped);
+  }
 
   // Check if test file export is enabled - if so, convert each plate to test file
   const testFileCheckbox = document.getElementById("opt_test_file_export");
