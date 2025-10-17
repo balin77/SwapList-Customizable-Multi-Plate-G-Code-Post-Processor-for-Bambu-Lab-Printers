@@ -187,7 +187,8 @@ G0 Y20 F2000                ; set position
 G0 Y100 F2000               ; park position
 G28                         ; home all axes
 G0 Z50                      ; lift Z for safety
-; ==== End JOBOX GRAB_ONLY ====`;
+; ==== End JOBOX GRAB_ONLY ====
+`;
 
 export const A1_JOBOX_END = `
 ; ==== A1 JOBOX PLATE_SWAP_FULL ====
@@ -207,7 +208,8 @@ G0 Y15 F2000                ; small adjustment
 G0 Y-2 F2000                ; final fine positioning
 G0 Y20 F2000                ; set position
 G0 Y100 F2000               ; park position
-; ==== End JOBOX SWAP_FULL ====`;
+; ==== End JOBOX SWAP_FULL ====
+`;
 
 export const A1_PRINTFLOW_START = `
 M17 X1.2 Y1.2 Z0.75 ; START
