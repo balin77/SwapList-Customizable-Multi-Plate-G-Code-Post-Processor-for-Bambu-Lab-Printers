@@ -255,6 +255,67 @@ G1 Y150 F3000; END
 ; ==== END PRINTFLOW PLATE_SWAP_FULL ====
 `;
 
+export const X1_P1_NOZZLE_CLEANING = `
+;===== X1/P1 CUSTOM NOZZLE CLEANING START =====
+
+G1 X60 Y265 F15000 ; nozzle wipe position
+G92 E0 ; zero extruder
+G1 E-0.5 F300 ; retract filament
+G1 X100 F5000 ; wipe right
+G1 X70 F15000 ; wipe left
+G1 X100 F5000 ; wipe right
+G1 X70 F15000 ; wipe left
+G1 X100 F5000 ; wipe right
+G1 X70 F15000 ; wipe left
+G1 X100 F5000 ; wipe right
+G1 X70 F15000 ; wipe left
+G1 X60 F5000 ; clearance
+
+G28 X Y ; Home X and Y axes
+
+;===== X1/P1 CUSTOM NOZZLE CLEANING END =====
+`;
+
+export const A1_NOZZLE_CLEANING = `
+;===== A1 CUSTOM NOZZLE CLEANING START =====
+
+G92 E0 ; zero extruder
+G1 E-0.5 F300 ; retract filament
+
+G1 X55 Y262.5 F15000 ; nozzle wipe position start
+
+G1 Z0.4; nozzle down (matching default z height when original wipe happens)
+
+G1 X20 Y262.5 F15000 ; first wipe
+
+G1 X20 Y262 F15000 ; Y down
+G1 X65 Y262 F15000 ; wipe
+
+G1 X65 Y261.5 F15000 ; Y down
+G1 X20 Y261.5 F15000 ; wipe
+
+G1 X20 Y261 F15000 ; Y down
+G1 X65 Y261 F15000 ; wipe
+
+G1 X65 Y260.5 F15000 ; Y down
+G1 X20 Y260.5 F15000 ; wipe
+
+G1 X20 Y260 F15000 ; Y down
+G1 X65 Y260 F15000 ; wipe
+
+; X-cross wipe Start
+G1 X20 Y262.5 F15000 ; starting position
+G1 X20 Y260 F15000 ; down \ wipe
+G1 X65 Y262.5 F15000 ; / wipe
+G1 X65 Y260 F15000 ; down
+G1 X20 Y262.5 F15000 ; \ wipe
+G1 X20 Y260 F15000 ; down
+G1 X65 Y262.5 F15000 ; / wipe
+G1 X65 Y260 F15000 ; down
+
+;===== A1 CUSTOM NOZZLE CLEANING END =====
+`;
+
 // commands.js
 export const SWAP_RULES = [
   
