@@ -8,6 +8,100 @@ import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { _parseAmsParams } from "../utils/amsUtils.js";
+import { createRecoloredPlateImage } from "../utils/imageColorMapping.js";
+import { getSlotColor } from "../ui/filamentColors.js";
+
+/**
+ * Helper function to convert a blob URL to an ArrayBuffer
+ * @param {string} blobUrl - The blob URL to convert
+ * @returns {Promise<ArrayBuffer>} The image data as ArrayBuffer
+ */
+async function blobUrlToArrayBuffer(blobUrl) {
+  const response = await fetch(blobUrl);
+  const blob = await response.blob();
+  return await blob.arrayBuffer();
+}
+
+/**
+ * Helper function to get recolored PNG data from the UI for a specific plate
+ * @param {number} uiPlateIndex - The index of the plate in the UI (0-based)
+ * @param {JSZip} baseZip - The base ZIP file containing original PNGs
+ * @param {number} originalPlateNumber - The original plate number in the 3MF file
+ * @returns {Promise<Object|null>} Object containing recolored PNG data or null
+ */
+async function getRecoloredPlateImages(uiPlateIndex, baseZip, originalPlateNumber) {
+  try {
+    // Get the plate element from the UI
+    const my_plates = state.playlist_ol.getElementsByTagName("li");
+    const plateElement = my_plates[uiPlateIndex];
+
+    if (!plateElement) {
+      console.log(`No plate element found at UI index ${uiPlateIndex}`);
+      return null;
+    }
+
+    const plateIcon = plateElement.querySelector('.p_icon');
+
+    // Check if we have a dynamically recolored image in the UI
+    if (!plateIcon || !plateIcon.dataset.litImageUrl || !plateIcon.dataset.unlitImageUrl) {
+      console.log(`No recolored image data found for plate at UI index ${uiPlateIndex}`);
+      return null;
+    }
+
+    // Build color mapping from the plate's filament data
+    const colorMapping = {};
+    const filamentRows = plateElement.querySelectorAll('.p_filaments .p_filament');
+
+    filamentRows.forEach(row => {
+      const swatch = row.querySelector('.f_color');
+      const slotSpan = row.querySelector('.f_slot');
+
+      if (swatch && slotSpan) {
+        // Get original color from dataset
+        const originalColor = swatch.dataset.f_color;
+
+        // Get current slot index
+        const slotIndex = parseInt(swatch.dataset.slotIndex || '0', 10);
+        const currentSlotColor = getSlotColor(slotIndex);
+
+        if (originalColor && currentSlotColor && originalColor !== currentSlotColor) {
+          colorMapping[originalColor] = currentSlotColor;
+        }
+      }
+    });
+
+    // If no color changes, return null to use original PNGs
+    if (Object.keys(colorMapping).length === 0) {
+      console.log(`No color changes detected for plate at UI index ${uiPlateIndex}`);
+      return null;
+    }
+
+    console.log(`Creating recolored PNGs for plate ${originalPlateNumber} with color mapping:`, colorMapping);
+
+    // Create the recolored image
+    const recoloredBlobUrl = await createRecoloredPlateImage(
+      plateIcon.dataset.litImageUrl,
+      plateIcon.dataset.unlitImageUrl,
+      colorMapping
+    );
+
+    // Convert the blob URL to ArrayBuffer
+    const recoloredArrayBuffer = await blobUrlToArrayBuffer(recoloredBlobUrl);
+
+    // Clean up the temporary blob URL
+    URL.revokeObjectURL(recoloredBlobUrl);
+
+    return {
+      plateImage: recoloredArrayBuffer,
+      // Note: We only recolor the main plate image (plate_X.png)
+      // Other images (top, pick, small, no_light) are kept as original for now
+    };
+
+  } catch (error) {
+    console.error(`Error creating recolored images for plate at UI index ${uiPlateIndex}:`, error);
+    return null;
+  }
+}
 
 // Generate combined plate_1.json data from all plates
 async function generatePlateJsonData() {
@@ -241,45 +335,94 @@ export async function export_3mf() {
         // Remove existing plate_1 PNG files first
         const targetFiles = [
           "Metadata/plate_1.png",
-          "Metadata/plate_1_small.png", 
+          "Metadata/plate_1_small.png",
           "Metadata/plate_no_light_1.png",
           "Metadata/top_1.png",
           "Metadata/pick_1.png"
         ];
-        
+
         targetFiles.forEach(targetFile => {
           if (baseZip.file(targetFile)) {
             baseZip.remove(targetFile);
             console.log(`Removed existing ${targetFile}`);
           }
         });
-        
+
+        // Try to get recolored images from the UI for the first active plate
+        let firstActivePlateUIIndex = -1;
+        for (let i = 0; i < my_plates.length; i++) {
+          const li = my_plates[i];
+          const p_rep = li.getElementsByClassName("p_rep")[0].value * 1;
+          if (p_rep > 0) {
+            firstActivePlateUIIndex = i;
+            break;
+          }
+        }
+
+        const recoloredImages = firstActivePlateUIIndex >= 0
+          ? await getRecoloredPlateImages(firstActivePlateUIIndex, baseZip, firstActivePlateIndex)
+          : null;
+
         // Copy plate PNG files from first active plate to plate_1 (within same baseZip)
         const pngFiles = [
           `Metadata/plate_${firstActivePlateIndex}.png`,
-          `Metadata/plate_${firstActivePlateIndex}_small.png`, 
+          `Metadata/plate_${firstActivePlateIndex}_small.png`,
           `Metadata/plate_no_light_${firstActivePlateIndex}.png`,
           `Metadata/top_${firstActivePlateIndex}.png`,
           `Metadata/pick_${firstActivePlateIndex}.png`
         ];
-        
+
         for (const sourceFile of pngFiles) {
-          const file = baseZip.file(sourceFile);
-          if (file) {
-            const content = await file.async("arraybuffer");
-            // Replace any occurrence of _X with _1 (works for plate_X, top_X, pick_X, etc.)
-            const targetFile = sourceFile.replace(`_${firstActivePlateIndex}`, "_1");
-            baseZip.file(targetFile, content);
-            console.log(`Copied ${sourceFile} to ${targetFile}`);
+          const targetFile = sourceFile.replace(`_${firstActivePlateIndex}`, "_1");
+
+          // Check if this is the main plate image and we have a recolored version
+          if (sourceFile.endsWith(`plate_${firstActivePlateIndex}.png`) && recoloredImages?.plateImage) {
+            // Use recolored image
+            baseZip.file(targetFile, recoloredImages.plateImage);
+            console.log(`Exported recolored ${targetFile}`);
           } else {
-            console.log(`Source file not found in baseZip: ${sourceFile}`);
+            // Use original image
+            const file = baseZip.file(sourceFile);
+            if (file) {
+              const content = await file.async("arraybuffer");
+              baseZip.file(targetFile, content);
+              console.log(`Copied ${sourceFile} to ${targetFile}`);
+            } else {
+              console.log(`Source file not found in baseZip: ${sourceFile}`);
+            }
           }
         }
       } catch (e) {
         console.warn(`Failed to copy PNG files from plate ${firstActivePlateIndex}:`, e);
       }
     } else if (firstActivePlateIndex === 1) {
-      console.log(`First active plate is already plate_1, no PNG copying needed`);
+      console.log(`First active plate is already plate_1, checking for recolored images`);
+
+      // Find the UI index of the first active plate
+      let firstActivePlateUIIndex = -1;
+      for (let i = 0; i < my_plates.length; i++) {
+        const li = my_plates[i];
+        const p_rep = li.getElementsByClassName("p_rep")[0].value * 1;
+        if (p_rep > 0) {
+          firstActivePlateUIIndex = i;
+          break;
+        }
+      }
+
+      // Try to get recolored images
+      const recoloredImages = firstActivePlateUIIndex >= 0
+        ? await getRecoloredPlateImages(firstActivePlateUIIndex, baseZip, 1)
+        : null;
+
+      // If we have recolored images, replace the plate_1.png
+      if (recoloredImages?.plateImage) {
+        try {
+          baseZip.file("Metadata/plate_1.png", recoloredImages.plateImage);
+          console.log(`Exported recolored Metadata/plate_1.png`);
+        } catch (e) {
+          console.warn(`Failed to update plate_1.png with recolored version:`, e);
+        }
+      }
     } else {
       console.log(`No active plates found`);
     }

@@ -2,7 +2,7 @@
 
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
-import { checkAutoToggleOverrideMetadata } from "./filamentColors.js";
+import { checkAutoToggleOverrideMetadata, hasOrphanedSlotsAfterRemoval } from "./filamentColors.js";
 import { showWarning } from "./infobox.js";
 import { autoPopulatePlateCoordinates } from "../utils/plateUtils.js";
 import { updatePlateSelector, getObjectCoordsForPlate, duplicatePlateSettings } from "./settings.js";
@@ -127,14 +127,25 @@ export function removePlate(btn) {
   const li = btn.closest("li.list_item");
   if (!li) return;
 
+  // Check if removing this plate will orphan any slots before removal
+  const hasOrphanedSlots = hasOrphanedSlotsAfterRemoval(li);
+
   // Plate aus der Queue entfernen
   li.remove();
 
   // Stats neu berechnen
   if (typeof update_statistics === "function") update_statistics();
 
-  // Auto-disable Override metadata wenn keine modified plates mehr vorhanden
-  checkAutoToggleOverrideMetadata();
+  // Auto-enable Override metadata wenn verwaiste Slots gefunden wurden
+  if (hasOrphanedSlots) {
+    console.log("Auto-enabling OVERRIDE_METADATA due to orphaned slots after plate removal");
+    state.OVERRIDE_METADATA = true;
+    const checkbox = document.getElementById("opt_override_metadata");
+    if (checkbox) checkbox.checked = true;
+  } else {
+    // Auto-disable Override metadata wenn keine modified plates mehr vorhanden
+    checkAutoToggleOverrideMetadata();
+  }
 
   // Update plate selector
   updatePlateSelector();

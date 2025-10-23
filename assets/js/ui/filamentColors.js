@@ -269,26 +269,81 @@ export function checkAutoToggleOverrideMetadata() {
 function hasModifiedSlotsInAnyPlate() {
   const plates = document.querySelectorAll("#playlist_ol li.list_item");
   console.log('Checking', plates.length, 'plates for modified slots');
-  
+
   for (const plate of plates) {
     // Nur aktive plates prüfen (Repeats > 0)
     const repInput = plate.querySelector(".p_rep");
     const reps = parseFloat(repInput?.value || "0");
     if (reps <= 0) continue;
-    
+
     // Slots in dieser plate prüfen
     const slots = plate.querySelectorAll(".p_filament .f_slot");
     for (const slot of slots) {
       const originalSlot = parseInt(slot.dataset.origSlot || "0", 10);
       const currentSlot = parseInt((slot.textContent || "").trim() || "0", 10);
-      
+
       // Wenn Original-Slot existiert und sich vom aktuellen unterscheidet
       if (originalSlot > 0 && currentSlot > 0 && originalSlot !== currentSlot) {
         return true;
       }
     }
   }
-  
+
+  return false;
+}
+
+/**
+ * Get all unique slots used in a specific plate (by index)
+ * @param {Element} plateElement - The plate list item element
+ * @returns {Set<number>} Set of slot numbers used in the plate
+ */
+function getSlotsUsedInPlate(plateElement) {
+  const slots = new Set();
+  const slotElements = plateElement.querySelectorAll(".p_filament .f_slot");
+
+  for (const slotEl of slotElements) {
+    const slotNum = parseInt((slotEl.textContent || "").trim() || "0", 10);
+    if (slotNum > 0) {
+      slots.add(slotNum);
+    }
+  }
+
+  return slots;
+}
+
+/**
+ * Check if removing a specific plate would leave any slots orphaned
+ * (used in the removed plate but not in any remaining plate)
+ * @param {Element} plateToRemove - The plate element that will be removed
+ * @returns {boolean} True if there are orphaned slots, false otherwise
+ */
+export function hasOrphanedSlotsAfterRemoval(plateToRemove) {
+  // Get all slots used in the plate to be removed
+  const removedSlots = getSlotsUsedInPlate(plateToRemove);
+
+  if (removedSlots.size === 0) {
+    return false; // No slots used in removed plate
+  }
+
+  // Get all remaining plates (excluding the one to be removed)
+  const allPlates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
+  const remainingSlots = new Set();
+
+  for (const plate of allPlates) {
+    if (plate === plateToRemove) continue; // Skip the plate to be removed
+
+    const plateSlots = getSlotsUsedInPlate(plate);
+    plateSlots.forEach(slot => remainingSlots.add(slot));
+  }
+
+  // Check if any slot from removed plate is not in remaining plates
+  for (const slot of removedSlots) {
+    if (!remainingSlots.has(slot)) {
+      console.log(`Orphaned slot detected: Slot ${slot} will not be used in any remaining plate`);
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -453,6 +508,16 @@ function setGlobalSlotMeta(sIndex, meta) {
   if (meta.vendor != null) sl.meta.vendor = meta.vendor;
   sl.manual = true;
   renderTotalsColors();
+
+  // Auto-enable OVERRIDE_METADATA when slot settings are manually changed
+  import('../config/state.js').then(({ state }) => {
+    if (!state.OVERRIDE_METADATA) {
+      state.OVERRIDE_METADATA = true;
+      const checkbox = document.getElementById("opt_override_metadata");
+      if (checkbox) checkbox.checked = true;
+      console.log("Auto-enabled OVERRIDE_METADATA due to manual slot settings change");
+    }
+  });
 }
 
 // --- NEU: nur dataset verdrahten, Farbe NICHT anfassen (für initialen Import)
