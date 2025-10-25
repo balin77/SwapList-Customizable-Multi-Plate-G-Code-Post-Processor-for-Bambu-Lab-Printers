@@ -30,5 +30,6 @@ export const state = {
     devices: [],                 // [{id, slots:[...]}]
     overridesPerPlate: new Map(),// plateIndex -> mapping
     seenKeys: new Set(),         // alle in allen Platten gefundenen Keys
+    slotCompactionMap: new Map(),// original slot (1-4) -> compacted slot (1-4)
   },
 };

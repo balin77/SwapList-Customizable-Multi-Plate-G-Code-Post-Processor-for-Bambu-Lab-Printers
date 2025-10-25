@@ -10,6 +10,7 @@ import { showError, showWarning } from "../ui/infobox.js";
 import { _parseAmsParams } from "../utils/amsUtils.js";
 import { createRecoloredPlateImage } from "../utils/imageColorMapping.js";
 import { getSlotColor } from "../ui/filamentColors.js";
+import { checkAllPlatesRestrictions } from "../commands/plateRestrictions.js";
 
 /**
  * Helper function to convert a blob URL to an ArrayBuffer
@@ -103,15 +104,62 @@ async function getRecoloredPlateImages(uiPlateIndex, baseZip, originalPlateNumbe
   }
 }
 
+/**
+ * Collect all active plates data and check for restrictions
+ * @returns {Object} Object containing plate data and warnings
+ */
+async function collectPlateDataForRestrictionCheck() {
+  const allPlatesData = [];
+  const my_plates = state.playlist_ol.getElementsByTagName("li");
+
+  console.log('[plateRestrictions] Collecting plate data from', my_plates.length, 'UI plates');
+
+  for (let i = 0; i < my_plates.length; i++) {
+    const li = my_plates[i];
+    const c_f_id = li.getElementsByClassName("f_id")[0].title;
+    const c_pname = li.getElementsByClassName("p_name")[0].title;
+    const p_rep = li.getElementsByClassName("p_rep")[0].value * 1;
+
+    if (p_rep > 0) {
+      try {
+        const zip = await JSZip.loadAsync(state.my_files[c_f_id]);
+
+        // Extract plate name and find corresponding JSON file
+        const plateJsonName = c_pname.replace('.gcode', '.json');
+        const plateJsonFile = zip.file(plateJsonName);
+
+        if (plateJsonFile) {
+          const plateJsonText = await plateJsonFile.async("text");
+          const plateData = JSON.parse(plateJsonText);
+
+          console.log(`[plateRestrictions] Loaded plate ${i + 1} (${c_pname}):`, {
+            bbox_objects: plateData.bbox_objects?.length || 0,
+            bed_type: plateData.bed_type
+          });
+
+          allPlatesData.push(plateData);
+        } else {
+          console.log(`[plateRestrictions] No JSON file found for plate ${c_pname}`);
+          allPlatesData.push(null);
+        }
+      } catch (e) {
+        console.warn(`[plateRestrictions] Failed to load plate ${c_pname}:`, e);
+        allPlatesData.push(null);
+      }
+    }
+  }
+
+  return allPlatesData;
+}
+
 // Generate combined plate_1.json data from all plates
 async function generatePlateJsonData() {
   const slotDivs = document
     .getElementById("filament_total")
     ?.querySelectorAll(":scope > div[title]") || [];
 
-  // Build a map: slotIndex (0-3) -> {color, used}
-  const slotData = new Map();
-  let maxUsedSlot = -1;
+  // Build a list of USED slots only (compacted)
+  const usedSlots = [];
 
   // Collect filament data from statistics
   for (let i = 0; i < slotDivs.length; i++) {
@@ -127,31 +175,33 @@ async function generatePlateJsonData() {
     const usedM = parseFloat(div.dataset.used_m || "0") || 0;
     const usedG = parseFloat(div.dataset.used_g || "0") || 0;
 
-    // Get color from swatch (use CURRENT slot color, not original)
-    const sw = div.querySelector(":scope > .f_color");
-    const colorRaw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
-    const hex = colorToHex(colorRaw || "#cccccc");
-
-    slotData.set(slotIndex, { color: hex, used: usedM > 0 || usedG > 0 });
-
+    // Only process slots with actual usage
     if (usedM > 0 || usedG > 0) {
-      maxUsedSlot = Math.max(maxUsedSlot, slotIndex);
+      // Get color from swatch (use CURRENT slot color, not original)
+      const sw = div.querySelector(":scope > .f_color");
+      const colorRaw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
+      const hex = colorToHex(colorRaw || "#cccccc");
+
+      usedSlots.push({
+        originalSlotIndex: slotIndex,
+        color: hex
+      });
     }
   }
 
-  // Build arrays from slot 0 to maxUsedSlot, filling gaps with gray
+  // Sort by original slot index
+  usedSlots.sort((a, b) => a.originalSlotIndex - b.originalSlotIndex);
+
+  // Build compacted arrays (no gaps)
   const filament_colors = [];
   const filament_ids = [];
 
-  if (maxUsedSlot >= 0) {
-    for (let i = 0; i <= maxUsedSlot; i++) {
-      const data = slotData.get(i);
-      filament_colors.push(data?.color || "#CCCCCC");
-      filament_ids.push(i); // 0-based index
-    }
-  }
+  usedSlots.forEach((slot, compactedIndex) => {
+    filament_colors.push(slot.color);
+    filament_ids.push(compactedIndex); // 0-based compacted index
+  });
 
-  console.log(`generatePlateJsonData: maxUsedSlot=${maxUsedSlot}, filament_ids=`, filament_ids, 'filament_colors=', filament_colors);
+  console.log(`generatePlateJsonData: ${usedSlots.length} slots COMPACTED, filament_ids=`, filament_ids, 'filament_colors=', filament_colors);
 
   // Collect bbox objects from all active UI plates (considering repetitions)
   let allBboxObjects = [];
@@ -280,6 +330,40 @@ export async function export_3mf() {
     if (!(await validatePlateXCoords())) return;
     update_progress(5);
 
+    // Check plate area restrictions
+    console.log('[plateRestrictions] Starting plate restriction checks');
+    const allPlatesData = await collectPlateDataForRestrictionCheck();
+
+    // Determine current submode for A1 in swap mode
+    let submode = null;
+    if (state.PRINTER_MODEL === 'A1' && state.APP_MODE === 'swap') {
+      // Use SWAP_MODE from state ('3print', 'jobox', 'printflow')
+      // Default to '3print' if not specified
+      submode = state.SWAP_MODE || '3print';
+    }
+
+    const warnings = checkAllPlatesRestrictions(
+      allPlatesData,
+      state.PRINTER_MODEL,
+      state.APP_MODE,
+      submode
+    );
+
+    // Display warnings if any
+    if (warnings.length > 0) {
+      console.log('[plateRestrictions] Found', warnings.length, 'restriction warnings');
+      for (const warning of warnings) {
+        if (warning.severity === 'high') {
+          showWarning(warning.message);
+        } else {
+          showWarning(warning.message);
+        }
+      }
+      // Note: We continue with export but show warnings
+      // If you want to block export, you can add: return;
+    } else {
+      console.log('[plateRestrictions] No restriction warnings found');
+    }
 
     // Collect and transform the data
     const result = await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
@@ -510,9 +594,8 @@ export async function export_3mf() {
       let filamentNodes = platesXML[0].getElementsByTagName("filament");
       while (filamentNodes.length > 0) filamentNodes[filamentNodes.length - 1].remove();
 
-      // Build a map: slotId (1-4) -> slot data
-      const slotMap = new Map();
-      let maxUsedSlot = 0;
+      // Build a list of USED slots only (compacted)
+      const usedSlots = [];
 
       for (let i = 0; i < slotDivs.length; i++) {
         const div = slotDivs[i];
@@ -524,43 +607,47 @@ export async function export_3mf() {
         const usedM = parseFloat(div.dataset.used_m || "0") || 0;
         const usedG = parseFloat(div.dataset.used_g || "0") || 0;
 
-        // Farbe vom Swatch (use CURRENT slot color, not original)
-        const sw = div.querySelector(":scope > .f_color");
-        const colorRaw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
-        const hex = colorToHex(colorRaw || "#cccccc");
-
-        // Typ aus dataset lesen oder default PLA
-        const type = div.dataset.f_type || "PLA";
-
-        slotMap.set(slotId, { usedM, usedG, hex, type, used: usedM > 0 || usedG > 0 });
-
+        // Only process slots with actual usage
         if (usedM > 0 || usedG > 0) {
-          maxUsedSlot = Math.max(maxUsedSlot, slotId);
+          // Farbe vom Swatch (use CURRENT slot color, not original)
+          const sw = div.querySelector(":scope > .f_color");
+          const colorRaw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
+          const hex = colorToHex(colorRaw || "#cccccc");
+
+          // Typ aus dataset lesen oder default PLA
+          const type = div.dataset.f_type || "PLA";
+
+          usedSlots.push({
+            originalSlotId: slotId,
+            usedM,
+            usedG,
+            hex,
+            type
+          });
         }
       }
 
-      console.log(`slice_info.config: Creating filament nodes 1-${maxUsedSlot}`);
+      // Sort by original slot ID
+      usedSlots.sort((a, b) => a.originalSlotId - b.originalSlotId);
 
-      // Create filament nodes from 1 to maxUsedSlot, filling gaps with defaults
-      for (let slotId = 1; slotId <= maxUsedSlot; slotId++) {
-        const data = slotMap.get(slotId) || {
-          usedM: 0,
-          usedG: 0,
-          hex: "#CCCCCC",
-          type: "PLA",
-          used: false
-        };
+      console.log(`slice_info.config: Creating ${usedSlots.length} COMPACTED filament nodes (no gaps)`);
 
-        // Filament-Node schreiben (auch für leere Slots!)
+      // Create filament nodes with compacted IDs (1, 2, 3, ... no gaps)
+      usedSlots.forEach((slotData, compactedIndex) => {
+        const compactedSlotId = compactedIndex + 1; // 1-based
+
+        console.log(`  Slot ${slotData.originalSlotId} → ${compactedSlotId} (${slotData.hex})`);
+
+        // Filament-Node schreiben (NUR für benutzte Slots!)
         const filament_tag = slicer_config_xml.createElement("filament");
-        filament_tag.id = String(slotId);
-        filament_tag.setAttribute("type", data.type);
-        filament_tag.setAttribute("color", data.hex);
-        filament_tag.setAttribute("used_m", String(data.usedM));
-        filament_tag.setAttribute("used_g", String(data.usedG));
+        filament_tag.id = String(compactedSlotId);
+        filament_tag.setAttribute("type", slotData.type);
+        filament_tag.setAttribute("color", slotData.hex);
+        filament_tag.setAttribute("used_m", String(slotData.usedM));
+        filament_tag.setAttribute("used_g", String(slotData.usedG));
 
         platesXML[0].appendChild(filament_tag);
-      }
+      });
     } else {
       // Override AUS: alle Filamente von allen aktiven Platten sammeln
 

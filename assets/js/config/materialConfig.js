@@ -6,19 +6,19 @@ import { state } from "./state.js";
 
 /**
  * Lese verwendete Slots & Farben aus #filament_total.
- * WICHTIG: Gibt Array von Slot 1 bis zum höchsten belegten Slot zurück.
- * Leere Slots dazwischen werden mit #CCCCCC (grau) gefüllt.
+ * WICHTIG: Slots werden kompaktiert - Lücken werden eliminiert!
  *
- * Beispiel: Nur Slot 3 belegt → ["#CCCCCC", "#CCCCCC", "#FF0000"]
- * Beispiel: Slot 1 + 4 belegt → ["#FF0000", "#CCCCCC", "#CCCCCC", "#00FF00"]
+ * Beispiel: Slot 1 + 3 belegt → Slot 3 wird zu Slot 2
+ * Beispiel: Slot 2 + 4 belegt → Slots werden zu 1 + 2
+ *
+ * Erstellt auch state.GLOBAL_AMS.slotCompactionMap für Mapping original → kompaktiert
  */
 function readUsedSlotsAndColors() {
   const root = document.getElementById("filament_total");
   const divs = root?.querySelectorAll(":scope > div[title]") || [];
 
-  // Build a map: slotIndex (0-3) -> color
-  const slotColors = new Map();
-  let maxUsedSlot = -1;
+  // Build a map: slotIndex (0-3) -> color for USED slots only
+  const usedSlots = [];
 
   divs.forEach(div => {
     const slotTitle = div.getAttribute("title");
@@ -36,23 +36,34 @@ function readUsedSlotsAndColors() {
       const raw = sw ? (getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : "#cccccc";
       const hex = (colorToHex(raw) || "#cccccc").toUpperCase();
 
-      slotColors.set(slotIndex, hex);
-      maxUsedSlot = Math.max(maxUsedSlot, slotIndex);
+      usedSlots.push({ originalSlot: slotIndex, color: hex });
     }
   });
 
   // If no slots used, return empty array
-  if (maxUsedSlot < 0) {
+  if (usedSlots.length === 0) {
+    state.GLOBAL_AMS.slotCompactionMap.clear();
     return [];
   }
 
-  // Build array from slot 0 to maxUsedSlot, filling gaps with gray
-  const result = [];
-  for (let i = 0; i <= maxUsedSlot; i++) {
-    result.push(slotColors.get(i) || "#CCCCCC");
-  }
+  // Sort by original slot index
+  usedSlots.sort((a, b) => a.originalSlot - b.originalSlot);
 
-  console.log(`readUsedSlotsAndColors: maxUsedSlot=${maxUsedSlot + 1}, result=`, result);
+  // Build compaction map: original slot (1-based) -> compacted slot (1-based)
+  state.GLOBAL_AMS.slotCompactionMap.clear();
+  const result = [];
+
+  usedSlots.forEach((slot, compactedIndex) => {
+    const originalSlot1Based = slot.originalSlot + 1; // 1-4
+    const compactedSlot1Based = compactedIndex + 1;   // 1-4
+
+    state.GLOBAL_AMS.slotCompactionMap.set(originalSlot1Based, compactedSlot1Based);
+    result.push(slot.color);
+
+    console.log(`Slot compaction: ${originalSlot1Based} → ${compactedSlot1Based} (${slot.color})`);
+  });
+
+  console.log(`readUsedSlotsAndColors: ${usedSlots.length} slots compacted, result=`, result);
 
   return result;
 }

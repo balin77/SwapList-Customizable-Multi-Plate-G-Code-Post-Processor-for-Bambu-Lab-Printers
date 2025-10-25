@@ -367,20 +367,20 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
   console.log('=== applyAmsOverridesToPlate CALLED ===');
   console.log('plateOriginIndex:', plateOriginIndex);
   console.log('OVERRIDE_METADATA:', state.OVERRIDE_METADATA);
-  
+
   // Nur ausführen, wenn "Override project & filament settings" aktiviert ist
   if (!state.OVERRIDE_METADATA) {
     console.log('OVERRIDE_METADATA is false, returning original gcode');
     return gcode;
   }
-  
+
+  // Get slot compaction map
+  const compactionMap = state.GLOBAL_AMS.slotCompactionMap;
+  console.log('Slot compaction map:', compactionMap);
+
   // UI speichert Overrides hier: Map<number, { fromKey: toKey }>
   const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
   console.log('AMS overrides for plate:', plateOriginIndex, map);
-  if (!map || Object.keys(map).length === 0) {
-    console.log('No overrides for this plate, returning original gcode');
-    return gcode;
-  }
 
   function rewrite(cmd, blob) {
     // Original-Form erfassen (kompaktes S…A? P vorhanden?)
@@ -391,7 +391,22 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
     const { p: origP, s: origS } = _parseAmsParams(blob);
     const fromKey = `P${origP}S${origS}`;
     const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
-    const toKey = map[fromKey];
+    let toKey = map[fromKey];
+
+    // If no user override, apply slot compaction mapping
+    if (!toKey && compactionMap && compactionMap.size > 0) {
+      // Convert 0-based S parameter to 1-based slot ID
+      const originalSlot1Based = origS + 1;
+      const compactedSlot1Based = compactionMap.get(originalSlot1Based);
+
+      if (compactedSlot1Based !== undefined && compactedSlot1Based !== originalSlot1Based) {
+        // Apply compaction: create synthetic toKey
+        const compactedS = compactedSlot1Based - 1; // Convert back to 0-based
+        toKey = `P${origP}S${compactedS}`;
+        console.log(`Slot compaction applied: ${fromKey} → ${toKey} (slot ${originalSlot1Based} → ${compactedSlot1Based})`);
+      }
+    }
+
     if (!toKey) {
       // Preserve original spacing even when no changes are made
       const originalSpacing = /^(\s*)/.exec(blob)?.[1] || ' ';
@@ -574,22 +589,31 @@ export function applyAmsOverridesToPlate(gcode, plateOriginIndex) {
     (match, prefix, slotList) => {
       // Parse original slots
       const originalSlots = slotList.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-      
-      // Map each slot through the override system
+
+      // Map each slot through the override system + compaction
       const newSlots = originalSlots.map(slot => {
         // Convert 1-based filament slot to 0-based AMS S-parameter
         const fromKey = `P0S${slot - 1}`;
-        const toKey = map[fromKey];
+        let toKey = map[fromKey];
+
+        // If no user override, apply slot compaction
+        if (!toKey && compactionMap && compactionMap.size > 0) {
+          const compactedSlot1Based = compactionMap.get(slot);
+          if (compactedSlot1Based !== undefined && compactedSlot1Based !== slot) {
+            toKey = `P0S${compactedSlot1Based - 1}`;
+          }
+        }
+
         if (!toKey) return slot; // keine Änderung
 
         const m = /^P(\d+)S(\d+)$/.exec(toKey);
         // Convert 0-based AMS S-parameter back to 1-based filament slot
         return m ? +m[2] + 1 : slot; // neuer Slot oder original falls Parse-Fehler
       });
-      
+
       // Remove duplicates and sort
       const uniqueSlots = [...new Set(newSlots)].sort((a, b) => a - b);
-      
+
       return prefix + uniqueSlots.join(',');
     }
   );

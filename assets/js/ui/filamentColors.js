@@ -228,24 +228,16 @@ export function autoEnableOverrideMetadata() {
 }
 
 export function checkAutoDisableOverrideMetadata() {
-  import('../config/state.js').then(({ state }) => {
-    // Prüfen ob es noch modified plates gibt
-    const hasModifiedPlates = state.GLOBAL_AMS.overridesPerPlate.size > 0;
-    
-    if (!hasModifiedPlates && state.OVERRIDE_METADATA) {
-      state.OVERRIDE_METADATA = false;
-      const checkbox = document.getElementById("opt_override_metadata");
-      if (checkbox) checkbox.checked = false;
-      console.log("Auto-disabled OVERRIDE_METADATA - no modified plates remaining");
-    }
-  });
+  // DEAKTIVIERT: Override wird nicht mehr automatisch deaktiviert
+  // Der User muss es manuell deaktivieren, falls gewünscht
+  console.log("checkAutoDisableOverrideMetadata: Auto-disable is disabled - user must manually toggle override");
 }
 
 export function checkAutoToggleOverrideMetadata() {
   // Prüfen ob aktuell irgendwelche Slots von ihren Originalwerten abweichen
   const hasAnyModifiedSlots = hasModifiedSlotsInAnyPlate();
   console.log('checkAutoToggleOverrideMetadata: hasModifiedSlots =', hasAnyModifiedSlots);
-  
+
   import('../config/state.js').then(({ state }) => {
     console.log('Current OVERRIDE_METADATA state:', state.OVERRIDE_METADATA);
     if (hasAnyModifiedSlots && !state.OVERRIDE_METADATA) {
@@ -254,14 +246,10 @@ export function checkAutoToggleOverrideMetadata() {
       const checkbox = document.getElementById("opt_override_metadata");
       if (checkbox) checkbox.checked = true;
       console.log("Auto-enabled OVERRIDE_METADATA due to slot change");
-    } else if (!hasAnyModifiedSlots && state.OVERRIDE_METADATA) {
-      // Disable wenn keine modifizierten Slots mehr vorhanden
-      state.OVERRIDE_METADATA = false;
-      const checkbox = document.getElementById("opt_override_metadata");
-      if (checkbox) checkbox.checked = false;
-      console.log("Auto-disabled OVERRIDE_METADATA - all slots reset to original values");
     } else {
-      console.log('No OVERRIDE_METADATA change needed');
+      // WICHTIG: Override wird NICHT automatisch deaktiviert, auch wenn keine modifizierten Slots mehr vorhanden
+      // Der User muss es manuell deaktivieren, falls gewünscht
+      console.log('No OVERRIDE_METADATA change - stays at current state');
     }
   });
 }
