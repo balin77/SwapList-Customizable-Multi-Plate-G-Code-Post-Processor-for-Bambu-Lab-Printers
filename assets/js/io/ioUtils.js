@@ -47,7 +47,7 @@ import { optimizeAMSBlocks } from "../gcode/gcodeManipulation.js";
 import { SWAP_RULES } from "../commands/swapRules.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
-import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, A1_JOBOX_START, A1_JOBOX_END, HOMING_All_AXES, HOMING_XY_AXES, GCODE_WAIT_30SECONDS, generateWaitCommand, START_SOUND_A1M, END_SOUND_A1M } from "../commands/swapRules.js";
+import { SWAP_START_A1M, SWAP_END_A1M, A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, A1_JOBOX_START, A1_JOBOX_END, HOMING_All_AXES, HOMING_XY_AXES, GCODE_WAIT_30SECONDS, generateWaitCommand, START_SOUND_A1M, END_SOUND_A1M, HEATERS_OFF } from "../commands/swapRules.js";
 import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal } from "../gcode/m73ProgressTransform.js";
 import { getLayerProgressMode, getPercentageProgressMode } from "../ui/settings.js";
 
@@ -379,6 +379,9 @@ function createSwapTestFile(plateCount) {
     `; Submode: ${state.SWAP_MODE || '3print'}`,
     '; PRINT BODIES REMOVED FOR TEST FILE',
     `; (${plateCount} plates of actual printing code would be here)`,
+    '',
+    '; Turn off heaters for safety during test',
+    HEATERS_OFF,
     '',
     `; Wait ${waitSeconds} seconds`,
     generateWaitCommand(waitSeconds).trim(),
