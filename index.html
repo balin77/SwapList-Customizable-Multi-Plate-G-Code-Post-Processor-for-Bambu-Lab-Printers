@@ -492,10 +492,20 @@
         <details open>
           <summary>How to use this app</summary>
           <div class="usage-guide">
+            <h3>Supported Printers</h3>
+            <p>This app supports the following Bambu Lab printer models:</p>
+            <ul>
+              <li><strong>A1 Mini</strong> - SWAP mode with Swapmod system</li>
+              <li><strong>A1</strong> - SWAP mode with JoBox, 3Print, or Printflow systems</li>
+              <li><strong>X1 Series</strong> - Push-off mode (direct push-off with print head)</li>
+              <li><strong>P1 Series</strong> - Push-off mode (direct push-off with print head)</li>
+            </ul>
+            <p>The app automatically detects your printer model from the GCODE file.</p>
+
             <h3>Getting Started</h3>
             <ol>
-              <li><strong>Load your files:</strong> Drag & drop your <code>.3mf</code> files (from Bambu Studio or Orca
-                Slicer) or <code>.gcode</code> files into the drop zone above.</li>
+              <li><strong>Load your files:</strong> Drag & drop your sliced <code>.gcode.3mf</code> files from Bambu Studio or Orca Slicer into the drop zone above.
+                <br><strong>Important:</strong> Only fully sliced project files (format: <code>filename.gcode.3mf</code>) are accepted. Unsliced 3D model files or plain <code>.gcode</code> files are not supported.</li>
               <li><strong>Printer detection:</strong> The app automatically detects your printer model and shows the
                 corresponding mode (A1 Mini, X1, or P1).</li>
               <li><strong>Configure settings:</strong> Adjust options in the Settings panel that appears below your
@@ -505,13 +515,23 @@
             </ol>
 
             <h3>Automatisation Mode</h3>
+            <p>This app supports both plate-swapper systems (Swapmod, JoBox, 3Print, Printflow) and direct push-off with the print head.</p>
+
+            <h4>Available Modes:</h4>
             <ul>
               <li><strong>A1 Mini (SWAP Mode):</strong> Creates .swap.3mf files for automatic plate swapping using
-                Swaplist system</li>
-              <li><strong>A1 (SWAP Mode):</strong> Supports 3Print and Printflow systems for automatic plate swapping
+                Swapmod system</li>
+              <li><strong>A1 (SWAP Mode):</strong> Supports JoBox, 3Print, and Printflow systems for automatic plate swapping
               </li>
               <li><strong>X1/P1 Series (Push-off Mode):</strong> Generates modified GCODE with automated push-off
-                sequences</li>
+                sequences using the print head</li>
+            </ul>
+
+            <h4>Switching Between Modes:</h4>
+            <ul>
+              <li><strong>A1 Mini:</strong> Only Swapmod is available - no mode selection needed</li>
+              <li><strong>A1:</strong> Click the logos (JoBox, 3Print, Printflow) at the top to switch between different plate-swapper systems. <strong>IMPORTANT:</strong> You must select the correct mode that matches your physically installed plate-swapper system. <span style="color: #ff4444; font-weight: bold;">Using the wrong mode can cause serious damage to your printer!</span></li>
+              <li><strong>X1/P1:</strong> Uses push-off mode exclusively - no mode selection needed</li>
             </ul>
 
             <h3>Working with Plates</h3>
@@ -521,7 +541,7 @@
               <li><strong>Repeat count:</strong> Change the number next to each plate to print it multiple times</li>
               <li><strong>Remove plates:</strong> Click the "×" button in the top-right corner of any plate</li>
               <li><strong>Duplicate plates:</strong> Click the "+" button on the plate image to make a copy</li>
-              <li><strong>Reorder plates:</strong> Drag plates to change the printing order</li>
+              <li><strong>Reorder plates:</strong> Drag and drop plates in the list to rearrange the printing order</li>
             </ul>
 
             <h3>Filament & AMS Slots</h3>
@@ -538,8 +558,7 @@
             <ul>
               <li><strong>Custom file name:</strong> Set your preferred output filename</li>
               <li><strong>Loop repeats:</strong> Number of times to repeat the entire print queue</li>
-              <li><strong>Test file export:</strong> Generate a test file with only start/end sequences for debugging
-              </li>
+              <li><strong>Test file export:</strong> Generate a test file with only start/end sequences for debugging. This creates a small file that goes through all plate-swap sequences without printing the actual objects. Perfect for testing your setup without wasting time or material. You can configure the wait time between plates in the "Test file wait time" setting (default: 30 seconds).</li>
             </ul>
 
             <h4>Plate-Specific Settings:</h4>
@@ -554,6 +573,10 @@
 
             <h4>X1/P1 Advanced Options:</h4>
             <ul>
+              <li><strong>"Disable bed leveling between plates"</strong> - Skips bed leveling for all plates after the first one. This can speed up multi-plate printing by reusing the leveling data from the initial print.
+                <em>Theory:</em> The bed was already leveled at print initialization, so re-leveling between plates should not be necessary.
+                <em>Risk:</em> There is a small risk that the push-off process may have affected the print head's leveling calibration. Use this option if print speed is more important than maximum reliability.</li>
+              <li><strong>"Disable first layer scan"</strong> - Disables the first layer inspection scan. This speeds up print start but removes the automatic quality check. Use this if you consider the scan to be unnecessary or if you prefer speed over the additional quality assurance.</li>
               <li><strong>"Turn off filament purge"</strong> - Skips purge sequence after first plate (faster
                 multi-plate jobs). Only enable if there are no filament changes between plates.</li>
               <li><strong>"Hide nozzle load line in model"</strong> - Extrudes extra material at print start to
@@ -574,6 +597,12 @@
               <li><strong>Max cooldown time:</strong> Maximum time to wait for cooling (default: 40 minutes)</li>
               <li><strong>Printer sounds:</strong> Disable all sounds or only sounds between plates (A1/A1M only)</li>
               <li><strong>AMS optimization:</strong> Remove redundant filament swaps between plates (A1/A1M only)</li>
+            </ul>
+
+            <h4>Progress Display Settings:</h4>
+            <ul>
+              <li><strong>Percentage Progress - Per plate:</strong> Shows progress percentage and time remaining for the current plate only (default behavior)</li>
+              <li><strong>Percentage Progress - Global:</strong> Shows overall progress percentage and time remaining across all plates in the entire queue. Useful for tracking the total job completion.</li>
             </ul>
 
           </div>

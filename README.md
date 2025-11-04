@@ -12,7 +12,8 @@ The GCODE modification concepts implemented here are inspired by ideas from **Fa
 ## 🚀 Features
 
 - **Drop & Convert**
-  Drag & drop `.3mf` or `.gcode` files into the app. SWAP files or customized GCODE will be generated instantly.
+  Drag & drop sliced `.gcode.3mf` files (from Bambu Studio or Orca Slicer) into the app. SWAP files or customized GCODE will be generated instantly.
+  **Important**: Only fully sliced project files (format: `filename.gcode.3mf`) are accepted. Unsliced 3D model files or plain `.gcode` files are not supported.
 
 - **App Mode Toggle**
   Switch between **SWAP Mode** and **Push-off Mode** depending on your printer and automation system:
@@ -31,15 +32,21 @@ The GCODE modification concepts implemented here are inspired by ideas from **Fa
   - If multiple plates are loaded → only plates from the same printer model are accepted.
 
 - **Automation System Support**
-  - **Swaplist**: Original system for A1 Mini automatic plate swapping
+  - **Swapmod**: Original system for A1 Mini automatic plate swapping (A1M only)
+  - **JoBox**: Plate swapping system for A1 series
   - **3Print**: Advanced automation system for A1 series
   - **Printflow**: Alternative automation system for A1 series
-  - **Push-off Mode**: Built-in automation for X1/P1 series
+  - **Push-off Mode**: Built-in automation for X1/P1 series using print head
+
+  **Mode Switching (A1 only)**:
+  - Click the system logos (JoBox, 3Print, Printflow) at the top of the app to switch between different plate-swapper systems
+  - ⚠️ **CRITICAL WARNING**: You MUST select the correct mode that matches your physically installed plate-swapper system. Using the wrong mode can cause serious damage to your printer!
 
 - **Queue Handling**
   - Multiple plates can be loaded into a print queue.
   - Queue statistics (total time, number of plates) are calculated automatically.
   - Each plate shows duration, repeat count, and filament usage.
+  - **Drag & Drop Reordering**: Plates can be reordered by dragging and dropping them in the list.
 
 - **Per-Plate Controls**
   - Each plate has its own **repeat counter**.
@@ -68,6 +75,15 @@ The GCODE modification concepts implemented here are inspired by ideas from **Fa
     - Max cooldown time (min) – implemented via repeated `M190` waits
   - **Secure push-off sequence**: performs multiple controlled push-offs at descending Z heights before the final push at Z=1.
 
+- **Startsequence Optimization (X1/P1)**
+  - **Disable bed leveling between plates**: Skips bed leveling for all plates after the first one to speed up multi-plate printing
+    - *Theory*: The bed was already leveled at print initialization, so re-leveling between plates should not be necessary
+    - *Risk*: Small risk that the push-off process may have affected the print head's leveling calibration
+    - Use this if print speed is more important than maximum reliability
+  - **Disable first layer scan**: Disables the first layer inspection scan to speed up print start
+    - Removes the automatic quality check
+    - Use this if you consider the scan unnecessary or prefer speed over additional quality assurance
+
 - **Printer Sound Management (A1/A1M)**
   - **Disable printer sounds**: Control sound removal with options to:
     - Remove all printer sounds completely
@@ -91,14 +107,18 @@ The GCODE modification concepts implemented here are inspired by ideas from **Fa
     - Remove `M73 P100 R0` on non-last plates
 
 - **Settings Panel Organization**
-  - **Global Settings**: Apply to all plates (cooling, sounds, AMS optimization, file settings)
+  - **Global Settings**: Apply to all plates (cooling, sounds, AMS optimization, file settings, startsequence)
   - **Per-Plate Settings**: Click any plate to configure individual settings (objects, nozzle, push-off)
   - **Loop Repeats**: Control how many times the entire queue is repeated
+  - **Progress Display**: Choose between per-plate or global progress calculation
+    - **Per plate**: Shows progress and time remaining for current plate only (default)
+    - **Global**: Shows overall progress across all plates in the queue
 
 - **Test File Export**
   - **Generate test file**: Creates files with only start and end sequences (no actual print code)
   - Perfect for verifying plate-swap logic, heating sequences, and GCODE modifications
   - Goes through all plate changes but skips object printing
+  - **Configurable wait time**: Set the wait time between plates in test mode (default: 30 seconds)
 
 - **GCODE Safety Checks**
   - When exporting SWAP or GCODE, the app validates:
@@ -167,14 +187,20 @@ Implementation notes:
 ## 🎯 Usage
 
 1. Launch index.html in your browser.
-2. Drag & drop a .3mf file (Bambu Studio / Orca Slicer) or .gcode file into the drop zone.
+2. Drag & drop a sliced `.gcode.3mf` file (from Bambu Studio / Orca Slicer) into the drop zone.
+   - **Important**: Only fully sliced project files are accepted (format: `filename.gcode.3mf`)
 3. The app automatically detects your printer model and updates the UI.
-4. Configure per-plate or global options if desired.
-5. Choose one of the actions:
-   - Generate SWAP file → creates a new .swap.3mf.
-   - Export GCODE (txt) → creates a plain-text GCODE file with all rules applied.
-6. Monitor progress with the built-in progress bar.
-7. If needed, reset the app with the Reset button.
+4. **(A1 only)** Select your installed plate-swapper system by clicking the appropriate logo (JoBox, 3Print, or Printflow)
+   - ⚠️ **WARNING**: Using the wrong mode can damage your printer!
+5. Configure per-plate or global options if desired:
+   - Click on individual plates to access plate-specific settings
+   - Adjust global settings (cooling, sounds, progress display, etc.)
+   - Drag plates to reorder the print queue
+6. Choose one of the actions:
+   - Generate SWAP file → creates a new .swap.3mf
+   - Export GCODE → creates a plain-text GCODE file with all rules applied
+7. Monitor progress with the built-in progress bar.
+8. If needed, reset the app with the Reset button.
 
 ## 🖨️ Supported Printers
 
