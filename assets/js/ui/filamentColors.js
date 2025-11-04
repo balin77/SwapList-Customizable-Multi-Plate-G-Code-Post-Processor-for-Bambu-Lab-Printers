@@ -29,7 +29,7 @@ function getContrastingBackground(hexColor) {
 // Add this helper function
 function ensureP0() {
   if (!state.P0) state.P0 = {};
-  if (!state.P0.slots) state.P0.slots = [{}, {}, {}, {}];
+  if (!state.P0.slots) state.P0.slots = Array(32).fill(null).map(() => ({}));
   return state.P0;
 }
 
@@ -67,8 +67,8 @@ function getSwatchHex(swatch) {
 }
 
 // ===== Defaults ===================================================
-// nicht belegte Slots → grau
-const DEFAULT_SLOT_COLORS = ["#cccccc", "#cccccc", "#cccccc", "#cccccc"];
+// nicht belegte Slots → grau (up to 32 slots)
+const DEFAULT_SLOT_COLORS = Array(32).fill("#cccccc");
 
 // Alte Funktionen entfernen:
 // - repaintPlateRowBySlot
@@ -86,7 +86,7 @@ export function updateAllPlateSwatchColors() {
     if (!sw || !slotSpan) return;
 
     const slot1 = parseInt(slotSpan.textContent?.trim() || "1", 10) || 1;
-    const idx = Math.max(0, Math.min(3, slot1 - 1));
+    const idx = Math.max(0, Math.min(31, slot1 - 1));
 
     // Originalfarbe im Dataset speichern falls noch nicht vorhanden
     if (!sw.dataset.f_color && sw.style.backgroundColor) {
@@ -103,7 +103,7 @@ export function updateAllPlateSwatchColors() {
 
 // Diese Funktion anpassen
 export function setGlobalSlotColor(sIndex, hex) {
-  if (sIndex < 0 || sIndex >= 4) return;
+  if (sIndex < 0 || sIndex >= 32) return;
   const p0 = ensureP0();
   if (!p0.slots) p0.slots = [];
   if (!p0.slots[sIndex]) p0.slots[sIndex] = {};
@@ -138,7 +138,7 @@ export function getSlotColor(sIndex) {
 export function deriveGlobalSlotColorsFromPlates() {
   const dev = ensureP0();
 
-  const derived = [null, null, null, null];
+  const derived = Array(32).fill(null);
   const slotColorConflicts = new Map(); // Track conflicts: slot -> [color1, color2, ...]
 
   const list = document.getElementById("playlist_ol");
@@ -150,7 +150,7 @@ export function deriveGlobalSlotColorsFromPlates() {
 
       const slot1 = parseInt(slotSpan.textContent?.trim() || "0", 10);
       const idx = slot1 - 1;
-      if (idx < 0 || idx > 3) return;
+      if (idx < 0 || idx > 31) return;
 
       const hex = getSwatchHex(sw);
       if (!hex) return;
@@ -168,7 +168,7 @@ export function deriveGlobalSlotColorsFromPlates() {
   // Check for color conflicts and show warning
   checkForSlotColorConflicts(slotColorConflicts);
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 32; i++) {
     const sl = dev.slots[i];
     if (sl.manual) continue; // manuelle Overrides nicht überschreiben
     sl.color = derived[i] || DEFAULT_SLOT_COLORS[i];
@@ -416,25 +416,27 @@ export function openSlotDropdown(anchorEl) {
   menu.className = "slot-dropdown";
   menu.setAttribute("data-role", "slot-dropdown");
 
-  for (let i = 0; i < 4; i++) {
+  // Get used slots from statistics (only show slots that are actually displayed in statistics)
+  const usedSlots = getUsedSlotsFromStatistics();
+
+  // Show only the slots that are displayed in statistics
+  for (const slotIndex of usedSlots) {
     const item = document.createElement("div");
     item.className = "slot-dropdown-item";
-    item.dataset.slotIndex = String(i);
+    item.dataset.slotIndex = String(slotIndex);
 
     const dot = document.createElement("span");
     dot.className = "dot";
-    dot.style.background = getSlotColor(i); // Slotfarbe (aus Plates abgeleitet)
+    dot.style.background = getSlotColor(slotIndex); // Slotfarbe (aus Plates abgeleitet)
 
     const lab = document.createElement("span");
-    lab.textContent = `Slot ${i + 1}`;
+    lab.textContent = `Slot ${slotIndex + 1}`;
 
-    if (i === cur) item.classList.add("current");
+    if (slotIndex === cur) item.classList.add("current");
     item.append(dot, lab);
-    item.addEventListener("click", () => { applySlotSelectionToPlate(anchorEl, i); closeMenu(); });
+    item.addEventListener("click", () => { applySlotSelectionToPlate(anchorEl, slotIndex); closeMenu(); });
     menu.appendChild(item);
   }
-
-  // KEIN "Edit slot color…" – entfernt.
 
   document.body.appendChild(menu);
   const r = anchorEl.getBoundingClientRect();
@@ -451,22 +453,45 @@ export function openSlotDropdown(anchorEl) {
   _openMenu = menu;
 }
 
-// ===== Statistik: vier Slots erzwingen + Swatch oben ============
-function ensureFourSlotDivs(host) {
-  for (let i = 1; i <= 4; i++) {
-    let div = host.querySelector(`:scope > div[title="${i}"]`) || host.querySelector(`:scope > div[data-slot="${i}"]`);
-    if (!div) {
-      div = document.createElement("div");
-      div.setAttribute("title", String(i));
-      div.innerHTML = `Slot ${i}: <br> 0.00m <br> 0.00g`;
-      host.appendChild(div);
-    }
+// Helper function to get max used slot across all plates
+function getMaxUsedSlot() {
+  let max = 4;
+  const list = document.getElementById("playlist_ol");
+  if (list) {
+    list.querySelectorAll("li.list_item .p_filament .f_slot").forEach(slotSpan => {
+      const slot1 = parseInt(slotSpan.textContent?.trim() || "0", 10);
+      if (slot1 > max) max = slot1;
+    });
   }
+  return max;
+}
+
+// Helper function to get used slots from statistics display (0-based indices)
+function getUsedSlotsFromStatistics() {
+  const usedSlots = [];
+  const filamentTotal = document.getElementById("filament_total");
+
+  if (!filamentTotal) return [0, 1, 2, 3]; // Fallback to 4 slots
+
+  // Get all slot divs that are currently displayed in statistics
+  const slotDivs = filamentTotal.querySelectorAll(":scope > div[title]");
+
+  slotDivs.forEach(div => {
+    const slotTitle = div.getAttribute("title");
+    const slotId = parseInt(slotTitle, 10); // 1-based
+    if (slotId >= 1 && slotId <= 32) {
+      usedSlots.push(slotId - 1); // Convert to 0-based
+    }
+  });
+
+  // Sort by slot index
+  usedSlots.sort((a, b) => a - b);
+
+  return usedSlots.length > 0 ? usedSlots : [0, 1, 2, 3]; // Fallback to 4 slots
 }
 
 export function renderTotalsColors() {
   const host = document.getElementById("filament_total"); if (!host) return;
-  ensureFourSlotDivs(host);
 
   host.querySelectorAll(":scope > div[title]").forEach(div => {
     const slot1 = +(div.getAttribute("title") || "0"); if (!slot1) return;
@@ -541,7 +566,7 @@ export function wirePlateSwatches(li) {
     const slotSpan = row.querySelector(".f_slot");
     if (!sw || !slotSpan) return;
     const slot1 = parseInt(slotSpan.textContent?.trim() || "1", 10) || 1;
-    const idx = Math.max(0, Math.min(3, slot1 - 1));
+    const idx = Math.max(0, Math.min(31, slot1 - 1));
     sw.dataset.slotIndex = String(idx);
     // Farbe absichtlich NICHT ändern – wir lesen sie beim Ableiten aus!
   });

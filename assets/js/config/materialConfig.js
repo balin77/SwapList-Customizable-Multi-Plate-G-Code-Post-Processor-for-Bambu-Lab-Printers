@@ -26,9 +26,9 @@ function readUsedSlotsAndColors() {
 
   divs.forEach(div => {
     const slotTitle = div.getAttribute("title");
-    const slotIndex = parseInt(slotTitle, 10) - 1; // Convert to 0-based (0-3)
+    const slotIndex = parseInt(slotTitle, 10) - 1; // Convert to 0-based (0-31)
 
-    if (slotIndex < 0 || slotIndex > 3) return; // Skip invalid slots
+    if (slotIndex < 0 || slotIndex > 31) return; // Skip invalid slots (up to 32 slots)
 
     const m = parseFloat(div.dataset.used_m || "0") || 0;
     const g = parseFloat(div.dataset.used_g || "0") || 0;

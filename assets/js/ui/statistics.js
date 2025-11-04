@@ -67,13 +67,14 @@ export function update_filament_usage() {
   const slot_tray_info_idx = [];   // [slot] → Array von tray_info_idx
 
   let ams_max = -1;
+  let max_slot = -1;
 
   for (let i = 0; i < my_fil_data.length; i++) {
     const row = my_fil_data[i];
 
     const slotIdx1 = parseInt(row.getElementsByClassName("f_slot")[0]?.innerText, 10);
     if (!Number.isFinite(slotIdx1)) continue;
-    const slot = slotIdx1 - 1; // 0..3
+    const slot = slotIdx1 - 1; // 0..31
 
     if (!used_m[slot]) used_m[slot] = 0;
     if (!used_g[slot]) used_g[slot] = 0;
@@ -124,19 +125,28 @@ export function update_filament_usage() {
       const fidEl = row.parentElement?.parentElement?.getElementsByClassName("f_id")[0];
       state.ams_max_file_id = fidEl?.title ?? state.ams_max_file_id;
     }
+
+    // Track the maximum slot number that has any usage
+    if (r > 0 && slot > max_slot) {
+      max_slot = slot;
+    }
   }
 
   const loopsEl = document.getElementById("loops");
   const loops = parseFloat(loopsEl?.value) || 1;
 
-  const used_m_scaled = Array.from({ length: 4 }, (_, s) => (used_m[s] || 0) * loops);
-  const used_g_scaled = Array.from({ length: 4 }, (_, s) => (used_g[s] || 0) * loops);
+  // Calculate number of slots in 4-slot increments (4, 8, 12, 16, 20, 24, 28, 32)
+  // Always show at least 4 slots, round up to next multiple of 4
+  const minSlots = Math.max(4, max_slot + 1);
+  const num_slots = Math.ceil(minSlots / 4) * 4;
 
-  // ⛔ NICHT mehr: fil_stat.innerHTML = "";
-  // ✅ Stelle sicher, dass 4 Slots existieren – in fester Reihenfolge.
-  ensureFourSlotDivs(fil_stat);
+  const used_m_scaled = Array.from({ length: num_slots }, (_, s) => (used_m[s] || 0) * loops);
+  const used_g_scaled = Array.from({ length: num_slots }, (_, s) => (used_g[s] || 0) * loops);
 
-  for (let s = 0; s < 4; s++) {
+  // Ensure the correct number of slot divs exist
+  ensureSlotDivs(fil_stat, num_slots);
+
+  for (let s = 0; s < num_slots; s++) {
     const m = used_m_scaled[s] || 0;
     const g = used_g_scaled[s] || 0;
 
@@ -149,8 +159,27 @@ export function update_filament_usage() {
     const mRounded = Math.round(m * 100) / 100;
     const gRounded = Math.round(g * 100) / 100;
 
+    // Get material type for this slot
+    const typeFirst = (slot_type_candidates[s] || []).find(Boolean) || div.dataset.f_type || "";
+    // Show "N/A" if slot is empty (no usage)
+    const materialDisplay = (m === 0 && g === 0) ? "N/A" : (typeFirst || "N/A");
+
+    // Determine label format based on number of colors
+    // Format: Slot #, Material, g, m (progressively reduced)
+    let label;
+    if (num_slots <= 4) {
+      // 1-4 colors: "Slot 1 \n Material \n g \n m" (full display, no colon)
+      label = `Slot ${s + 1} <br>${materialDisplay} <br> ${gRounded}g <br> ${mRounded}m`;
+    } else if (num_slots <= 8) {
+      // 5-8 colors: "Material \n g" (no "Slot X", no m)
+      label = `${materialDisplay} <br> ${gRounded}g`;
+    } else {
+      // 9-32 colors: only "g" (minimal display - grams only, no material type)
+      label = `${gRounded}g`;
+    }
+
     // Inhalt neu schreiben
-    div.innerHTML = `Slot ${s + 1}: <br>${mRounded}m <br> ${gRounded}g`;
+    div.innerHTML = label;
 
     // Swatch wieder ganz oben einsetzen (falls vorhanden)
     if (sw) {
@@ -161,7 +190,6 @@ export function update_filament_usage() {
     // Datensätze für Export/Picker
     div.dataset.used_m = String(mRounded);
     div.dataset.used_g = String(gRounded);
-    const typeFirst = (slot_type_candidates[s] || []).find(Boolean) || div.dataset.f_type || "";
     div.dataset.f_type = typeFirst;
 
     // Store first tray_info_idx for this slot (if available)
@@ -178,18 +206,44 @@ export function update_filament_usage() {
   }
 }
 
-function ensureFourSlotDivs(host) {
-  // Wenn Struktur unsauber ist, baue sie einmal sauber komplett neu.
-  const needRebuild =
-    host.children.length !== 4 ||
-    ![1,2,3,4].every((n, i) => host.children[i]?.getAttribute?.("title") === String(n));
+function ensureSlotDivs(host, numSlots) {
+  // Check if we need to rebuild the slot structure
+  const currentSlots = host.querySelectorAll(':scope > div[title]');
+  const needRebuild = currentSlots.length !== numSlots;
 
   if (needRebuild) {
+    // Save existing swatches before rebuilding
+    const savedSwatches = new Map();
+    currentSlots.forEach(div => {
+      const slotNum = div.getAttribute('title');
+      const swatch = div.querySelector(':scope > .f_color');
+      if (swatch) {
+        savedSwatches.set(slotNum, swatch.cloneNode(true));
+      }
+    });
+
+    // Clear and rebuild
     host.innerHTML = "";
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= numSlots; i++) {
       const div = document.createElement("div");
       div.setAttribute("title", String(i));
-      div.innerHTML = `Slot ${i}: <br> 0.00m <br> 0.00g`;
+
+      // Restore swatch if it existed
+      const savedSwatch = savedSwatches.get(String(i));
+      if (savedSwatch) {
+        div.appendChild(savedSwatch);
+        div.appendChild(document.createElement("br"));
+      }
+
+      // Default content based on number of slots
+      if (numSlots <= 4) {
+        div.innerHTML += `Slot ${i} <br> N/A <br> 0.00g <br> 0.00m`;
+      } else if (numSlots <= 8) {
+        div.innerHTML += `N/A <br> 0.00g`;
+      } else {
+        div.innerHTML += `0.00g`;
+      }
+
       host.appendChild(div);
     }
   }

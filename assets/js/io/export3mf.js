@@ -173,11 +173,11 @@ async function generatePlateJsonData() {
   for (let i = 0; i < slotDivs.length; i++) {
     const div = slotDivs[i];
 
-    // Get slot ID (1..4) and convert to 0-based index
+    // Get slot ID (1..32) and convert to 0-based index
     const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
-    const slotIndex = slotId - 1; // Convert to 0-based for filament_ids (0-3)
+    const slotIndex = slotId - 1; // Convert to 0-based for filament_ids (0-31)
 
-    if (slotIndex < 0 || slotIndex > 3) continue; // Skip invalid slots
+    if (slotIndex < 0 || slotIndex > 31) continue; // Skip invalid slots (up to 32 slots)
 
     // Check if this slot is actually used
     const usedM = parseFloat(div.dataset.used_m || "0") || 0;
@@ -620,7 +620,7 @@ export async function export_3mf() {
         const div = slotDivs[i];
         const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
 
-        if (slotId < 1 || slotId > 4) continue; // Skip invalid slots
+        if (slotId < 1 || slotId > 32) continue; // Skip invalid slots (up to 32 slots)
 
         // Verbrauch lesen
         const usedM = parseFloat(div.dataset.used_m || "0") || 0;

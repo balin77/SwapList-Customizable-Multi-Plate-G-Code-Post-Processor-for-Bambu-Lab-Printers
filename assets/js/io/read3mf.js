@@ -65,7 +65,7 @@ function resolveSlotForRow(model_plates, plateIndex, filIndex, filamentNode) {
   // 1) Versuche: <filament id="...">
   const slotAttr = filamentNode?.getAttribute?.("id");
   let slot = parseInt(slotAttr, 10);
-  if (Number.isFinite(slot) && slot >= 1 && slot <= 4) return slot;
+  if (Number.isFinite(slot) && slot >= 1 && slot <= 32) return slot;
 
   // 2) Fallback: Plate-Metadaten 'filament_maps'
   try {
@@ -74,7 +74,7 @@ function resolveSlotForRow(model_plates, plateIndex, filIndex, filamentNode) {
     const raw = meta?.getAttribute?.("value") || "";
     // "1 4 2" -> [1,4,2]
     const parts = raw.split(/\s+/).map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
-    if (parts[filIndex] && parts[filIndex] >= 1 && parts[filIndex] <= 4) {
+    if (parts[filIndex] && parts[filIndex] >= 1 && parts[filIndex] <= 32) {
       return parts[filIndex];
     }
   } catch (e) {
@@ -330,7 +330,9 @@ export function handleFile(f) {
 
           var my_fl;
 
-          // Neue Filamentzeilen erstellen
+          // Get total number of colors on this plate to determine display format
+          const numColors = config_filaments.length;
+
           // Neue Filamentzeilen erstellen
           for (let filament_id = 0; filament_id < config_filaments.length; filament_id++) {
             const cfg = config_filaments[filament_id];
@@ -343,7 +345,7 @@ export function handleFile(f) {
             const usedM = parseFloat(cfg.getAttribute("used_m") || "0") || 0;
             const usedG = parseFloat(cfg.getAttribute("used_g") || "0") || 0;
 
-            // Slot 1..4 aus dem Attribut "id" holen (Fallback = Index+1)
+            // Slot 1..32 aus dem Attribut "id" holen (Fallback = Index+1)
             const slotNum = resolveSlotForRow(model_plates, i, filament_id, cfg);
 
             // Zeile klonen + anhängen
@@ -363,10 +365,60 @@ export function handleFile(f) {
             slotEl.dataset.origType = type;
             slotEl.dataset.trayInfoIdx = trayInfoIdx;
 
-            // Typ + Verbrauchswerte
-            my_fl.getElementsByClassName("f_type")[0].innerText = type;
-            my_fl.getElementsByClassName("f_used_m")[0].innerText = usedM.toString();
-            my_fl.getElementsByClassName("f_used_g")[0].innerText = usedG.toString();
+            // Determine what to display based on number of colors on this plate
+            // 1-5 colors: Full display (Slot #, type, g, m) - default template
+            // 6-10 colors: No "Slot" label (type, g, m)
+            // 11+ colors: Only g value
+
+            const typeEl = my_fl.getElementsByClassName("f_type")[0];
+            const mEl = my_fl.getElementsByClassName("f_used_m")[0];
+            const gEl = my_fl.getElementsByClassName("f_used_g")[0];
+
+            if (numColors <= 5) {
+              // Full display (1-5 colors): Slot #, type, g, m
+              typeEl.innerText = type;
+              mEl.innerText = usedM.toString();
+              gEl.innerText = usedG.toString();
+            } else if (numColors <= 10) {
+              // Reduced display (6-10 colors): Hide "Slot" label, keep type, g, m
+              // Find and hide the "Slot" text span
+              const slotLabel = Array.from(my_fl.querySelectorAll('span')).find(
+                span => !span.className && span.textContent.trim() === 'Slot'
+              );
+              if (slotLabel) {
+                slotLabel.style.display = 'none';
+              }
+              slotEl.style.display = 'none';
+
+              typeEl.innerText = type;
+              mEl.innerText = usedM.toString();
+              gEl.innerText = usedG.toString();
+            } else {
+              // Minimal display (11+ colors): Only g value
+              // Hide "Slot" label
+              const slotLabel = Array.from(my_fl.querySelectorAll('span')).find(
+                span => !span.className && span.textContent.trim() === 'Slot'
+              );
+              if (slotLabel) {
+                slotLabel.style.display = 'none';
+              }
+              slotEl.style.display = 'none';
+
+              // Hide type
+              typeEl.style.display = 'none';
+
+              // Hide m value and its label
+              mEl.style.display = 'none';
+              const mLabel = Array.from(my_fl.querySelectorAll('span')).find(
+                span => !span.className && span.textContent.trim() === 'm'
+              );
+              if (mLabel) {
+                mLabel.style.display = 'none';
+              }
+
+              // Keep only g value
+              gEl.innerText = usedG.toString();
+            }
 
             my_fl.className = "p_filament";
           }

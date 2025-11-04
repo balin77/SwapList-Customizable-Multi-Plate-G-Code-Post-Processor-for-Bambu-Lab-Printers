@@ -6,10 +6,11 @@
  */
 
 /**
- * Extracts lighting information from two images as a grayscale brightness mask
+ * Extracts lighting information from two images as a hybrid lighting mask
+ * Stores both multiplicative and additive lighting information
  * @param {ImageData} litImageData - Image with lighting effects
  * @param {ImageData} unlitImageData - Image without lighting effects
- * @returns {ImageData} Grayscale lighting mask data (brightness only)
+ * @returns {ImageData} Lighting mask with R=multiplicative factor, G=additive amount, B=blend mode
  */
 function extractLightingMask(litImageData, unlitImageData) {
   const canvas = document.createElement('canvas');
@@ -27,16 +28,39 @@ function extractLightingMask(litImageData, unlitImageData) {
     const litBrightness = (lit[i] + lit[i + 1] + lit[i + 2]) / 3;
     const unlitBrightness = (unlit[i] + unlit[i + 1] + unlit[i + 2]) / 3;
 
-    // Calculate lighting factor based on brightness only
-    // Avoid division by zero
-    const brightnessFactor = unlitBrightness > 0 ? litBrightness / unlitBrightness : 1;
+    // For dark colors (black/near-black), lighting is ADDITIVE (lit = unlit + light)
+    // For bright colors, lighting is MULTIPLICATIVE (lit = unlit * factor)
 
-    // Store as grayscale value (same for R, G, B channels)
-    // Factor 1.0 = 128, Factor 2.0 = 255, Factor 0.5 = 64
-    const grayValue = Math.min(255, Math.max(0, brightnessFactor * 128));
-    mask[i] = grayValue;
-    mask[i + 1] = grayValue;
-    mask[i + 2] = grayValue;
+    const DARK_THRESHOLD = 30; // Below this, use additive lighting
+
+    if (unlitBrightness < DARK_THRESHOLD) {
+      // ADDITIVE lighting for dark colors (e.g., black objects)
+      // lit = unlit + additive_light
+      // So: additive_light = lit - unlit
+      const additiveDelta = litBrightness - unlitBrightness;
+
+      // Store in mask:
+      // R channel: 0 (signals additive mode)
+      // G channel: additive delta (how much light to add)
+      // B channel: 255 (signals this is additive)
+      mask[i] = 0; // Multiplicative factor not used
+      mask[i + 1] = Math.max(0, Math.min(255, additiveDelta)); // Additive delta
+      mask[i + 2] = 255; // Mode flag: 255 = additive
+    } else {
+      // MULTIPLICATIVE lighting for normal/bright colors
+      // lit = unlit * factor
+      const brightnessFactor = litBrightness / unlitBrightness;
+
+      // Store in mask:
+      // R channel: multiplicative factor (128 = 1.0, 255 = 2.0, 64 = 0.5)
+      // G channel: not used
+      // B channel: 0 (signals this is multiplicative)
+      const grayValue = Math.min(255, Math.max(0, brightnessFactor * 128));
+      mask[i] = grayValue; // Multiplicative factor
+      mask[i + 1] = 0; // Not used for multiplicative
+      mask[i + 2] = 0; // Mode flag: 0 = multiplicative
+    }
+
     mask[i + 3] = 255; // Alpha
   }
 
@@ -59,14 +83,14 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
   const source = unlitImageData.data;
   const target = newImageData.data;
 
-  // Convert color mapping to RGB
+  // Convert color mapping to RGB with tolerance for near-matches
   const rgbMapping = {};
   for (const [oldHex, newHex] of Object.entries(colorMapping)) {
     const oldRgb = hexToRgb(oldHex);
     const newRgb = hexToRgb(newHex);
     if (oldRgb && newRgb) {
       const oldKey = `${oldRgb.r},${oldRgb.g},${oldRgb.b}`;
-      rgbMapping[oldKey] = newRgb;
+      rgbMapping[oldKey] = { ...newRgb, original: oldRgb };
     }
   }
 
@@ -76,8 +100,23 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
     const b = source[i + 2];
     const a = source[i + 3];
 
+    // Try exact match first
     const key = `${r},${g},${b}`;
-    const newColor = rgbMapping[key];
+    let newColor = rgbMapping[key];
+
+    // If no exact match, try fuzzy matching with tolerance (for anti-aliased edges)
+    if (!newColor) {
+      const tolerance = 10;
+      for (const [mappedKey, color] of Object.entries(rgbMapping)) {
+        const orig = color.original;
+        if (Math.abs(r - orig.r) <= tolerance &&
+            Math.abs(g - orig.g) <= tolerance &&
+            Math.abs(b - orig.b) <= tolerance) {
+          newColor = color;
+          break;
+        }
+      }
+    }
 
     if (newColor) {
       target[i] = newColor.r;
@@ -95,9 +134,10 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
 }
 
 /**
- * Applies grayscale lighting mask to recolored image
+ * Applies hybrid lighting mask to recolored image
+ * Supports both multiplicative (for bright colors) and additive (for dark colors) lighting
  * @param {ImageData} recoloredImageData - Image with new colors
- * @param {ImageData} lightingMask - Grayscale lighting information (brightness only)
+ * @param {ImageData} lightingMask - Hybrid lighting mask (R=mult factor, G=additive, B=mode)
  * @returns {ImageData} Final image with lighting applied
  */
 function applyLightingMask(recoloredImageData, lightingMask) {
@@ -112,14 +152,26 @@ function applyLightingMask(recoloredImageData, lightingMask) {
   const final = finalImageData.data;
 
   for (let i = 0; i < recolored.length; i += 4) {
-    // Get grayscale brightness factor (same for all channels)
-    // Convert mask value back to factor (128 = 1.0)
-    const brightnessFactor = mask[i] / 128;
+    const modeFlag = mask[i + 2]; // B channel: 255=additive, 0=multiplicative
 
-    // Apply same brightness factor to all RGB channels
-    final[i] = Math.min(255, Math.max(0, recolored[i] * brightnessFactor));
-    final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] * brightnessFactor));
-    final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] * brightnessFactor));
+    if (modeFlag > 127) {
+      // ADDITIVE mode (for dark/black colors)
+      // final = recolored + additive_light
+      const additiveDelta = mask[i + 1]; // G channel holds additive delta
+
+      final[i] = Math.min(255, Math.max(0, recolored[i] + additiveDelta));
+      final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] + additiveDelta));
+      final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] + additiveDelta));
+    } else {
+      // MULTIPLICATIVE mode (for normal/bright colors)
+      // final = recolored * factor
+      const brightnessFactor = mask[i] / 128; // R channel holds multiplicative factor
+
+      final[i] = Math.min(255, Math.max(0, recolored[i] * brightnessFactor));
+      final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] * brightnessFactor));
+      final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] * brightnessFactor));
+    }
+
     final[i + 3] = recolored[i + 3]; // Alpha unchanged
   }
 
@@ -228,16 +280,16 @@ export async function createRecoloredPlateImage(unlitImageUrl, cachedLightingMas
     // If no cached mask is provided, log a warning (shouldn't happen in normal flow)
     if (!lightingMask) {
       console.warn('No cached lighting mask provided, color changes may accumulate incorrectly');
-      // Create a neutral mask as fallback
+      // Create a neutral multiplicative mask as fallback
       const canvas = document.createElement('canvas');
       canvas.width = unlitImageData.width;
       canvas.height = unlitImageData.height;
       const ctx = canvas.getContext('2d');
       lightingMask = ctx.createImageData(canvas.width, canvas.height);
       for (let i = 0; i < lightingMask.data.length; i += 4) {
-        lightingMask.data[i] = 128;     // neutral red factor
-        lightingMask.data[i + 1] = 128; // neutral green factor
-        lightingMask.data[i + 2] = 128; // neutral blue factor
+        lightingMask.data[i] = 128;     // neutral multiplicative factor (1.0)
+        lightingMask.data[i + 1] = 0;   // no additive component
+        lightingMask.data[i + 2] = 0;   // mode: multiplicative
         lightingMask.data[i + 3] = 255; // full alpha
       }
     }
