@@ -12,6 +12,7 @@ import {
   updateAllPlateSwatchColors,
   deriveGlobalSlotColorsFromPlates  // Add this import
 } from "../ui/filamentColors.js";
+import { calculateLightingMask } from "../utils/imageColorMapping.js";
 import { update_statistics } from "../ui/statistics.js";
 import { export_3mf } from "./export3mf.js";
 import { err00, err01 } from "../constants/errorMessages.js";
@@ -292,10 +293,28 @@ export function handleFile(f) {
             if (no_light_icon_name) {
               const no_light_img_file = zip.file(no_light_icon_name);
               if (no_light_img_file) {
-                no_light_img_file.async("blob").then(function (no_light_u8) {
+                no_light_img_file.async("blob").then(async function (no_light_u8) {
                   const unlitImageUrl = URL.createObjectURL(no_light_u8);
                   p_icon.dataset.unlitImageUrl = unlitImageUrl;
                   console.log("Stored unlit image URL for plate", i);
+
+                  // Calculate and cache the lighting mask (shadowmap) once during loading
+                  try {
+                    const lightingMask = await calculateLightingMask(litImageUrl, unlitImageUrl);
+                    if (lightingMask) {
+                      // Store the lighting mask directly on the DOM element
+                      // Note: We can't store ImageData directly, so we store it as a non-enumerable property
+                      Object.defineProperty(p_icon, '_cachedLightingMask', {
+                        value: lightingMask,
+                        writable: false,
+                        enumerable: false,
+                        configurable: true
+                      });
+                      console.log("Cached lighting mask for plate", i);
+                    }
+                  } catch (error) {
+                    console.error("Failed to calculate lighting mask for plate", i, error);
+                  }
                 });
               }
             }

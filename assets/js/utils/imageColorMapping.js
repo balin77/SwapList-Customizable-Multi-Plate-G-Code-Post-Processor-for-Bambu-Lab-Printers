@@ -6,10 +6,10 @@
  */
 
 /**
- * Extracts lighting information from two images
+ * Extracts lighting information from two images as a grayscale brightness mask
  * @param {ImageData} litImageData - Image with lighting effects
  * @param {ImageData} unlitImageData - Image without lighting effects
- * @returns {ImageData} Lighting mask data
+ * @returns {ImageData} Grayscale lighting mask data (brightness only)
  */
 function extractLightingMask(litImageData, unlitImageData) {
   const canvas = document.createElement('canvas');
@@ -23,17 +23,20 @@ function extractLightingMask(litImageData, unlitImageData) {
   const mask = maskData.data;
 
   for (let i = 0; i < lit.length; i += 4) {
-    // Calculate lighting factor for each RGB channel
-    // Avoid division by zero
-    const rFactor = unlit[i] > 0 ? lit[i] / unlit[i] : 1;
-    const gFactor = unlit[i + 1] > 0 ? lit[i + 1] / unlit[i + 1] : 1;
-    const bFactor = unlit[i + 2] > 0 ? lit[i + 2] / unlit[i + 2] : 1;
+    // Calculate average brightness for lit and unlit pixels
+    const litBrightness = (lit[i] + lit[i + 1] + lit[i + 2]) / 3;
+    const unlitBrightness = (unlit[i] + unlit[i + 1] + unlit[i + 2]) / 3;
 
-    // Store lighting factors as RGB values (0-255 range)
+    // Calculate lighting factor based on brightness only
+    // Avoid division by zero
+    const brightnessFactor = unlitBrightness > 0 ? litBrightness / unlitBrightness : 1;
+
+    // Store as grayscale value (same for R, G, B channels)
     // Factor 1.0 = 128, Factor 2.0 = 255, Factor 0.5 = 64
-    mask[i] = Math.min(255, Math.max(0, rFactor * 128));
-    mask[i + 1] = Math.min(255, Math.max(0, gFactor * 128));
-    mask[i + 2] = Math.min(255, Math.max(0, bFactor * 128));
+    const grayValue = Math.min(255, Math.max(0, brightnessFactor * 128));
+    mask[i] = grayValue;
+    mask[i + 1] = grayValue;
+    mask[i + 2] = grayValue;
     mask[i + 3] = 255; // Alpha
   }
 
@@ -92,9 +95,9 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
 }
 
 /**
- * Applies lighting mask to recolored image
+ * Applies grayscale lighting mask to recolored image
  * @param {ImageData} recoloredImageData - Image with new colors
- * @param {ImageData} lightingMask - Lighting information
+ * @param {ImageData} lightingMask - Grayscale lighting information (brightness only)
  * @returns {ImageData} Final image with lighting applied
  */
 function applyLightingMask(recoloredImageData, lightingMask) {
@@ -109,15 +112,14 @@ function applyLightingMask(recoloredImageData, lightingMask) {
   const final = finalImageData.data;
 
   for (let i = 0; i < recolored.length; i += 4) {
-    // Convert mask values back to factors (128 = 1.0)
-    const rFactor = mask[i] / 128;
-    const gFactor = mask[i + 1] / 128;
-    const bFactor = mask[i + 2] / 128;
+    // Get grayscale brightness factor (same for all channels)
+    // Convert mask value back to factor (128 = 1.0)
+    const brightnessFactor = mask[i] / 128;
 
-    // Apply lighting factors
-    final[i] = Math.min(255, Math.max(0, recolored[i] * rFactor));
-    final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] * gFactor));
-    final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] * bFactor));
+    // Apply same brightness factor to all RGB channels
+    final[i] = Math.min(255, Math.max(0, recolored[i] * brightnessFactor));
+    final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] * brightnessFactor));
+    final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] * brightnessFactor));
     final[i + 3] = recolored[i + 3]; // Alpha unchanged
   }
 
@@ -180,13 +182,13 @@ function imageDataToBlobUrl(imageData) {
 }
 
 /**
- * Main function: Creates dynamically recolored plate image
+ * Pre-calculates and stores the lighting mask for a plate
+ * This should be called once during initial plate loading
  * @param {string} litImageUrl - URL of plate_*.png (with lighting)
  * @param {string} unlitImageUrl - URL of plate_no_light_*.png (without lighting)
- * @param {Object} colorMapping - Map of old hex colors to new hex colors
- * @returns {Promise<string>} New blob URL with recolored image
+ * @returns {Promise<ImageData>} The calculated lighting mask
  */
-export async function createRecoloredPlateImage(litImageUrl, unlitImageUrl, colorMapping) {
+export async function calculateLightingMask(litImageUrl, unlitImageUrl) {
   try {
     // Load both images
     const [litImageData, unlitImageData] = await Promise.all([
@@ -200,8 +202,45 @@ export async function createRecoloredPlateImage(litImageUrl, unlitImageUrl, colo
       throw new Error('Image dimensions do not match');
     }
 
-    // Extract lighting mask
-    const lightingMask = extractLightingMask(litImageData, unlitImageData);
+    // Extract and return lighting mask
+    return extractLightingMask(litImageData, unlitImageData);
+  } catch (error) {
+    console.error('Error calculating lighting mask:', error);
+    return null;
+  }
+}
+
+/**
+ * Main function: Creates dynamically recolored plate image using a cached shadowmap
+ * @param {string} unlitImageUrl - URL of plate_no_light_*.png (without lighting)
+ * @param {ImageData} cachedLightingMask - Pre-calculated lighting mask (shadowmap)
+ * @param {Object} colorMapping - Map of old hex colors to new hex colors
+ * @returns {Promise<string>} New blob URL with recolored image
+ */
+export async function createRecoloredPlateImage(unlitImageUrl, cachedLightingMask, colorMapping) {
+  try {
+    // Load unlit image
+    const unlitImageData = await loadImageDataFromBlob(unlitImageUrl);
+
+    // Use cached lighting mask if available
+    let lightingMask = cachedLightingMask;
+
+    // If no cached mask is provided, log a warning (shouldn't happen in normal flow)
+    if (!lightingMask) {
+      console.warn('No cached lighting mask provided, color changes may accumulate incorrectly');
+      // Create a neutral mask as fallback
+      const canvas = document.createElement('canvas');
+      canvas.width = unlitImageData.width;
+      canvas.height = unlitImageData.height;
+      const ctx = canvas.getContext('2d');
+      lightingMask = ctx.createImageData(canvas.width, canvas.height);
+      for (let i = 0; i < lightingMask.data.length; i += 4) {
+        lightingMask.data[i] = 128;     // neutral red factor
+        lightingMask.data[i + 1] = 128; // neutral green factor
+        lightingMask.data[i + 2] = 128; // neutral blue factor
+        lightingMask.data[i + 3] = 255; // full alpha
+      }
+    }
 
     // Replace colors in unlit image
     const recoloredImage = replaceColorsInImage(unlitImageData, colorMapping);
@@ -214,8 +253,8 @@ export async function createRecoloredPlateImage(litImageUrl, unlitImageUrl, colo
 
   } catch (error) {
     console.error('Error creating recolored plate image:', error);
-    // Fallback: return original lit image
-    return litImageUrl;
+    // Fallback: return original unlit image
+    return unlitImageUrl;
   }
 }
 

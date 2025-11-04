@@ -80,10 +80,17 @@ async function getRecoloredPlateImages(uiPlateIndex, baseZip, originalPlateNumbe
 
     console.log(`Creating recolored PNGs for plate ${originalPlateNumber} with color mapping:`, colorMapping);
 
-    // Create the recolored image
+    // Get cached lighting mask
+    const cachedLightingMask = plateIcon._cachedLightingMask;
+    if (!cachedLightingMask) {
+      console.warn('No cached lighting mask found for plate during export, using original image');
+      return null;
+    }
+
+    // Create the recolored image using cached shadowmap
     const recoloredBlobUrl = await createRecoloredPlateImage(
-      plateIcon.dataset.litImageUrl,
       plateIcon.dataset.unlitImageUrl,
+      cachedLightingMask,
       colorMapping
     );
 

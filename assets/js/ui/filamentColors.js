@@ -592,10 +592,17 @@ async function updatePlateImageColors(plateElement) {
 
     console.log('Updating plate image with color mapping:', colorMapping);
 
-    // Create recolored image
+    // Get cached lighting mask
+    const cachedLightingMask = plateIcon._cachedLightingMask;
+    if (!cachedLightingMask) {
+      console.warn('No cached lighting mask found for plate, skipping image update');
+      return;
+    }
+
+    // Create recolored image using cached shadowmap
     const newImageUrl = await createRecoloredPlateImage(
-      plateIcon.dataset.litImageUrl,
       plateIcon.dataset.unlitImageUrl,
+      cachedLightingMask,
       colorMapping
     );
 
