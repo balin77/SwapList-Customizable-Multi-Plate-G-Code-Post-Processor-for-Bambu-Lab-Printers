@@ -366,6 +366,17 @@ export async function export_3mf() {
       console.log('[plateRestrictions] No restriction warnings found');
     }
 
+    // Build slot compaction map BEFORE collecting/transforming
+    // This is crucial because applyAmsOverridesToPlate() needs the compaction map
+    if (state.OVERRIDE_METADATA) {
+      // Read used slots and populate state.GLOBAL_AMS.slotCompactionMap
+      // This is normally done in buildProjectSettingsForUsedSlots(), but we need it earlier
+      const projZipTemp = await JSZip.loadAsync(state.my_files[state.ams_max_file_id]);
+      const projSettingsTextTemp = await projZipTemp.file("Metadata/project_settings.config").async("text");
+      buildProjectSettingsForUsedSlots(projSettingsTextTemp); // Populates slotCompactionMap
+      console.log('Slot compaction map initialized before collectAndTransform:', state.GLOBAL_AMS.slotCompactionMap);
+    }
+
     // Collect and transform the data
     const result = await collectAndTransform({ applyRules: true, applyOptimization: true, amsOverride: true });
     if (result.empty) {
@@ -618,12 +629,16 @@ export async function export_3mf() {
           // Typ aus dataset lesen oder default PLA
           const type = div.dataset.f_type || "PLA";
 
+          // tray_info_idx aus dataset lesen (optional)
+          const trayInfoIdx = div.dataset.trayInfoIdx || "";
+
           usedSlots.push({
             originalSlotId: slotId,
             usedM,
             usedG,
             hex,
-            type
+            type,
+            trayInfoIdx
           });
         }
       }
@@ -646,6 +661,11 @@ export async function export_3mf() {
         filament_tag.setAttribute("color", slotData.hex);
         filament_tag.setAttribute("used_m", String(slotData.usedM));
         filament_tag.setAttribute("used_g", String(slotData.usedG));
+
+        // tray_info_idx nur setzen wenn vorhanden
+        if (slotData.trayInfoIdx) {
+          filament_tag.setAttribute("tray_info_idx", slotData.trayInfoIdx);
+        }
 
         platesXML[0].appendChild(filament_tag);
       });

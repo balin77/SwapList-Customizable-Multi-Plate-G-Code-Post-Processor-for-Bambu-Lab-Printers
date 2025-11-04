@@ -106,7 +106,9 @@ export const printerTemplates = {
       "temperature_vitrification",
       "textured_plate_temp",
       "textured_plate_temp_initial_layer",
-      "volumetric_speed_coefficients"
+      "volumetric_speed_coefficients",
+      "first_x_layer_fan_speed",
+      "no_slow_down_for_cooling_on_outwalls"
     ],
 
     // Special handling for fields that need custom logic instead of simple duplication
@@ -219,7 +221,9 @@ export const printerTemplates = {
       "temperature_vitrification",
       "textured_plate_temp",
       "textured_plate_temp_initial_layer",
-      "volumetric_speed_coefficients"
+      "volumetric_speed_coefficients",
+      "first_x_layer_fan_speed",
+      "no_slow_down_for_cooling_on_outwalls"
     ],
 
     // Special handling for fields that need custom logic instead of simple duplication

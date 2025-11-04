@@ -318,6 +318,7 @@ export function handleFile(f) {
 
             const color = cfg.getAttribute("color") || "#cccccc";
             const type = cfg.getAttribute("type") || "PLA";
+            const trayInfoIdx = cfg.getAttribute("tray_info_idx") || "";
 
             // Verbrauch robust parsen (keine "undefined" schreiben)
             const usedM = parseFloat(cfg.getAttribute("used_m") || "0") || 0;
@@ -338,9 +339,10 @@ export function handleFile(f) {
             // Slot-Text setzen (sichtbar) …
             const slotEl = my_fl.getElementsByClassName("f_slot")[0];
             slotEl.innerText = String(slotNum);
-            // … und Original-Slot/Typ für spätere Exporte merken
+            // … und Original-Slot/Typ/TrayInfoIdx für spätere Exporte merken
             slotEl.dataset.origSlot = String(slotNum);
             slotEl.dataset.origType = type;
+            slotEl.dataset.trayInfoIdx = trayInfoIdx;
 
             // Typ + Verbrauchswerte
             my_fl.getElementsByClassName("f_type")[0].innerText = type;

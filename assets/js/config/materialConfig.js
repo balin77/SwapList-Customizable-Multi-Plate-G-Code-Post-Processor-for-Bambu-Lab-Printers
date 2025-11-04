@@ -12,6 +12,10 @@ import { state } from "./state.js";
  * Beispiel: Slot 2 + 4 belegt → Slots werden zu 1 + 2
  *
  * Erstellt auch state.GLOBAL_AMS.slotCompactionMap für Mapping original → kompaktiert
+ *
+ * @returns {Object} { colors: string[], originalSlots: number[] }
+ *   - colors: Array der Farben für kompaktierte Slots
+ *   - originalSlots: Array der ursprünglichen Slot-Indizes (0-based)
  */
 function readUsedSlotsAndColors() {
   const root = document.getElementById("filament_total");
@@ -40,10 +44,10 @@ function readUsedSlotsAndColors() {
     }
   });
 
-  // If no slots used, return empty array
+  // If no slots used, return empty arrays
   if (usedSlots.length === 0) {
     state.GLOBAL_AMS.slotCompactionMap.clear();
-    return [];
+    return { colors: [], originalSlots: [] };
   }
 
   // Sort by original slot index
@@ -51,21 +55,23 @@ function readUsedSlotsAndColors() {
 
   // Build compaction map: original slot (1-based) -> compacted slot (1-based)
   state.GLOBAL_AMS.slotCompactionMap.clear();
-  const result = [];
+  const colors = [];
+  const originalSlots = [];
 
   usedSlots.forEach((slot, compactedIndex) => {
     const originalSlot1Based = slot.originalSlot + 1; // 1-4
     const compactedSlot1Based = compactedIndex + 1;   // 1-4
 
     state.GLOBAL_AMS.slotCompactionMap.set(originalSlot1Based, compactedSlot1Based);
-    result.push(slot.color);
+    colors.push(slot.color);
+    originalSlots.push(slot.originalSlot); // Store 0-based original slot index
 
     console.log(`Slot compaction: ${originalSlot1Based} → ${compactedSlot1Based} (${slot.color})`);
   });
 
-  console.log(`readUsedSlotsAndColors: ${usedSlots.length} slots compacted, result=`, result);
+  console.log(`readUsedSlotsAndColors: ${usedSlots.length} slots compacted, colors=`, colors, 'originalSlots=', originalSlots);
 
-  return result;
+  return { colors, originalSlots };
 }
 
 /** repliziere Template-Arrays auf Länge n (nimmt jeweils das erste Element als Basis) */
@@ -87,13 +93,16 @@ function replicateTemplateArrays(template, n) {
  * Baut ein neues project_settings.config JSON (String),
  * basierend auf originalText und den verwendeten Slots/Farben.
  * Verwendet printer-spezifische Templates für präzise Feld-Duplikation.
+ *
+ * WICHTIG: Bei Kompaktierung werden die Werte der ursprünglichen Slots übernommen!
+ * Beispiel: Slots 3+4 verwendet → Werte von Index [2] und [3] werden zu [0] und [1]
  */
 export function buildProjectSettingsForUsedSlots(originalText) {
   let original;
   try { original = JSON.parse(originalText); }
   catch (e) { console.warn("project_settings original parse failed, fallback to {}:", e); original = {}; }
 
-  const colors = readUsedSlotsAndColors();
+  const { colors, originalSlots } = readUsedSlotsAndColors();
   const n = colors.length;
   if (n === 0) {
     // nichts benutzt → gib Original zurück
@@ -108,12 +117,16 @@ export function buildProjectSettingsForUsedSlots(originalText) {
   const template = printerTemplates[printerMode];
 
   if (template) {
-    // Nur spezifische Felder duplizieren (basierend auf Analyse)
+    // Nur spezifische Felder kompaktieren (Werte von ursprünglichen Slots übernehmen)
     for (const fieldName of template.duplicateFields) {
       const value = original[fieldName];
       if (Array.isArray(value) && value.length > 0) {
-        const baseValue = String(value[0] ?? "");
-        out[fieldName] = Array(n).fill(baseValue);
+        // Map original slot values to compacted positions
+        out[fieldName] = originalSlots.map(origSlotIndex => {
+          // origSlotIndex ist 0-based (0-3)
+          const val = value[origSlotIndex];
+          return val !== undefined ? String(val) : String(value[0] ?? "");
+        });
       }
     }
 
@@ -129,11 +142,14 @@ export function buildProjectSettingsForUsedSlots(originalText) {
       }
     }
   } else {
-    // Fallback: alle Array-Felder duplizieren (alte Methode)
+    // Fallback: alle Array-Felder kompaktieren (Werte von ursprünglichen Slots übernehmen)
     for (const [key, value] of Object.entries(original)) {
       if (Array.isArray(value) && value.length > 0) {
-        const baseValue = String(value[0] ?? "");
-        out[key] = Array(n).fill(baseValue);
+        // Map original slot values to compacted positions
+        out[key] = originalSlots.map(origSlotIndex => {
+          const val = value[origSlotIndex];
+          return val !== undefined ? String(val) : String(value[0] ?? "");
+        });
       }
     }
   }

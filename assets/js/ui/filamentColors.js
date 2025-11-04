@@ -42,6 +42,21 @@ function toHexAny(color) {
   return "#" + m.slice(1).map(x => (+x).toString(16).padStart(2, "0")).join("");
 }
 
+// Lookup vendor by filament_id (tray_info_idx) in registry
+function lookupVendorByFilamentId(filamentId) {
+  if (!filamentId) {
+    console.log("[lookupVendor] No filamentId provided");
+    return "Unknown";
+  }
+
+  // Search in PRESET_INDEX for matching filament_id in settings object
+  const entry = (PRESET_INDEX || []).find(e => e.settings?.filament_id === filamentId);
+
+  console.log(`[lookupVendor] Searching for filament_id="${filamentId}":`, entry ? `Found vendor="${entry.vendor}"` : "Not found");
+
+  return entry?.vendor || "Unknown";
+}
+
 // Add this helper function after toHexAny()
 function getSwatchHex(swatch) {
   if (!swatch) return null;
@@ -93,6 +108,17 @@ export function setGlobalSlotColor(sIndex, hex) {
   if (!p0.slots) p0.slots = [];
   if (!p0.slots[sIndex]) p0.slots[sIndex] = {};
   p0.slots[sIndex].color = hex;
+  p0.slots[sIndex].manual = true; // Mark as manually changed
+
+  // Auto-enable OVERRIDE_METADATA when color is manually changed
+  import('../config/state.js').then(({ state }) => {
+    if (!state.OVERRIDE_METADATA) {
+      state.OVERRIDE_METADATA = true;
+      const checkbox = document.getElementById("opt_override_metadata");
+      if (checkbox) checkbox.checked = true;
+      console.log("Auto-enabled OVERRIDE_METADATA due to manual color change");
+    }
+  });
 
   // UI aktualisieren - wichtig: beide Aufrufe!
   renderTotalsColors();
@@ -663,46 +689,38 @@ export function catalogForCurrentPrinterAndNozzle() {
 }
 
 
-/** Öffnet den Dialog für Statistics-Slot */
+/** Öffnet den Dialog für Statistics-Slot (zeigt Plate-Daten, Farbe editierbar) */
 export function openStatsSlotDialog(slotIndex) {
-  const curColor  = getSlotColor(slotIndex);
-  const sl        = (ensureP0().slots[slotIndex] || {});
-  const curType   = sl.meta?.type   || "PLA";
-  const curVendor = sl.meta?.vendor || "Generic";
+  const curColor = getSlotColor(slotIndex);
 
-  // Gefilterter Katalog passend zu Mode + 0.2er Nozzle
-  const { candidates, vendorsByMaterial } = catalogForCurrentPrinterAndNozzle();
+  // Lese Daten aus dem Statistics-Box Dataset (aus Plates abgeleitet)
+  const box = document.querySelector(`#filament_total > div[title="${slotIndex + 1}"]`);
+  const trayInfoIdx = box?.dataset?.trayInfoIdx || "";
+  const curType = box?.dataset?.f_type || "Unknown";
 
-  const fallbackMaterials = ["PLA","PETG","ABS","ASA","TPU","PC","PA","PVA","Other"];
-  const fallbackVendors   = ["Bambu","Polymaker","eSun","Generic","Other"];
+  // Lookup vendor by tray_info_idx
+  const curVendor = lookupVendorByFilamentId(trayInfoIdx);
 
-  // Vendor- und Materiallisten aus den Kandidaten ableiten
-  const vendorList = Object.keys(vendorsByMaterial);
-  const vendors    = vendorList.length ? vendorList.sort() : fallbackVendors;
-
-  const initialVendor   = vendors.includes(curVendor) ? curVendor : vendors[0];
-  const materialsForV   = vendorsByMaterial[initialVendor] || fallbackMaterials;
-  const initialMaterial = materialsForV.includes(curType) ? curType : materialsForV[0];
-
-  // Modal bauen
+  // Modal bauen (Farbe editierbar, Rest read-only)
   const backdrop = document.createElement("div");
   backdrop.className = "slot-modal-backdrop";
   const modal = document.createElement("div");
   modal.className = "slot-modal";
   modal.innerHTML = `
-    <h4>Slot ${slotIndex + 1}</h4>
+    <h4>Slot ${slotIndex + 1} Information</h4>
     <div class="row">
       <label>Color:</label>
       <input type="color" id="slotColor" value="${curColor}">
     </div>
     <div class="row">
       <label>Producer:</label>
-      <select id="slotVendor"></select>
+      <span style="font-weight: bold;">${curVendor}</span>
     </div>
     <div class="row">
       <label>Material:</label>
-      <select id="slotType"></select>
+      <span style="font-weight: bold;">${curType}</span>
     </div>
+    ${trayInfoIdx ? `<div class="row"><label>Filament ID:</label><span style="font-family: monospace; color: #666;">${trayInfoIdx}</span></div>` : ''}
     <div class="actions">
       <button id="slotCancel">Cancel</button>
       <button id="slotSave">Save</button>
@@ -711,54 +729,21 @@ export function openStatsSlotDialog(slotIndex) {
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
 
-  const $       = sel => modal.querySelector(sel);
-  const vendSel = $("#slotVendor");
-  const typeSel = $("#slotType");
-
-  // Helper zum Befüllen
-  function fillSelect(sel, values, selected) {
-    sel.innerHTML = values
-      .map(v => `<option value="${v}" ${v === selected ? "selected" : ""}>${v}</option>`)
-      .join("");
-  }
-
-  // Initiale Befüllung
-  fillSelect(vendSel, vendors,        initialVendor);
-  fillSelect(typeSel, materialsForV,  initialMaterial);
-
-  // Wenn Vendor wechselt → Materials neu filtern
-  vendSel.addEventListener("change", () => {
-    const mats = vendorsByMaterial[vendSel.value] || fallbackMaterials;
-    const keep = mats.includes(typeSel.value) ? typeSel.value : mats[0];
-    fillSelect(typeSel, mats, keep);
-  });
+  const $ = sel => modal.querySelector(sel);
 
   // Buttons
   $("#slotCancel").onclick = () => backdrop.remove();
   $("#slotSave").onclick = () => {
-    const color  = $("#slotColor").value;
-    const type   = typeSel.value;
-    const vendor = vendSel.value;
+    const newColor = $("#slotColor").value;
 
-    // passenden Preset-Eintrag suchen (falls vorhanden)
-    const entry = candidates.find(e => e.material === type && e.vendor === vendor) || null;
+    // Nur Farbe aktualisieren (OHNE Override-Aktivierung)
+    // Da Type und Vendor aus Plates kommen und nicht editierbar sind,
+    // sollte das Ändern der Farbe NICHT den Override aktivieren
+    setGlobalSlotColor(slotIndex, newColor);
 
-    // globale Slot-Metadaten setzen
-    setGlobalSlotMeta(slotIndex, { color, type, vendor });
-
-    // presetFile / setting_id am Slot für Export hinterlegen
-    const slot = ensureP0().slots[slotIndex];
-    slot.meta = slot.meta || {};
-    slot.meta.presetFile = entry?.file || null;
-    slot.meta.setting_id = entry?.settings?.setting_id ?? entry?.data?.setting_id ?? null;
-
-    // Statistics-Zeile aktualisieren (Export liest das später aus)
-    const box = document.querySelector(`#filament_total > div[title="${slotIndex + 1}"]`);
+    // Statistics-Zeile aktualisieren
     if (box) {
-      box.dataset.f_color  = toHexAny(color);
-      box.dataset.f_type   = type;
-      box.dataset.f_vendor = vendor;
-      if (entry?.file) box.dataset.preset_file = entry.file;
+      box.dataset.f_color = toHexAny(newColor);
     }
 
     // Anzeige auffrischen
@@ -770,6 +755,11 @@ export function openStatsSlotDialog(slotIndex) {
     updateAllPlateImages();
 
     backdrop.remove();
+  };
+
+  // Close on backdrop click
+  backdrop.onclick = (e) => {
+    if (e.target === backdrop) backdrop.remove();
   };
 }
 

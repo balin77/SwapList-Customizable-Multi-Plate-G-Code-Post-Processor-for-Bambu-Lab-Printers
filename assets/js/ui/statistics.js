@@ -64,6 +64,7 @@ export function update_filament_usage() {
   const used_m = [];               // [slot] → m
   const used_g = [];               // [slot] → g
   const slot_type_candidates = []; // [slot] → Array originaler Typen
+  const slot_tray_info_idx = [];   // [slot] → Array von tray_info_idx
 
   let ams_max = -1;
 
@@ -77,6 +78,7 @@ export function update_filament_usage() {
     if (!used_m[slot]) used_m[slot] = 0;
     if (!used_g[slot]) used_g[slot] = 0;
     if (!slot_type_candidates[slot]) slot_type_candidates[slot] = [];
+    if (!slot_tray_info_idx[slot]) slot_tray_info_idx[slot] = [];
 
     const repEl = row.parentElement?.parentElement?.getElementsByClassName("p_rep")[0];
     const r = parseFloat(repEl?.value) || 0;
@@ -111,6 +113,11 @@ export function update_filament_usage() {
     const tShow = tEl?.innerText || "";
     const t     = tOrig || tShow || "";
     if (t) slot_type_candidates[slot].push(t);
+
+    // Collect tray_info_idx for each slot
+    const slotEl = row.getElementsByClassName("f_slot")[0];
+    const trayIdx = slotEl?.dataset?.trayInfoIdx || "";
+    if (trayIdx && r > 0) slot_tray_info_idx[slot].push(trayIdx);
 
     if (slot > ams_max && r > 0) {
       ams_max = slot;
@@ -156,6 +163,10 @@ export function update_filament_usage() {
     div.dataset.used_g = String(gRounded);
     const typeFirst = (slot_type_candidates[s] || []).find(Boolean) || div.dataset.f_type || "";
     div.dataset.f_type = typeFirst;
+
+    // Store first tray_info_idx for this slot (if available)
+    const trayIdxFirst = (slot_tray_info_idx[s] || []).find(Boolean) || "";
+    div.dataset.trayInfoIdx = trayIdxFirst;
 
     // Optional: Slots ohne Nutzung optisch dimmen statt zu verstecken
     div.style.opacity = (m === 0 && g === 0) ? "0.7" : "1";
