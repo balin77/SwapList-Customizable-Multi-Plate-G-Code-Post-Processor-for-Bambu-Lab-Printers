@@ -206,7 +206,7 @@ G0 Y240 Z250 F2000          ; bring print head to safe height before pull back
 G0 Y0 F2000                 ; move back to remove old plate and grab new plate
 G0 Y256 F2000               ; initial pull of new plate
 G0 Y210 F2000               ; reposition new plate
-G0 Y20 F2000                ; position old plate for throw off
+G0 Y10 F2000                ; position old plate for throw off
 G0 Y265 F2000               ; throw off old plate and pull of new plate
 G0 Y-2 F2000                ; set new plate first time
 G0 Y15 F2000                ; small adjustment to new plate

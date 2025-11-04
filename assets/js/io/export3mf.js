@@ -11,6 +11,7 @@ import { _parseAmsParams } from "../utils/amsUtils.js";
 import { createRecoloredPlateImage } from "../utils/imageColorMapping.js";
 import { getSlotColor } from "../ui/filamentColors.js";
 import { checkAllPlatesRestrictions } from "../commands/plateRestrictions.js";
+import { calculateTotalGlobalLayers } from "../gcode/m73ProgressTransform.js";
 
 /**
  * Helper function to convert a blob URL to an ArrayBuffer
@@ -759,6 +760,22 @@ export async function export_3mf() {
       weightElement.setAttribute("key", "weight");
       weightElement.setAttribute("value", totalWeight.toFixed(2));
       platesXML[0].appendChild(weightElement);
+    }
+
+    // Update layer_ranges to reflect global layer count
+    // Since layer progress is now always global, we need to calculate total layers across all plates
+    const globalMaxLayerIndex = calculateTotalGlobalLayers(result.modifiedLooped);
+    const layerFilamentLists = platesXML[0].getElementsByTagName("layer_filament_list");
+
+    if (layerFilamentLists.length > 0 && globalMaxLayerIndex > 0) {
+      // Update the layer_ranges attribute with 0-based range
+      // calculateTotalGlobalLayers returns the max layer index (e.g., 1279 for 1280 layers)
+      // So layer_ranges = "0 <maxIndex>" (e.g., "0 1279")
+      const layerRangesValue = `0 ${globalMaxLayerIndex}`;
+      layerFilamentLists[0].setAttribute("layer_ranges", layerRangesValue);
+      console.log(`[Layer Ranges] Updated layer_ranges to: ${layerRangesValue} (total: ${globalMaxLayerIndex + 1} layers)`);
+    } else {
+      console.log('[Layer Ranges] No layer_filament_list found or globalMaxLayerIndex is 0, skipping layer_ranges update');
     }
 
     const s = new XMLSerializer();

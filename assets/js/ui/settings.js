@@ -86,15 +86,8 @@ export function getSoundRemovalMode() {
 }
 
 export function getLayerProgressMode() {
-  const perPlate = document.getElementById("layer_progress_per_plate");
-  const global = document.getElementById("layer_progress_global");
-
-  if (global && global.checked) {
-    return "global";
-  } else if (perPlate && perPlate.checked) {
-    return "per_plate";
-  }
-  return "per_plate"; // default
+  // Layer Progress UI removed - always return "global" as default behavior
+  return "global";
 }
 
 export function getPercentageProgressMode() {

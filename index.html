@@ -108,18 +108,20 @@
           <!-- Loop Repeats - Top Level -->
           <div id="loop_repeats_section">
             <div class="settings-col">
-              <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
-              <label for="loops">Loop repeats</label>
-              <details class="tool_info">
-                <summary></summary>
-                <p>This number defines how many times the entire
-                  queue will be reprinted.</p>
-                <p> Example: Plate "A"
-                  is set to 3 repeats, plate "B" is set to 1
-                  repeat and the "Loop repeats" is set to 2.
-                  This will result in following printing order: </p>
-                <p> A A A B A A A B .</p>
-              </details>
+              <label for="loops">
+                <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
+                Loop repeats
+                <details class="tool_info">
+                  <summary></summary>
+                  <p>This number defines how many times the entire
+                    queue will be reprinted.</p>
+                  <p> Example: Plate "A"
+                    is set to 3 repeats, plate "B" is set to 1
+                    repeat and the "Loop repeats" is set to 2.
+                    This will result in following printing order: </p>
+                  <p> A A A B A A A B .</p>
+                </details>
+              </label>
             </div>
           </div>
 
@@ -273,33 +275,6 @@
             <!-- Progress Display Settings (Global) -->
             <div class="settings-group">
               <h4>Progress Display</h4>
-
-              <!-- Layer Progress -->
-              <div style="margin-bottom: 20px;">
-                <div style="margin-bottom: 8px; position: relative;">
-                  <strong style="margin: 0;">Layer Progress</strong>
-                  <details class="tool_info tool_info_inline">
-                    <summary style="display: inline;"></summary>
-                    <div style="clear: both; padding-top: 4px;">
-                      <p>
-                        Controls how layer numbers are displayed during printing:
-                      </p>
-                      <ul>
-                        <li><strong>Per plate:</strong> Layer count resets to 0 at the start of each plate (default behavior)</li>
-                        <li><strong>Global:</strong> Layer count continues across all plates without resetting</li>
-                      </ul>
-                    </div>
-                  </details>
-                </div>
-                <label style="display: block; margin-bottom: 4px;">
-                  <input type="radio" name="layer_progress_mode" id="layer_progress_per_plate" value="per_plate" checked>
-                  Per plate
-                </label>
-                <label style="display: block;">
-                  <input type="radio" name="layer_progress_mode" id="layer_progress_global" value="global">
-                  Global (continuous across all plates)
-                </label>
-              </div>
 
               <!-- Percentage Progress -->
               <div>

@@ -10,10 +10,12 @@ export function transformM73LayerProgressGlobal(gcodeArray) {
     return gcodeArray;
   }
 
-  // First pass: analyze each plate to find max layer count
+  // First pass: analyze each plate to find min and max layer
   const plateLayerCounts = [];
+  const plateMinLayers = [];
   for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
     const gcode = gcodeArray[plateIdx];
+    let minLayer = Infinity;
     let maxLayer = 0;
 
     // Find all M73 L* commands
@@ -21,12 +23,20 @@ export function transformM73LayerProgressGlobal(gcodeArray) {
     let match;
     while ((match = m73LayerPattern.exec(gcode)) !== null) {
       const layerNum = parseInt(match[1], 10);
-      if (!isNaN(layerNum) && layerNum > maxLayer) {
-        maxLayer = layerNum;
+      if (!isNaN(layerNum)) {
+        if (layerNum < minLayer) minLayer = layerNum;
+        if (layerNum > maxLayer) maxLayer = layerNum;
       }
     }
 
-    plateLayerCounts.push(maxLayer);
+    // Calculate the number of layers in this plate
+    // If layers are 0-127, then count = 127 - 0 + 1 = 128
+    // If layers are 1-128, then count = 128 - 1 + 1 = 128
+    const layerCount = (minLayer === Infinity) ? 0 : (maxLayer - minLayer + 1);
+    plateLayerCounts.push(layerCount);
+    plateMinLayers.push(minLayer === Infinity ? 0 : minLayer);
+
+    console.log(`[M73 Layer Transform] Plate ${plateIdx}: layers ${minLayer}-${maxLayer}, count=${layerCount}`);
   }
 
   // Calculate cumulative layer offsets for each plate
@@ -43,15 +53,18 @@ export function transformM73LayerProgressGlobal(gcodeArray) {
   for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
     const gcode = gcodeArray[plateIdx];
     const offset = layerOffsets[plateIdx];
+    const minLayer = plateMinLayers[plateIdx];
 
     // Replace M73 L* commands with global layer numbers
+    // Formula: globalLayer = (originalLayer - minLayer) + offset
+    // This normalizes layers to start at 0, then applies the global offset
     const transformed = gcode.replace(/M73\s+L(\d+)/gi, (match, layerStr) => {
       const originalLayer = parseInt(layerStr, 10);
       if (isNaN(originalLayer)) {
         return match; // Keep original if parsing fails
       }
 
-      const globalLayer = originalLayer + offset;
+      const globalLayer = (originalLayer - minLayer) + offset;
       return `M73 L${globalLayer}`;
     });
 
@@ -160,4 +173,40 @@ export function transformM73PercentageProgressGlobal(gcodeArray) {
 
   console.log('[M73 Percentage Transform] Global percentage transformation completed');
   return transformedGcodeArray;
+}
+
+/**
+ * Calculates the maximum global layer index across all plates
+ * This function assumes the GCODE has already been transformed with global layer numbers
+ * @param {Array<string>} gcodeArray - Array of GCODE strings (one per plate)
+ * @returns {number} - Maximum layer index (0-based), e.g., 1279 for 1280 layers
+ */
+export function calculateTotalGlobalLayers(gcodeArray) {
+  if (!Array.isArray(gcodeArray) || gcodeArray.length === 0) {
+    return 0;
+  }
+
+  // Find the maximum layer number across ALL plates
+  // Since layers are already globally numbered after transformM73LayerProgressGlobal(),
+  // we just need to find the highest layer index
+  let globalMaxLayer = 0;
+
+  for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
+    const gcode = gcodeArray[plateIdx];
+
+    // Find all M73 L* commands
+    const m73LayerPattern = /M73\s+L(\d+)/gi;
+    let match;
+    while ((match = m73LayerPattern.exec(gcode)) !== null) {
+      const layerNum = parseInt(match[1], 10);
+      if (!isNaN(layerNum) && layerNum > globalMaxLayer) {
+        globalMaxLayer = layerNum;
+      }
+    }
+  }
+
+  // Return the maximum layer index (0-based)
+  // Example: if globalMaxLayer = 1279, that means layers 0-1279 (1280 total layers)
+  console.log(`[Layer Count] Global max layer index: ${globalMaxLayer} (total: ${globalMaxLayer + 1} layers)`);
+  return globalMaxLayer;
 }
