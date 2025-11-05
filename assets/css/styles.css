@@ -265,7 +265,6 @@ body.compact-mode #app_logo {
   margin: 8px 0;
   border: 1px solid #554;
   display: flex;
-  align-items: flex-start;
   flex-wrap: wrap;
   min-height: 180px;
 }
