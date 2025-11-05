@@ -2,7 +2,7 @@
 
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
-import { checkAutoToggleOverrideMetadata, hasOrphanedSlotsAfterRemoval } from "./filamentColors.js";
+import { checkAutoToggleOverrideMetadata, hasOrphanedSlotsAfterRemoval, updatePlateImageColors } from "./filamentColors.js";
 import { showWarning } from "./infobox.js";
 import { autoPopulatePlateCoordinates } from "../utils/plateUtils.js";
 import { updatePlateSelector, getObjectCoordsForPlate, duplicatePlateSettings } from "./settings.js";
@@ -349,10 +349,20 @@ function deepCopyDatasets(sourceEl, targetEl) {
     }
   }
 
+  // Kopiere die cached lighting mask wenn vorhanden (p_icon spezifisch)
+  if (sourceEl._cachedLightingMask && sourceEl.classList.contains('p_icon')) {
+    Object.defineProperty(targetEl, '_cachedLightingMask', {
+      value: sourceEl._cachedLightingMask,
+      writable: false,
+      enumerable: false,
+      configurable: true
+    });
+  }
+
   // Rekursiv für alle Kindelemente
   const sourceChildren = sourceEl.children;
   const targetChildren = targetEl.children;
-  
+
   for (let i = 0; i < sourceChildren.length && i < targetChildren.length; i++) {
     deepCopyDatasets(sourceChildren[i], targetChildren[i]);
   }
@@ -406,6 +416,13 @@ export function duplicatePlate(li){
 
   // Re-apply sortable functionality to include the new duplicated plate
   makeListSortable(li.parentNode);
+
+  // Update plate image with current color mapping
+  setTimeout(() => {
+    updatePlateImageColors(clone).catch(error => {
+      console.error("Failed to update duplicated plate image colors:", error);
+    });
+  }, 100);
 
   // Auto-populate coordinates for duplicated plate (same as original)
   if (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1') {

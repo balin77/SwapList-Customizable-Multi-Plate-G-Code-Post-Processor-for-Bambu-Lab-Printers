@@ -641,7 +641,7 @@ export function wirePlateSwatches(li) {
  * Updates the plate image colors based on current slot assignments
  * @param {Element} plateElement - The plate li element
  */
-async function updatePlateImageColors(plateElement) {
+export async function updatePlateImageColors(plateElement) {
   if (!plateElement) return;
 
   const plateIcon = plateElement.querySelector('.p_icon');
