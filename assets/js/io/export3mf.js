@@ -66,8 +66,19 @@ async function getRecoloredPlateImages(uiPlateIndex, baseZip, originalPlateNumbe
         const slotIndex = parseInt(swatch.dataset.slotIndex || '0', 10);
         const currentSlotColor = getSlotColor(slotIndex);
 
+        console.log(`[Color Mapping Debug] Row:`, {
+          originalColor,
+          currentSlotColor,
+          slotIndex,
+          swatchStyle: swatch.style.backgroundColor,
+          datasetKeys: Object.keys(swatch.dataset)
+        });
+
         if (originalColor && currentSlotColor && originalColor !== currentSlotColor) {
           colorMapping[originalColor] = currentSlotColor;
+          console.log(`[Color Mapping] Added: ${originalColor} -> ${currentSlotColor}`);
+        } else {
+          console.log(`[Color Mapping] Skipped: originalColor=${originalColor}, currentSlotColor=${currentSlotColor}, equal=${originalColor === currentSlotColor}`);
         }
       }
     });

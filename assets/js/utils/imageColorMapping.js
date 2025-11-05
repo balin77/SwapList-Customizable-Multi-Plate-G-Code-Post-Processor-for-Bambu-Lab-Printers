@@ -31,7 +31,7 @@ function extractLightingMask(litImageData, unlitImageData) {
     // For dark colors (black/near-black), lighting is ADDITIVE (lit = unlit + light)
     // For bright colors, lighting is MULTIPLICATIVE (lit = unlit * factor)
 
-    const DARK_THRESHOLD = 30; // Below this, use additive lighting
+    const DARK_THRESHOLD = 80; // Below this, use additive lighting (increased from 30 to handle dark gray objects)
 
     if (unlitBrightness < DARK_THRESHOLD) {
       // ADDITIVE lighting for dark colors (e.g., black objects)
@@ -40,11 +40,17 @@ function extractLightingMask(litImageData, unlitImageData) {
       const additiveDelta = litBrightness - unlitBrightness;
 
       // Store in mask:
-      // R channel: 0 (signals additive mode)
-      // G channel: additive delta (how much light to add)
+      // R channel: Stores the sign and magnitude of delta
+      //   - Values 0-127: negative delta (127 = 0, 0 = -127)
+      //   - Values 128-255: positive delta (128 = 0, 255 = +127)
+      // G channel: not used for additive (was previously used incorrectly)
       // B channel: 255 (signals this is additive)
-      mask[i] = 0; // Multiplicative factor not used
-      mask[i + 1] = Math.max(0, Math.min(255, additiveDelta)); // Additive delta
+
+      // Encode delta: map from [-127, +127] to [0, 255] with 127 as zero point
+      const encodedDelta = Math.max(0, Math.min(255, Math.round(additiveDelta + 127)));
+
+      mask[i] = encodedDelta; // Encoded delta
+      mask[i + 1] = 0; // Not used
       mask[i + 2] = 255; // Mode flag: 255 = additive
     } else {
       // MULTIPLICATIVE lighting for normal/bright colors
@@ -91,8 +97,14 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
     if (oldRgb && newRgb) {
       const oldKey = `${oldRgb.r},${oldRgb.g},${oldRgb.b}`;
       rgbMapping[oldKey] = { ...newRgb, original: oldRgb };
+      console.log(`[replaceColorsInImage] Mapping: ${oldHex} (${oldKey}) -> ${newHex} (${newRgb.r},${newRgb.g},${newRgb.b})`);
     }
   }
+
+  let exactMatches = 0;
+  let fuzzyMatches = 0;
+  let noMatches = 0;
+  const samplePixels = [];
 
   for (let i = 0; i < source.length; i += 4) {
     const r = source[i];
@@ -104,15 +116,34 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
     const key = `${r},${g},${b}`;
     let newColor = rgbMapping[key];
 
-    // If no exact match, try fuzzy matching with tolerance (for anti-aliased edges)
+    if (newColor) {
+      exactMatches++;
+      if (exactMatches <= 5) {
+        samplePixels.push({ type: 'exact', from: key, to: `${newColor.r},${newColor.g},${newColor.b}` });
+      }
+    }
+
+    // If no exact match, try fuzzy matching with adaptive tolerance
     if (!newColor) {
-      const tolerance = 10;
       for (const [mappedKey, color] of Object.entries(rgbMapping)) {
         const orig = color.original;
+
+        // Adaptive tolerance based on brightness of original color
+        // Dark colors (like black) need higher tolerance because:
+        // 1. Slicer may use slightly different shades (e.g., RGB(45,45,45) instead of pure black)
+        // 2. PNG compression artifacts
+        // 3. Shading/gradients in the unlit image
+        const origBrightness = (orig.r + orig.g + orig.b) / 3;
+        const tolerance = origBrightness < 50 ? 80 : 10; // Very high tolerance for dark colors, low for bright
+
         if (Math.abs(r - orig.r) <= tolerance &&
             Math.abs(g - orig.g) <= tolerance &&
             Math.abs(b - orig.b) <= tolerance) {
           newColor = color;
+          fuzzyMatches++;
+          if (fuzzyMatches <= 5) {
+            samplePixels.push({ type: 'fuzzy', from: key, to: `${newColor.r},${newColor.g},${newColor.b}`, tolerance });
+          }
           break;
         }
       }
@@ -126,9 +157,13 @@ function replaceColorsInImage(unlitImageData, colorMapping) {
       target[i] = r;
       target[i + 1] = g;
       target[i + 2] = b;
+      if (a > 0) noMatches++; // Only count non-transparent pixels
     }
     target[i + 3] = a;
   }
+
+  console.log(`[replaceColorsInImage] Stats: ${exactMatches} exact matches, ${fuzzyMatches} fuzzy matches, ${noMatches} no matches (non-transparent)`);
+  console.log(`[replaceColorsInImage] Sample pixels:`, samplePixels);
 
   return newImageData;
 }
@@ -151,21 +186,51 @@ function applyLightingMask(recoloredImageData, lightingMask) {
   const mask = lightingMask.data;
   const final = finalImageData.data;
 
+  let additiveCount = 0;
+  let multiplicativeCount = 0;
+
   for (let i = 0; i < recolored.length; i += 4) {
     const modeFlag = mask[i + 2]; // B channel: 255=additive, 0=multiplicative
 
     if (modeFlag > 127) {
       // ADDITIVE mode (for dark/black colors)
-      // final = recolored + additive_light
-      const additiveDelta = mask[i + 1]; // G channel holds additive delta
+      // Decode delta from R channel: map from [0, 255] to [-127, +127] with 127 as zero point
+      const encodedDelta = mask[i]; // R channel holds encoded delta
+      const additiveDelta = encodedDelta - 127;
+      additiveCount++;
 
-      final[i] = Math.min(255, Math.max(0, recolored[i] + additiveDelta));
-      final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] + additiveDelta));
-      final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] + additiveDelta));
+      const recoloredBrightness = (recolored[i] + recolored[i + 1] + recolored[i + 2]) / 3;
+
+      // If recolored pixel is bright, we need to convert additive to multiplicative
+      if (recoloredBrightness > 80) {
+        // For bright colors, convert additive delta to multiplicative factor
+        // Original: lit_original = unlit_original + delta
+        // We want: lit_new = unlit_new * factor
+        //
+        // The "darkness" effect should be proportional:
+        // If original was darkened by -2 from 26 (factor ~0.92),
+        // we want to darken the new color by the same relative amount
+        //
+        // Approximate factor from delta: factor ≈ 1 + (delta / original_brightness)
+        // Since we don't know original brightness here, use a simpler approach:
+        // Convert small deltas to multiplicative factors
+
+        const factor = 1 + (additiveDelta / 50); // Scale delta to factor (empirical)
+
+        final[i] = Math.min(255, Math.max(0, Math.round(recolored[i] * factor)));
+        final[i + 1] = Math.min(255, Math.max(0, Math.round(recolored[i + 1] * factor)));
+        final[i + 2] = Math.min(255, Math.max(0, Math.round(recolored[i + 2] * factor)));
+      } else {
+        // For dark recolored pixels, keep additive logic
+        final[i] = Math.min(255, Math.max(0, Math.round(recolored[i] + additiveDelta)));
+        final[i + 1] = Math.min(255, Math.max(0, Math.round(recolored[i + 1] + additiveDelta)));
+        final[i + 2] = Math.min(255, Math.max(0, Math.round(recolored[i + 2] + additiveDelta)));
+      }
     } else {
       // MULTIPLICATIVE mode (for normal/bright colors)
       // final = recolored * factor
       const brightnessFactor = mask[i] / 128; // R channel holds multiplicative factor
+      multiplicativeCount++;
 
       final[i] = Math.min(255, Math.max(0, recolored[i] * brightnessFactor));
       final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] * brightnessFactor));
@@ -174,6 +239,8 @@ function applyLightingMask(recoloredImageData, lightingMask) {
 
     final[i + 3] = recolored[i + 3]; // Alpha unchanged
   }
+
+  console.log(`[applyLightingMask] Stats: ${additiveCount} additive pixels, ${multiplicativeCount} multiplicative pixels`);
 
   return finalImageData;
 }
