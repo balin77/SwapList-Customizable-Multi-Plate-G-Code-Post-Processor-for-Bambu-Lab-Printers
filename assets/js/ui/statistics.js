@@ -1,10 +1,12 @@
 // /src/ui/statistics.js
 
 import { state } from "../config/state.js";
+import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 
 export function update_statistics() {
   update_filament_usage();
   update_total_time();
+  update_total_weight_and_cost();
 }
 
 export function update_total_time() {
@@ -248,3 +250,67 @@ function ensureSlotDivs(host, numSlots) {
     }
   }
 }
+
+export function update_total_weight_and_cost() {
+  const totalWeightEl = document.getElementById("total_weight");
+  const totalCostEl = document.getElementById("total_cost");
+  const costPerKgInput = document.getElementById("cost_per_kg");
+  const filStatEl = document.getElementById("filament_total");
+
+  if (!totalWeightEl || !totalCostEl || !costPerKgInput || !filStatEl) return;
+
+  let totalWeightGrams = 0;
+
+  // Get all slot divs from filament statistics
+  const slotDivs = filStatEl.querySelectorAll(':scope > div[title]');
+
+  slotDivs.forEach(div => {
+    const slotNum = parseInt(div.getAttribute('title'), 10);
+    if (!slotNum) return;
+
+    const usedG = parseFloat(div.dataset.used_g || '0');
+    if (usedG <= 0) return;
+
+    totalWeightGrams += usedG;
+  });
+
+  // Get the user-specified cost per kg
+  const userCostPerKg = parseFloat(costPerKgInput.value) || 25.4;
+
+  // Calculate total cost based on total weight and user's cost per kg
+  const totalCostValue = (totalWeightGrams / 1000) * userCostPerKg;
+
+  // Update weight display
+  totalWeightEl.innerText = totalWeightGrams.toFixed(1) + 'g';
+
+  // Update cost display
+  totalCostEl.innerText = '$' + totalCostValue.toFixed(2);
+
+  // Set default cost per kg from the first found filament cost, or keep current value
+  if (!costPerKgInput.dataset.userModified && totalWeightGrams > 0) {
+    const firstEntry = (PRESET_INDEX || []).find(e => {
+      const filamentId = e.settings?.filament_id;
+      if (!filamentId) return false;
+      // Check if this filament is used in any slot
+      return Array.from(slotDivs).some(div => div.dataset.trayInfoIdx === filamentId);
+    });
+
+    if (firstEntry && firstEntry.settings?.filament_cost) {
+      const defaultCost = parseFloat(firstEntry.settings.filament_cost[0] || '25.4');
+      if (costPerKgInput.value !== String(defaultCost)) {
+        costPerKgInput.value = defaultCost.toFixed(1);
+      }
+    }
+  }
+}
+
+// Track when user manually modifies the cost per kg input
+document.addEventListener('DOMContentLoaded', () => {
+  const costPerKgInput = document.getElementById("cost_per_kg");
+  if (costPerKgInput) {
+    costPerKgInput.addEventListener('input', () => {
+      costPerKgInput.dataset.userModified = 'true';
+      update_total_weight_and_cost();
+    });
+  }
+});

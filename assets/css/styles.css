@@ -311,19 +311,30 @@ body.compact-mode #app_logo {
 
 #queue_statistics {
   border-right:#777 1px solid;
-  padding-right:40px !important;
+  padding-right:30px !important;
   flex-shrink: 0;
-  width: 250px;
+  width: 270px;
 }
 
 #queue_statistics > * > *:nth-child(1) {
   display:inline-block;
-  width:9ch;
+  width:13ch;
   font-size:10pt;
 }
 
 #queue_statistics > div {
   margin: 20px 0 0;
+}
+
+#cost_per_kg {
+  padding: 2px 4px;
+  border: 1px solid #cbd5e0;
+  background: #fafafa;
+  color: #333;
+  border-radius: 4px;
+  font-size: 10pt;
+  text-align: right;
+  width: 50px;
 }
 
 #filament_statistics {
@@ -358,9 +369,10 @@ body.compact-mode #app_logo {
   flex-shrink: 0;
 }
 
-#total_time, #used_plates {
-  font-size:16pt;
+#total_time, #used_plates, #total_weight, #total_cost {
+  font-size:12pt;
   font-weight:600;
+  padding: 0 10px 0 0;
 }
 
 /* ========================================= */
