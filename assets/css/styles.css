@@ -273,7 +273,7 @@ body.compact-mode #app_logo {
 #statistics {
   height: auto;
   flex: 1;
-  gap: 50px;
+  gap: 40px;
 }
 
 #statistics > div {
@@ -301,7 +301,7 @@ body.compact-mode #app_logo {
   align-items: center;
   justify-content: space-between;
   min-width: 180px;
-  margin: 30px 0 30px 0;
+  margin: 30px 0 30px 20px;
 }
 
 /* --- Action Buttons (Right Column) --- */
@@ -311,7 +311,7 @@ body.compact-mode #app_logo {
   justify-content: space-between;
   gap: 8px;
   width: 170px;
-  margin: 30px 0 30px 0;
+  margin: 30px 20px 30px 0;
 }
 
 #queue_statistics {
@@ -343,9 +343,7 @@ body.compact-mode #app_logo {
 }
 
 #filament_statistics {
-  padding-left:25px;
   flex-shrink: 0;
-  width: 280px;
 }
 
 #filament_statistics > div {
