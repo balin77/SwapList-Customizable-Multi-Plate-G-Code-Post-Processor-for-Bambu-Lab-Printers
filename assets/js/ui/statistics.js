@@ -71,6 +71,9 @@ export function update_filament_usage() {
   let ams_max = -1;
   let max_slot = -1;
 
+  // Check if we have a forced slot count from user expansion
+  const forcedSlotCount = state.forcedSlotCount || 0;
+
   for (let i = 0; i < my_fil_data.length; i++) {
     const row = my_fil_data[i];
 
@@ -138,9 +141,17 @@ export function update_filament_usage() {
   const loops = parseFloat(loopsEl?.value) || 1;
 
   // Calculate number of slots in 4-slot increments (4, 8, 12, 16, 20, 24, 28, 32)
-  // Always show at least 4 slots, round up to next multiple of 4
-  const minSlots = Math.max(4, max_slot + 1);
-  const num_slots = Math.ceil(minSlots / 4) * 4;
+  // If user forced a slot count, use it directly (don't round up)
+  // Otherwise, round up based on max_slot
+  let num_slots;
+  if (forcedSlotCount > 0) {
+    // User explicitly expanded - use exact forced count
+    num_slots = Math.min(32, forcedSlotCount);
+  } else {
+    // Auto-calculate based on usage - round up to next multiple of 4
+    const minSlots = Math.max(4, max_slot + 1);
+    num_slots = Math.min(32, Math.ceil(minSlots / 4) * 4);
+  }
 
   const used_m_scaled = Array.from({ length: num_slots }, (_, s) => (used_m[s] || 0) * loops);
   const used_g_scaled = Array.from({ length: num_slots }, (_, s) => (used_g[s] || 0) * loops);
@@ -206,6 +217,72 @@ export function update_filament_usage() {
   if (typeof repaintAllPlateSwatchesFromStats === "function") {
     repaintAllPlateSwatchesFromStats();
   }
+
+  // Update expand button visibility - pass actual usage data
+  updateExpandButtonVisibility(num_slots, used_g_scaled);
+}
+
+/**
+ * Updates the visibility of the slot expansion button
+ * Only show when ALL current slots are used AND we're at a multiple of 4 (not at 32)
+ */
+function updateExpandButtonVisibility(currentSlotCount, usedGrams) {
+  const fil_stat = document.getElementById("filament_total");
+  if (!fil_stat) return;
+
+  // Remove existing button if present
+  let expandBtn = fil_stat.querySelector('.stats-expand-btn');
+
+  // Check if all current slots are actually used (have any usage > 0)
+  let allSlotsUsed = true;
+  for (let i = 0; i < currentSlotCount; i++) {
+    if ((usedGrams[i] || 0) === 0) {
+      allSlotsUsed = false;
+      break;
+    }
+  }
+
+  // Show button only if:
+  // 1. All current slots are used
+  // 2. We're at a multiple of 4
+  // 3. Not at max (32)
+  const shouldShowButton = allSlotsUsed && currentSlotCount % 4 === 0 && currentSlotCount < 32;
+
+  if (shouldShowButton) {
+    // Create button if it doesn't exist
+    if (!expandBtn) {
+      expandBtn = document.createElement('div');
+      expandBtn.className = 'stats-expand-btn';
+      expandBtn.innerHTML = '+';
+      expandBtn.title = 'Add 4 more slots';
+      expandBtn.addEventListener('click', expandSlotCount);
+      fil_stat.appendChild(expandBtn);
+    }
+  } else {
+    // Remove button if it exists
+    if (expandBtn) {
+      expandBtn.remove();
+    }
+  }
+}
+
+/**
+ * Expands the slot count to the next multiple of 4
+ */
+function expandSlotCount() {
+  // Get current slot count from statistics
+  const fil_stat = document.getElementById("filament_total");
+  if (!fil_stat) return;
+
+  const currentSlots = fil_stat.querySelectorAll(':scope > div[title]').length;
+  // Calculate next multiple of 4 (e.g., 4→8, 8→12, 12→16, etc.)
+  const newSlotCount = Math.min(32, Math.ceil((currentSlots + 1) / 4) * 4); // Cap at 32
+
+  // Store forced slot count in state
+  state.forcedSlotCount = newSlotCount;
+
+  // Trigger update
+  update_filament_usage();
 }
 
 function ensureSlotDivs(host, numSlots) {

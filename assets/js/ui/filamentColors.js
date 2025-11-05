@@ -438,6 +438,32 @@ export function openSlotDropdown(anchorEl) {
     menu.appendChild(item);
   }
 
+  // Add separator and "Add New Slot" option only if:
+  // 1. We can add more slots (< 32)
+  // 2. All current slots are used
+  const currentSlotCount = usedSlots.length;
+  if (currentSlotCount < 32) {
+    // Check if all current slots are actually used
+    const allSlotsUsed = areAllSlotsUsed(currentSlotCount);
+
+    if (allSlotsUsed) {
+      const sep = document.createElement("div");
+      sep.className = "slot-dropdown-sep";
+      menu.appendChild(sep);
+
+      // Add "Add New Slot" option
+      const addItem = document.createElement("div");
+      addItem.className = "slot-dropdown-item slot-dropdown-more";
+      addItem.innerHTML = "+ Add new slot";
+      addItem.title = "Add 4 more slots";
+      addItem.addEventListener("click", () => {
+        expandSlotsFromDropdown();
+        closeMenu();
+      });
+      menu.appendChild(addItem);
+    }
+  }
+
   document.body.appendChild(menu);
   const r = anchorEl.getBoundingClientRect();
   menu.style.left = `${window.scrollX + r.left}px`;
@@ -488,6 +514,45 @@ function getUsedSlotsFromStatistics() {
   usedSlots.sort((a, b) => a - b);
 
   return usedSlots.length > 0 ? usedSlots : [0, 1, 2, 3]; // Fallback to 4 slots
+}
+
+/**
+ * Checks if all current slots have usage (used for showing expand button)
+ */
+function areAllSlotsUsed(slotCount) {
+  const filamentTotal = document.getElementById("filament_total");
+  if (!filamentTotal) return false;
+
+  // Check each slot div for usage
+  const slotDivs = filamentTotal.querySelectorAll(':scope > div[title]');
+  for (let i = 0; i < Math.min(slotCount, slotDivs.length); i++) {
+    const div = slotDivs[i];
+    const usedG = parseFloat(div.dataset.used_g || '0');
+    if (usedG <= 0) {
+      return false; // Found an unused slot
+    }
+  }
+
+  return true; // All slots are used
+}
+
+/**
+ * Expands the slot count to the next multiple of 4 (called from dropdown menu)
+ */
+function expandSlotsFromDropdown() {
+  // Get current slot count from statistics
+  const filamentTotal = document.getElementById("filament_total");
+  if (!filamentTotal) return;
+
+  const currentSlots = filamentTotal.querySelectorAll(':scope > div[title]').length;
+  // Calculate next multiple of 4 (e.g., 4→8, 8→12, 12→16, etc.)
+  const newSlotCount = Math.min(32, Math.ceil((currentSlots + 1) / 4) * 4); // Cap at 32
+
+  // Store forced slot count in state
+  state.forcedSlotCount = newSlotCount;
+
+  // Trigger update
+  update_statistics();
 }
 
 export function renderTotalsColors() {

@@ -230,15 +230,15 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
+  flex: 1;
 }
 
 #app_header > div:last-child {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
   gap: 30px;
-  height: 162px;
 }
 
 .hidden {
@@ -268,45 +268,51 @@ body.compact-mode #app_logo {
   align-items: flex-start;
   flex-wrap: wrap;
   min-height: 180px;
-  height: auto;
 }
 
+/* --- Statistics Container --- */
 #statistics {
+  height: auto;
+  flex: 1;
   gap: 50px;
 }
 
 #statistics > div {
-  margin:15px 0;
+  margin: 15px 0;
   padding: 15px 0;
 }
 
 #statistics h3 {
-  margin:0 0 10px 0;
+  margin: 0 0 10px 0;
   font-size: 16px;
 }
 
+/* --- Controls Box Container --- */
 #controls_box {
+  align-self: stretch;
   gap: 20px;
   justify-content: space-between;
 }
 
-#controls_box #mode_controls {
-  height: 160px;
+/* --- Mode Controls (Left Column) --- */
+#mode_controls {
   margin: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   min-width: 180px;
+  margin: 30px 0 30px 0;
 }
 
-#controls_box #action_buttons {
-  height: 160px;
+/* --- Action Buttons (Right Column) --- */
+#action_buttons {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 8px;
   width: 170px;
-  margin: 5px;
+  margin: 30px 0 30px 0;
 }
 
 #queue_statistics {
@@ -389,7 +395,6 @@ body.compact-mode #app_logo {
   background-color: #f5f5f5;
   border: 1px solid #555;
   border-radius: 8px;
-  margin: 10px 0;
   font-size: 14px;
   box-sizing: border-box;
 }
@@ -1033,6 +1038,51 @@ li.active .p_info,
 
 .plate-duplicate:hover {
   filter:brightness(1.1);
+}
+
+/* Statistics Expand Button (Add Slots) */
+.stats-expand-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px !important;
+  height: 35px;
+  min-width: 35px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #000;
+  border: 2px solid #555;
+  font-size: 18px;
+  line-height: 35px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  transition: all 0.2s ease;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+.stats-expand-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+
+/* Mode-specific colors for stats expand button */
+body.pushoff-mode .stats-expand-btn {
+  background: var(--pushoff-color);
+}
+
+body.a1-swap-mode .stats-expand-btn {
+  background: var(--a1-swap-color);
+}
+
+body.printflow-mode .stats-expand-btn {
+  background: var(--printflow-color);
+}
+
+body.jobox-mode .stats-expand-btn {
+  background: var(--jobox-color);
 }
 
 /* ========================================= */
