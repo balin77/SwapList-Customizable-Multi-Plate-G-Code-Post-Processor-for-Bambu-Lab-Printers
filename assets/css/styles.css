@@ -343,7 +343,10 @@ body.compact-mode #app_logo {
 }
 
 #filament_statistics {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  display: flex;
+  flex-wrap: wrap;
+  width: 270px;
 }
 
 #filament_statistics > div {
