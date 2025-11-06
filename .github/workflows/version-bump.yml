@@ -14,6 +14,10 @@ jobs:
   version-bump:
     runs-on: ubuntu-latest
 
+    # Grant write permissions to the GITHUB_TOKEN
+    permissions:
+      contents: write
+
     # Only run if commit message doesn't contain [skip-version]
     if: "!contains(github.event.head_commit.message, '[skip-version]')"
 
