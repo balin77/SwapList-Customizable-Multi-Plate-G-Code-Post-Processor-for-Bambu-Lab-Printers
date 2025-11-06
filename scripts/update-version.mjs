@@ -15,8 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // Paths
 const VERSION_FILE = path.join(__dirname, '..', 'version.json');
-const DE_LOCALE = path.join(__dirname, '..', 'assets', 'js', 'i18n', 'locales', 'de.json');
-const EN_LOCALE = path.join(__dirname, '..', 'assets', 'js', 'i18n', 'locales', 'en.json');
+const LOCALE_DIR = path.join(__dirname, '..', 'assets', 'js', 'i18n', 'locales');
 const INDEX_HTML = path.join(__dirname, '..', 'index.html');
 
 // Read version file
@@ -134,9 +133,13 @@ function main() {
   // Write updated version
   writeVersion(versionData);
 
-  // Update all files
-  updateLocaleFile(DE_LOCALE, versionString);
-  updateLocaleFile(EN_LOCALE, versionString);
+  // Update all locale files
+  const localeFiles = fs.readdirSync(LOCALE_DIR).filter(file => file.endsWith('.json'));
+  console.log(`\nUpdating ${localeFiles.length} locale files...`);
+  localeFiles.forEach(file => {
+    updateLocaleFile(path.join(LOCALE_DIR, file), versionString);
+  });
+
   updateHtmlFile(INDEX_HTML, versionString);
 
   console.log('\n✅ Version update complete!');

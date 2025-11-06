@@ -1,0 +1,332 @@
+{
+  "app": {
+    "title": "CLEAR.bed",
+    "version": "AutoEject 版本 V1.5",
+    "inspiredBy": "灵感来自 Swaplist.app"
+  },
+  "ui": {
+    "buttons": {
+      "export": "生成 3MF 文件",
+      "exportGcode": "导出 GCODE",
+      "reset": "重置",
+      "remove": "×"
+    },
+    "dropzone": {
+      "title": "将文件拖放到此处",
+      "subtitle": "...或点击选择"
+    },
+    "modes": {
+      "swap": "SWAP 模式",
+      "pushoff": "推出模式"
+    },
+    "printerInfo": {
+      "label": "打印机型号:",
+      "unknown": "未知"
+    }
+  },
+  "statistics": {
+    "title": "常规统计:",
+    "duration": "时长:",
+    "plates": "平台数:",
+    "totalWeight": "总重量:",
+    "totalCost": "总成本:",
+    "costPerKg": "¥/kg",
+    "filamentTitle": "耗材使用统计:",
+    "slot": "槽位"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "loopRepeats": {
+      "label": "循环重复次数",
+      "help": "此数字定义整个队列将被重新打印的次数。",
+      "example": "示例:平台 \"A\" 设置为 3 次重复,平台 \"B\" 设置为 1 次重复,\"循环重复次数\" 设置为 2。这将导致以下打印顺序:",
+      "exampleOrder": "A A A B A A A B ."
+    },
+    "plateSettings": {
+      "title": "平台设置",
+      "instruction": "点击上方的平台以配置其设置",
+      "objects": {
+        "title": "此平台上的对象",
+        "count": "对象数量:"
+      },
+      "nozzleFilament": {
+        "title": "喷嘴和耗材",
+        "hideLoadLine": "在模型中隐藏喷嘴加载线",
+        "hideLoadLineHelp": "激活此选项以在开始新打印时实现正确的喷嘴压力。如果停用,可能会在第一个对象的底部造成轻微的挤出不足。",
+        "purgeOff": "关闭耗材清理",
+        "purgeOffHelp": "在此平台开始时禁用耗材清理序列。这可以加快多平台作业,但如果之前的平台使用了不同的材料,可能会导致问题。"
+      },
+      "pushoff": {
+        "title": "推出和弹出",
+        "bedRaiseOffset": "推出前热床抬升偏移量(毫米)",
+        "bedRaiseOffsetHelp": "定义执行推出序列之前热床抬升的高度。",
+        "securePushoff": "安全推出序列",
+        "securePushoffHelp": "启用后,应用程序会在最终推出之前在递减的 Z 高度执行多次受控推出,最后在 Z=1 处执行。这有助于避免碰撞并使弹出更顺畅。",
+        "additionalLevels": "额外推出层级",
+        "additionalLevelsHelp": "定义如何划分最大 Z 高度。示例:如果最大 Z 高度为 100 毫米,您输入 2,推出将在 Z≈50 和最后在 Z=1 处发生。如果输入 5,将有 5 次额外推出,最后一次始终在 Z=1。值为 1 表示仅在 Z=1 处进行最终推出。"
+      }
+    },
+    "globalSettings": {
+      "title": "全局设置",
+      "cooling": {
+        "title": "冷却和热床温度",
+        "raiseBed": "抬升热床以进行冷却",
+        "raiseBedHelp": "激活此选项以将热床抬升到风扇高度以加快冷却。<b>警告:</b>对于大型打印,必须移除打印机盖以避免碰撞。",
+        "targetTemp": "冷却目标热床温度(°C)",
+        "targetTempHelp": "指定在推出序列之前应达到的热床温度。",
+        "maxTime": "最大冷却时间(分钟)",
+        "maxTimeHelp": "定义以分钟为单位的最大冷却持续时间。应用程序将插入重复的 <code>M190</code> 命令以等待热床,直到达到此总时间。默认值为 40 分钟。"
+      },
+      "sounds": {
+        "title": "打印机声音",
+        "disable": "禁用打印机声音",
+        "disableHelp": "控制 A1/A1M 打印机的声音移除。启用后,您可以选择移除所有声音或仅移除平台之间的声音。此设置仅影响 A1/A1M 打印机。",
+        "removeAll": "移除所有打印机声音",
+        "removeBetweenPlates": "仅移除平台之间的声音"
+      },
+      "ams": {
+        "title": "AMS 优化",
+        "enable": "启用 AMS 冗余移除",
+        "enableHelp": "启用后,应用程序会自动移除平台之间的冗余 AMS 耗材交换。这消除了不必要的\"卸载全部\" + \"加载相同槽位\"序列,使多平台打印更高效。仅适用于 A1/A1M 打印机。"
+      },
+      "startsequence": {
+        "title": "启动序列",
+        "disableBedLeveling": "禁用平台之间的热床调平",
+        "disableBedLevelingHelp": "启用后,第一个平台之后的所有平台都将跳过热床调平。这通过重用第一个平台的调平数据来加快多平台打印。仅适用于推出模式下的 X1/P1 打印机。",
+        "disableFirstLayerScan": "禁用首层扫描",
+        "disableFirstLayerScanHelp": "启用后,将禁用首层检查扫描。这可以加快打印开始,但会移除自动质量检查。仅适用于推出模式下的 X1 打印机。"
+      },
+      "project": {
+        "title": "项目设置",
+        "overrideMetadata": "覆盖项目和耗材设置",
+        "overrideMetadataHelp": "启用后,应用程序会重新生成耗材条目和材料/打印机设置。如果您使用原始 G 代码中不存在的新 AMS 槽位分配,这是必需的。禁用后,原始 3MF 元数据将按原样保留;如果您重新映射到最初未定义的 AMS 槽位,打印机或 Studio 可能会报告不匹配。"
+      },
+      "progress": {
+        "title": "进度显示",
+        "percentageProgress": "百分比进度",
+        "percentageProgressHelp": "控制如何计算百分比和剩余时间:",
+        "perPlate": "按平台",
+        "perPlateDesc": "进度仅显示当前平台的百分比/时间(默认行为)",
+        "global": "全局(跨所有平台)",
+        "globalDesc": "进度显示队列中所有平台的总体百分比/时间",
+        "helpText": "控制如何计算百分比和剩余时间:<ul><li><strong>按平台:</strong>进度仅显示当前平台的百分比/时间(默认行为)</li><li><strong>全局:</strong>进度显示队列中所有平台的总体百分比/时间</li></ul>"
+      },
+      "file": {
+        "title": "文件设置",
+        "customName": "自定义文件名:",
+        "testExport": "生成测试文件(仅启动/结束序列)",
+        "testExportHelp": "启用后,仅导出启动和结束序列而不包含实际打印代码。这将创建一个小型测试文件,非常适合在不运行完整打印的情况下验证平台交换逻辑。测试文件将经过所有平台更换,但跳过实际对象打印。",
+        "testWaitTime": "测试文件等待时间(秒):"
+      }
+    }
+  },
+  "info": {
+    "title": "应用程序信息",
+    "howToUse": {
+      "title": "如何使用此应用程序",
+      "supportedPrinters": {
+        "title": "支持的打印机",
+        "intro": "此应用程序支持以下 Bambu Lab 打印机型号:",
+        "a1mini": "A1 Mini - 使用 Swapmod 系统的 SWAP 模式",
+        "a1": "A1 - 使用 JoBox、3Print 或 Printflow 系统的 SWAP 模式",
+        "x1": "X1 系列 - 推出模式(使用打印头直接推出)",
+        "p1": "P1 系列 - 推出模式(使用打印头直接推出)",
+        "autoDetect": "应用程序会从 GCODE 文件自动检测您的打印机型号。"
+      },
+      "gettingStarted": {
+        "title": "入门",
+        "step1": "加载文件:将来自 Bambu Studio 或 Orca Slicer 的切片 .gcode.3mf 文件拖放到上方的放置区域。",
+        "step1important": "重要提示:仅接受完全切片的项目文件(格式:filename.gcode.3mf)。不支持未切片的 3D 模型文件或纯 .gcode 文件。",
+        "step2": "打印机检测:应用程序会自动检测您的打印机型号并显示相应的模式(A1 Mini、X1 或 P1)。",
+        "step3": "配置设置:在加载的平台下方显示的设置面板中调整选项。",
+        "step4": "导出:点击\"生成 SWAP 文件\"或\"导出 GCODE\"以创建处理后的文件。"
+      },
+      "automation": {
+        "title": "自动化模式",
+        "intro": "此应用程序支持平台交换系统(Swapmod、JoBox、3Print、Printflow)和使用打印头的直接推出。",
+        "modesTitle": "可用模式:",
+        "a1mini": "A1 Mini(SWAP 模式):使用 Swapmod 系统创建用于自动平台交换的 .swap.3mf 文件",
+        "a1": "A1(SWAP 模式):支持 JoBox、3Print 和 Printflow 系统进行自动平台交换",
+        "x1p1": "X1/P1 系列(推出模式):使用打印头生成带有自动推出序列的修改 GCODE",
+        "switchingTitle": "在模式之间切换:",
+        "a1miniSwitch": "A1 Mini:仅提供 Swapmod - 无需选择模式",
+        "a1Switch": "A1:点击顶部的标志(JoBox、3Print、Printflow)以在不同的平台交换系统之间切换。重要提示:您必须选择与物理安装的平台交换系统匹配的正确模式。使用错误的模式可能会对您的打印机造成严重损坏!",
+        "x1p1Switch": "X1/P1:专门使用推出模式 - 无需选择模式"
+      },
+      "plates": {
+        "title": "使用平台",
+        "select": "选择平台:点击任何平台以选择它并配置特定于平台的设置",
+        "repeat": "重复计数:更改每个平台旁边的数字以多次打印",
+        "remove": "移除平台:点击任何平台右上角的\"×\"按钮",
+        "duplicate": "复制平台:点击平台图像上的\"+\"按钮以制作副本",
+        "reorder": "重新排序平台:在列表中拖放平台以重新排列打印顺序"
+      },
+      "filament": {
+        "title": "耗材和 AMS 槽位",
+        "changeSlot": "更改槽位分配:点击平台上的任何彩色耗材样本以将其重新分配到不同的 AMS 槽位(1-4)",
+        "globalColors": "全局槽位颜色:点击\"耗材使用统计\"中的颜色样本以自定义全局槽位颜色",
+        "tracking": "使用跟踪:在统计区域查看每个槽位的总耗材消耗"
+      },
+      "settingsPanel": {
+        "title": "设置面板选项",
+        "general": "常规设置:",
+        "generalCustomName": "自定义文件名:设置您的首选输出文件名",
+        "generalLoopRepeats": "循环重复次数:重复整个打印队列的次数",
+        "generalTestExport": "测试文件导出:生成仅包含启动/结束序列的测试文件以进行调试。这将创建一个小文件,该文件会经过所有平台交换序列而不打印实际对象。非常适合在不浪费时间或材料的情况下测试您的设置。您可以在\"测试文件等待时间\"设置中配置平台之间的等待时间(默认:30 秒)。",
+        "plateSpecific": "特定于平台的设置:",
+        "plateSpecificIntro": "点击上方的平台以访问这些设置:",
+        "plateSpecificObjects": "对象计数和坐标:配置平台上的对象数量及其 X 位置",
+        "plateSpecificNozzle": "喷嘴和耗材设置:按平台控制清理序列和喷嘴行为",
+        "plateSpecificPushoff": "推出设置:为每个单独的平台自定义弹出行为",
+        "advanced": "X1/P1 高级选项:",
+        "advancedBedLeveling": "\"禁用平台之间的热床调平\" - 跳过第一个平台之后所有平台的热床调平。这可以通过重用初始打印的调平数据来加快多平台打印。理论:热床已在打印初始化时调平,因此平台之间的重新调平应该不是必需的。风险:推出过程可能会影响打印头的调平校准,存在小风险。如果打印速度比最大可靠性更重要,请使用此选项。",
+        "advancedFirstLayer": "\"禁用首层扫描\" - 禁用首层检查扫描。这加快了打印开始,但移除了自动质量检查。如果您认为扫描不必要或您更喜欢速度而不是额外的质量保证,请使用此选项。",
+        "advancedPurge": "\"关闭耗材清理\" - 在第一个平台后跳过清理序列(更快的多平台作业)。仅在平台之间没有耗材更换时启用。",
+        "advancedLoadLine": "\"在模型中隐藏喷嘴加载线\" - 在打印开始时挤出额外材料以补偿移除的加载线。防止对象底层的挤出不足,但如果打印开始在对象边缘,可能会可见。",
+        "advancedCooling": "\"抬升热床以进行冷却\" - 将热床移动到风扇高度以加快冷却。对于高对象,请移除打印机的顶部玻璃盖以防止碰撞。",
+        "advancedSecurePushoff": "\"安全推出序列\" - 使用多个高度的受控推出以确保安全弹出打印机中的已完成对象",
+        "advancedOverride": "\"覆盖项目和耗材设置\" - 为新槽位分配重新生成元数据。当重新定义 AMS 槽位时,此选项变得必要。",
+        "cooldownSound": "全局冷却和声音设置:",
+        "cooldownSoundTarget": "目标热床温度:在推出前冷却到此温度(默认:23°C)",
+        "cooldownSoundMax": "最大冷却时间:等待冷却的最长时间(默认:40 分钟)",
+        "cooldownSoundSounds": "打印机声音:禁用所有声音或仅禁用平台之间的声音(仅 A1/A1M)",
+        "cooldownSoundAms": "AMS 优化:移除平台之间的冗余耗材交换(仅 A1/A1M)",
+        "progressDisplay": "进度显示设置:",
+        "progressDisplayPerPlate": "百分比进度 - 按平台:仅显示当前平台的进度百分比和剩余时间(默认行为)",
+        "progressDisplayGlobal": "百分比进度 - 全局:显示整个队列中所有平台的总体进度百分比和剩余时间。对于跟踪总作业完成情况很有用。"
+      }
+    },
+    "dataSecurity": {
+      "title": "数据安全",
+      "content": "此应用程序使用您的浏览器作为环境,并在您的计算机上本地运行。这意味着您的任何数据都不会发送到我们的服务器或任何第三方云提供商。您甚至可以将此应用程序保存为网页并完全离线使用它。此网站也不使用 Cookie 或在您的设备上存储任何个人信息。"
+    }
+  },
+  "plate": {
+    "title": "平台",
+    "slot": "槽位",
+    "weight": "克",
+    "length": "米"
+  },
+  "errors": {
+    "fileNotFound": "文件未找到",
+    "invalidFormat": "文件格式无效",
+    "parseError": "解析文件失败",
+    "localeLoadFailed": "加载语言文件失败",
+    "defaultError": "请使用 *.3mf 或 *.gcode.3mf 格式的切片文件。不支持使用纯 *.gcode 文件。",
+    "fileNotReadable": "文件不可读。",
+    "noSlicedData": "未找到切片数据。",
+    "errorReading": "读取 {{fileName}} 时出错: {{error}}",
+    "noActivePlates": "没有活动平台(重复次数=0)。",
+    "gcodeExportFailed": "GCODE 导出失败: {{error}}",
+    "exportFailed": "导出失败: {{error}}",
+    "printerNotSupported": "此应用程序尚不支持此打印机型号(文件: {{fileName}})。",
+    "missingCoordinates": "警告:某些 X 坐标缺失(0)。请在导出前输入有效值。",
+    "swapModeOnlyA1": "SWAP 模式仅适用于 A1 Mini 和 A1 打印机。对于其他打印机,请使用推出模式。",
+    "incompatibleSlots": "检测到不兼容的 AMS 槽位。此平台使用的槽位与之前的平台不兼容。请检查您的耗材配置。",
+    "tooManyColors": "检测到太多不同的颜色/材料。打印机仅支持 4 个 AMS 槽位。",
+    "colorConflict": "检测到颜色冲突。不同的材料分配给同一个槽位。",
+    "slotMismatch": "检测到平台之间的 AMS 槽位不匹配。"
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português",
+    "ru": "Русский",
+    "zh": "中文"
+  },
+  "colorPicker": {
+    "title": "槽位 {{slot}} 信息",
+    "color": "颜色:",
+    "producer": "制造商:",
+    "material": "材料:",
+    "filamentId": "耗材 ID:",
+    "cancel": "取消",
+    "save": "保存"
+  },
+  "appInfo": {
+    "title": "应用程序信息",
+    "version": "AutoEject 版本 V1.5",
+    "inspiredBy": "灵感来自 Swaplist.app",
+    "howToUse": {
+      "title": "如何使用此应用程序",
+      "supportedPrinters": {
+        "title": "支持的打印机",
+        "intro": "此应用程序支持以下 Bambu Lab 打印机型号:",
+        "a1Mini": "<strong>A1 Mini</strong> - 使用 Swapmod 系统的 SWAP 模式",
+        "a1": "<strong>A1</strong> - 使用 JoBox、3Print 或 Printflow 系统的 SWAP 模式",
+        "x1": "<strong>X1 系列</strong> - 推出模式(使用打印头直接推出)",
+        "p1": "<strong>P1 系列</strong> - 推出模式(使用打印头直接推出)",
+        "autoDetect": "应用程序会从 GCODE 文件自动检测您的打印机型号。"
+      },
+      "gettingStarted": {
+        "title": "入门",
+        "step1": "<strong>加载文件:</strong>将来自 Bambu Studio 或 Orca Slicer 的切片 <code>.gcode.3mf</code> 文件拖放到上方的放置区域。<br><strong>重要提示:</strong>仅接受完全切片的项目文件(格式:<code>filename.gcode.3mf</code>)。不支持未切片的 3D 模型文件或纯 <code>.gcode</code> 文件。",
+        "step2": "<strong>打印机检测:</strong>应用程序会自动检测您的打印机型号并显示相应的模式(A1 Mini、X1 或 P1)。",
+        "step3": "<strong>配置设置:</strong>在加载的平台下方显示的设置面板中调整选项。",
+        "step4": "<strong>导出:</strong>点击\"生成 SWAP 文件\"或\"导出 GCODE\"以创建处理后的文件。"
+      },
+      "automation": {
+        "title": "自动化模式",
+        "intro": "此应用程序支持平台交换系统(Swapmod、JoBox、3Print、Printflow)和使用打印头的直接推出。",
+        "modesTitle": "可用模式:",
+        "a1Mini": "<strong>A1 Mini(SWAP 模式):</strong>使用 Swapmod 系统创建用于自动平台交换的 .swap.3mf 文件",
+        "a1": "<strong>A1(SWAP 模式):</strong>支持 JoBox、3Print 和 Printflow 系统进行自动平台交换",
+        "x1p1": "<strong>X1/P1 系列(推出模式):</strong>使用打印头生成带有自动推出序列的修改 GCODE",
+        "switchingTitle": "在模式之间切换:",
+        "a1MiniSwitch": "<strong>A1 Mini:</strong>仅提供 Swapmod - 无需选择模式",
+        "a1Switch": "<strong>A1:</strong>点击顶部的标志(JoBox、3Print、Printflow)以在不同的平台交换系统之间切换。<strong>重要提示:</strong>您必须选择与物理安装的平台交换系统匹配的正确模式。<span style=\"color: #ff4444; font-weight: bold;\">使用错误的模式可能会对您的打印机造成严重损坏!</span>",
+        "x1p1Switch": "<strong>X1/P1:</strong>专门使用推出模式 - 无需选择模式"
+      },
+      "plates": {
+        "title": "使用平台",
+        "select": "<strong>选择平台:</strong>点击任何平台以选择它并配置特定于平台的设置",
+        "repeat": "<strong>重复计数:</strong>更改每个平台旁边的数字以多次打印",
+        "remove": "<strong>移除平台:</strong>点击任何平台右上角的\"×\"按钮",
+        "duplicate": "<strong>复制平台:</strong>点击平台图像上的\"+\"按钮以制作副本",
+        "reorder": "<strong>重新排序平台:</strong>在列表中拖放平台以重新排列打印顺序"
+      },
+      "filament": {
+        "title": "耗材和 AMS 槽位",
+        "changeSlot": "<strong>更改槽位分配:</strong>点击平台上的任何彩色耗材样本以将其重新分配到不同的 AMS 槽位(1-4)",
+        "globalColors": "<strong>全局槽位颜色:</strong>点击\"耗材使用统计\"中的颜色样本以自定义全局槽位颜色",
+        "tracking": "<strong>使用跟踪:</strong>在统计区域查看每个槽位的总耗材消耗"
+      },
+      "settingsPanel": {
+        "title": "设置面板选项",
+        "generalTitle": "常规设置:",
+        "generalCustomName": "<strong>自定义文件名:</strong>设置您的首选输出文件名",
+        "generalLoopRepeats": "<strong>循环重复次数:</strong>重复整个打印队列的次数",
+        "generalTestExport": "<strong>测试文件导出:</strong>生成仅包含启动/结束序列的测试文件以进行调试。这将创建一个小文件,该文件会经过所有平台交换序列而不打印实际对象。非常适合在不浪费时间或材料的情况下测试您的设置。您可以在\"测试文件等待时间\"设置中配置平台之间的等待时间(默认:30 秒)。",
+        "plateSpecificTitle": "特定于平台的设置:",
+        "plateSpecificIntro": "<em>点击上方的平台以访问这些设置:</em>",
+        "plateSpecificObjects": "<strong>对象计数和坐标:</strong>配置平台上的对象数量及其 X 位置",
+        "plateSpecificNozzle": "<strong>喷嘴和耗材设置:</strong>按平台控制清理序列和喷嘴行为",
+        "plateSpecificPushoff": "<strong>推出设置:</strong>为每个单独的平台自定义弹出行为",
+        "advancedTitle": "X1/P1 高级选项:",
+        "advancedBedLeveling": "<strong>\"禁用平台之间的热床调平\"</strong> - 跳过第一个平台之后所有平台的热床调平。这可以通过重用初始打印的调平数据来加快多平台打印。<em>理论:</em>热床已在打印初始化时调平,因此平台之间的重新调平应该不是必需的。<em>风险:</em>推出过程可能会影响打印头的调平校准,存在小风险。如果打印速度比最大可靠性更重要,请使用此选项。",
+        "advancedFirstLayer": "<strong>\"禁用首层扫描\"</strong> - 禁用首层检查扫描。这加快了打印开始,但移除了自动质量检查。如果您认为扫描不必要或您更喜欢速度而不是额外的质量保证,请使用此选项。",
+        "advancedPurge": "<strong>\"关闭耗材清理\"</strong> - 在第一个平台后跳过清理序列(更快的多平台作业)。仅在平台之间没有耗材更换时启用。",
+        "advancedLoadLine": "<strong>\"在模型中隐藏喷嘴加载线\"</strong> - 在打印开始时挤出额外材料以补偿移除的加载线。防止对象底层的挤出不足,但如果打印开始在对象边缘,可能会可见。",
+        "advancedCooling": "<strong>\"抬升热床以进行冷却\"</strong> - 将热床移动到风扇高度以加快冷却。对于高对象,请移除打印机的顶部玻璃盖以防止碰撞。",
+        "advancedSecurePushoff": "<strong>\"安全推出序列\"</strong> - 使用多个高度的受控推出以确保安全弹出打印机中的已完成对象",
+        "advancedOverride": "<strong>\"覆盖项目和耗材设置\"</strong> - 为新槽位分配重新生成元数据。当重新定义 AMS 槽位时,此选项变得必要。",
+        "cooldownTitle": "全局冷却和声音设置:",
+        "cooldownTarget": "<strong>目标热床温度:</strong>在推出前冷却到此温度(默认:23°C)",
+        "cooldownMax": "<strong>最大冷却时间:</strong>等待冷却的最长时间(默认:40 分钟)",
+        "cooldownSounds": "<strong>打印机声音:</strong>禁用所有声音或仅禁用平台之间的声音(仅 A1/A1M)",
+        "cooldownAms": "<strong>AMS 优化:</strong>移除平台之间的冗余耗材交换(仅 A1/A1M)",
+        "progressTitle": "进度显示设置:",
+        "progressPerPlate": "<strong>百分比进度 - 按平台:</strong>仅显示当前平台的进度百分比和剩余时间(默认行为)",
+        "progressGlobal": "<strong>百分比进度 - 全局:</strong>显示整个队列中所有平台的总体进度百分比和剩余时间。对于跟踪总作业完成情况很有用。"
+      }
+    },
+    "dataSecurity": {
+      "title": "数据安全",
+      "content": "此应用程序使用您的浏览器作为环境,并在您的计算机上本地运行。这意味着您的任何数据都不会发送到我们的服务器或任何第三方云提供商。您甚至可以将此应用程序保存为网页并完全离线使用它。此网站也不使用 Cookie 或在您的设备上存储任何个人信息。"
+    }
+  }
+}

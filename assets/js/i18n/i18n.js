@@ -8,7 +8,7 @@ class I18n {
     this.locale = 'en';
     this.fallbackLocale = 'en';
     this.translations = {};
-    this.supportedLocales = ['en', 'de'];
+    this.supportedLocales = ['en', 'de', 'fr', 'es', 'it', 'pt', 'ru', 'zh'];
   }
 
   /**
@@ -28,6 +28,18 @@ class I18n {
         translations = (await import('./locales/en.json')).default;
       } else if (locale === 'de') {
         translations = (await import('./locales/de.json')).default;
+      } else if (locale === 'fr') {
+        translations = (await import('./locales/fr.json')).default;
+      } else if (locale === 'es') {
+        translations = (await import('./locales/es.json')).default;
+      } else if (locale === 'it') {
+        translations = (await import('./locales/it.json')).default;
+      } else if (locale === 'pt') {
+        translations = (await import('./locales/pt.json')).default;
+      } else if (locale === 'ru') {
+        translations = (await import('./locales/ru.json')).default;
+      } else if (locale === 'zh') {
+        translations = (await import('./locales/zh.json')).default;
       } else {
         throw new Error(`Unsupported locale: ${locale}`);
       }

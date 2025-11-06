@@ -230,7 +230,13 @@
   },
   "languages": {
     "en": "English",
-    "de": "Deutsch"
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português",
+    "ru": "Русский",
+    "zh": "中文"
   },
   "colorPicker": {
     "title": "Slot {{slot}} Information",

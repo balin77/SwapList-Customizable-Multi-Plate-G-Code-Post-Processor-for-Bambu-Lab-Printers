@@ -35,21 +35,17 @@ function extractLightingMask(litImageData, unlitImageData) {
 
     if (unlitBrightness < DARK_THRESHOLD) {
       // ADDITIVE lighting for dark colors (e.g., black objects)
-      // lit = unlit + additive_light
-      // So: additive_light = lit - unlit
-      const additiveDelta = litBrightness - unlitBrightness;
+      // For dark objects, store the ABSOLUTE brightness from the lit image
+      // This way, when recoloring to black, we can apply the lighting as grayscale
 
       // Store in mask:
-      // R channel: Stores the sign and magnitude of delta
-      //   - Values 0-127: negative delta (127 = 0, 0 = -127)
-      //   - Values 128-255: positive delta (128 = 0, 255 = +127)
-      // G channel: not used for additive (was previously used incorrectly)
-      // B channel: 255 (signals this is additive)
+      // R channel: Stores the absolute lit brightness (0-255)
+      // G channel: not used
+      // B channel: 255 (signals this is additive mode for dark colors)
 
-      // Encode delta: map from [-127, +127] to [0, 255] with 127 as zero point
-      const encodedDelta = Math.max(0, Math.min(255, Math.round(additiveDelta + 127)));
+      const absoluteLitBrightness = Math.max(0, Math.min(255, Math.round(litBrightness)));
 
-      mask[i] = encodedDelta; // Encoded delta
+      mask[i] = absoluteLitBrightness; // Absolute lit brightness
       mask[i + 1] = 0; // Not used
       mask[i + 2] = 255; // Mode flag: 255 = additive
     } else {
@@ -191,40 +187,34 @@ function applyLightingMask(recoloredImageData, lightingMask) {
 
   for (let i = 0; i < recolored.length; i += 4) {
     const modeFlag = mask[i + 2]; // B channel: 255=additive, 0=multiplicative
+    const recoloredBrightness = (recolored[i] + recolored[i + 1] + recolored[i + 2]) / 3;
 
     if (modeFlag > 127) {
-      // ADDITIVE mode (for dark/black colors)
-      // Decode delta from R channel: map from [0, 255] to [-127, +127] with 127 as zero point
-      const encodedDelta = mask[i]; // R channel holds encoded delta
-      const additiveDelta = encodedDelta - 127;
+      // ADDITIVE mode (for dark/black colors in ORIGINAL image)
+      // R channel contains absolute lit brightness from original
+      const absoluteLitBrightness = mask[i];
       additiveCount++;
 
-      const recoloredBrightness = (recolored[i] + recolored[i + 1] + recolored[i + 2]) / 3;
-
-      // If recolored pixel is bright, we need to convert additive to multiplicative
+      // If recolored pixel is bright, apply lighting multiplicatively
       if (recoloredBrightness > 80) {
-        // For bright colors, convert additive delta to multiplicative factor
-        // Original: lit_original = unlit_original + delta
-        // We want: lit_new = unlit_new * factor
-        //
-        // The "darkness" effect should be proportional:
-        // If original was darkened by -2 from 26 (factor ~0.92),
-        // we want to darken the new color by the same relative amount
-        //
-        // Approximate factor from delta: factor ≈ 1 + (delta / original_brightness)
-        // Since we don't know original brightness here, use a simpler approach:
-        // Convert small deltas to multiplicative factors
-
-        const factor = 1 + (additiveDelta / 50); // Scale delta to factor (empirical)
+        // For bright recolored pixels, calculate a factor from the lit brightness
+        // Normalize brightness to a factor (dim areas ~0.7, bright areas ~1.3)
+        const factor = 0.5 + (absoluteLitBrightness / 128); // Maps 0-255 to 0.5-2.5 range
 
         final[i] = Math.min(255, Math.max(0, Math.round(recolored[i] * factor)));
         final[i + 1] = Math.min(255, Math.max(0, Math.round(recolored[i + 1] * factor)));
         final[i + 2] = Math.min(255, Math.max(0, Math.round(recolored[i + 2] * factor)));
       } else {
-        // For dark recolored pixels, keep additive logic
-        final[i] = Math.min(255, Math.max(0, Math.round(recolored[i] + additiveDelta)));
-        final[i + 1] = Math.min(255, Math.max(0, Math.round(recolored[i + 1] + additiveDelta)));
-        final[i + 2] = Math.min(255, Math.max(0, Math.round(recolored[i + 2] + additiveDelta)));
+        // For dark recolored pixels (especially black), apply lighting as absolute grayscale
+        // This makes shadows/lighting visible on black surfaces
+        // The absoluteLitBrightness directly represents how bright this pixel should be
+
+        // Apply brightness directly as grayscale (no amplification)
+        const amplifiedBrightness = Math.min(255, Math.max(0, Math.round(absoluteLitBrightness * 1.0))); // 1.0x = original brightness
+
+        final[i] = amplifiedBrightness;
+        final[i + 1] = amplifiedBrightness;
+        final[i + 2] = amplifiedBrightness;
       }
     } else {
       // MULTIPLICATIVE mode (for normal/bright colors)
@@ -239,8 +229,6 @@ function applyLightingMask(recoloredImageData, lightingMask) {
 
     final[i + 3] = recolored[i + 3]; // Alpha unchanged
   }
-
-  console.log(`[applyLightingMask] Stats: ${additiveCount} additive pixels, ${multiplicativeCount} multiplicative pixels`);
 
   return finalImageData;
 }

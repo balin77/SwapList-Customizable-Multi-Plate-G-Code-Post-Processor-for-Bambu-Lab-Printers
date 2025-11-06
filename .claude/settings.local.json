@@ -28,7 +28,11 @@
       "Bash(npm run dev:compare-settings:*)",
       "Bash(del:*)",
       "Bash(cd c:UsersgubleOneDrive3d PrintDiverse Utility für PrinterSwapmodSwapmod Website)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,330 @@
+{
+  "app": {
+    "title": "CLEAR.bed",
+    "version": "AutoEject Versão V1.5",
+    "inspiredBy": "Inspirado em Swaplist.app"
+  },
+  "ui": {
+    "buttons": {
+      "export": "Gerar arquivo 3MF",
+      "exportGcode": "Exportar GCODE",
+      "reset": "Redefinir",
+      "remove": "×"
+    },
+    "dropzone": {
+      "title": "ARRASTE SEUS ARQUIVOS AQUI",
+      "subtitle": "...ou clique para selecionar"
+    },
+    "modes": {
+      "swap": "Modo SWAP",
+      "pushoff": "Modo Push Off"
+    },
+    "printerInfo": {
+      "label": "Modelo da impressora:",
+      "unknown": "Desconhecido"
+    }
+  },
+  "statistics": {
+    "title": "Estatísticas gerais:",
+    "duration": "Duração:",
+    "plates": "Placas:",
+    "totalWeight": "Peso total:",
+    "totalCost": "Custo total:",
+    "costPerKg": "R$/kg",
+    "filamentTitle": "Estatísticas de uso de filamento:",
+    "slot": "Slot"
+  },
+  "settings": {
+    "title": "Configurações",
+    "language": "Idioma",
+    "loopRepeats": {
+      "label": "Repetições de loop",
+      "help": "Este número define quantas vezes toda a fila será reimprimida.",
+      "example": "Exemplo: A placa \"A\" está configurada para 3 repetições, a placa \"B\" está configurada para 1 repetição e as \"Repetições de loop\" estão configuradas para 2. Isso resultará na seguinte ordem de impressão:",
+      "exampleOrder": "A A A B A A A B ."
+    },
+    "plateSettings": {
+      "title": "Configurações da placa",
+      "instruction": "Clique em uma placa acima para configurar suas definições",
+      "objects": {
+        "title": "Objetos nesta placa",
+        "count": "Número de objetos:"
+      },
+      "nozzleFilament": {
+        "title": "Bico e Filamento",
+        "hideLoadLine": "Ocultar linha de carga do bico no modelo",
+        "hideLoadLineHelp": "Ative esta opção para obter a pressão correta do bico ao iniciar uma nova impressão. Se desativada, isso pode causar subextrusão leve na parte inferior do primeiro objeto.",
+        "purgeOff": "Desativar purga de filamento",
+        "purgeOffHelp": "Desabilita a sequência de purga de filamento no início desta placa. Isso pode acelerar trabalhos de múltiplas placas, mas pode causar problemas se a placa anterior usou materiais diferentes."
+      },
+      "pushoff": {
+        "title": "Push-off e Ejeção",
+        "bedRaiseOffset": "Elevação da mesa antes do push-out (mm)",
+        "bedRaiseOffsetHelp": "Define quanto a mesa é elevada antes de executar a sequência de push-out.",
+        "securePushoff": "Sequência de push-off segura",
+        "securePushoffHelp": "Quando habilitada, o aplicativo executa múltiplos push-offs controlados em alturas Z decrescentes antes do push final em Z=1. Isso ajuda a evitar colisões e facilita a ejeção.",
+        "additionalLevels": "Níveis de push-off adicionais",
+        "additionalLevelsHelp": "Define como a altura Z máxima é dividida. Exemplo: se a altura Z máxima for 100 mm e você inserir 2, os push-offs ocorrerão em Z≈50 e o final em Z=1. Se você inserir 5, haverá 5 push-offs extras, com o último sempre em Z=1. Um valor de 1 significa apenas um push final em Z=1."
+      }
+    },
+    "globalSettings": {
+      "title": "Configurações globais",
+      "cooling": {
+        "title": "Resfriamento e Temperatura da mesa",
+        "raiseBed": "Elevar mesa para resfriamento",
+        "raiseBedHelp": "Ative esta opção para elevar a mesa até a altura do ventilador para resfriamento mais rápido. <b>Aviso:</b> Para impressões grandes, a cobertura da impressora deve ser removida para evitar colisões.",
+        "targetTemp": "Temperatura alvo da mesa para resfriamento (°C)",
+        "targetTempHelp": "Especifica a temperatura da mesa que deve ser alcançada antes da sequência de push-out.",
+        "maxTime": "Tempo máximo de resfriamento (min)",
+        "maxTimeHelp": "Define a duração máxima de resfriamento em minutos. O aplicativo inserirá comandos <code>M190</code> repetidos para aguardar a mesa até que esse tempo total seja atingido. O padrão é 40 minutos."
+      },
+      "sounds": {
+        "title": "Sons da impressora",
+        "disable": "Desativar sons da impressora",
+        "disableHelp": "Controla a remoção de sons da impressora para impressoras A1/A1M. Quando habilitado, você pode escolher remover todos os sons ou apenas sons entre placas. Esta configuração afeta apenas impressoras A1/A1M.",
+        "removeAll": "Remover todos os sons da impressora",
+        "removeBetweenPlates": "Remover sons apenas entre placas"
+      },
+      "ams": {
+        "title": "Otimização AMS",
+        "enable": "Habilitar remoção de redundância AMS",
+        "enableHelp": "Quando ativado, o aplicativo remove automaticamente trocas de filamento AMS redundantes entre placas. Isso elimina sequências desnecessárias de \"descarregar tudo\" + \"carregar mesmo slot\", tornando as impressões de múltiplas placas mais eficientes. Disponível apenas para impressoras A1/A1M."
+      },
+      "startsequence": {
+        "title": "Sequência de início",
+        "disableBedLeveling": "Desativar nivelamento da mesa entre placas",
+        "disableBedLevelingHelp": "Quando ativado, o nivelamento da mesa é ignorado para todas as placas após a primeira. Isso acelera a impressão de múltiplas placas reutilizando os dados de nivelamento da primeira placa. Disponível apenas para impressoras X1/P1 no modo push-off.",
+        "disableFirstLayerScan": "Desativar varredura da primeira camada",
+        "disableFirstLayerScanHelp": "Quando ativado, a varredura de inspeção da primeira camada é desabilitada. Isso pode acelerar o início da impressão, mas remove a verificação de qualidade automática. Disponível apenas para impressoras X1 no modo push-off."
+      },
+      "project": {
+        "title": "Configurações do projeto",
+        "overrideMetadata": "Substituir configurações de projeto e filamento",
+        "overrideMetadataHelp": "Quando ativado, o aplicativo regenera as entradas de filamento e configurações de material/impressora. Isso é essencial se você usar novas atribuições de slot AMS que não estavam presentes no G-code original. Quando desativado, os metadados 3MF originais são mantidos como estão; se você remapear para slots AMS que não foram originalmente definidos, a impressora ou Studio pode relatar uma incompatibilidade."
+      },
+      "progress": {
+        "title": "Exibição de progresso",
+        "percentageProgress": "Progresso percentual",
+        "percentageProgressHelp": "Controla como a porcentagem e o tempo restante são calculados:",
+        "perPlate": "Por placa",
+        "perPlateDesc": "O progresso mostra porcentagem/tempo apenas para a placa atual (comportamento padrão)",
+        "global": "Global (em todas as placas)",
+        "globalDesc": "O progresso mostra porcentagem/tempo geral em todas as placas na fila",
+        "helpText": "Controla como a porcentagem e o tempo restante são calculados:<ul><li><strong>Por placa:</strong> O progresso mostra porcentagem/tempo apenas para a placa atual (comportamento padrão)</li><li><strong>Global:</strong> O progresso mostra porcentagem/tempo geral em todas as placas na fila</li></ul>"
+      },
+      "file": {
+        "title": "Configurações de arquivo",
+        "customName": "Nome de arquivo personalizado:",
+        "testExport": "Gerar arquivo de teste (apenas sequências de início/fim)",
+        "testExportHelp": "Quando habilitado, exporta apenas as sequências de início e fim sem o código de impressão real. Isso cria um pequeno arquivo de teste perfeito para verificar a lógica de troca de placa sem executar uma impressão completa. O arquivo de teste passará por todas as trocas de placa, mas pulará a impressão real dos objetos.",
+        "testWaitTime": "Tempo de espera do arquivo de teste (segundos):"
+      }
+    }
+  },
+  "info": {
+    "title": "Informações do aplicativo",
+    "howToUse": {
+      "title": "Como usar este aplicativo",
+      "supportedPrinters": {
+        "title": "Impressoras suportadas",
+        "intro": "Este aplicativo suporta os seguintes modelos de impressoras Bambu Lab:",
+        "a1mini": "A1 Mini - modo SWAP com sistema Swapmod",
+        "a1": "A1 - modo SWAP com sistemas JoBox, 3Print ou Printflow",
+        "x1": "Série X1 - modo Push-off (push-off direto com cabeça de impressão)",
+        "p1": "Série P1 - modo Push-off (push-off direto com cabeça de impressão)",
+        "autoDetect": "O aplicativo detecta automaticamente o modelo da sua impressora a partir do arquivo GCODE."
+      },
+      "gettingStarted": {
+        "title": "Começando",
+        "step1": "Carregue seus arquivos: Arraste e solte seus arquivos .gcode.3mf fatiados do Bambu Studio ou Orca Slicer na zona de soltar acima.",
+        "step1important": "Importante: Apenas arquivos de projeto totalmente fatiados (formato: nomedoarquivo.gcode.3mf) são aceitos. Arquivos de modelo 3D não fatiados ou arquivos .gcode simples não são suportados.",
+        "step2": "Detecção de impressora: O aplicativo detecta automaticamente o modelo da sua impressora e mostra o modo correspondente (A1 Mini, X1 ou P1).",
+        "step3": "Configure as definições: Ajuste as opções no painel Configurações que aparece abaixo de suas placas carregadas.",
+        "step4": "Exportar: Clique em \"Gerar arquivo SWAP\" ou \"Exportar GCODE\" para criar seus arquivos processados."
+      },
+      "automation": {
+        "title": "Modo de automação",
+        "intro": "Este aplicativo suporta tanto sistemas de troca de placas (Swapmod, JoBox, 3Print, Printflow) quanto push-off direto com a cabeça de impressão.",
+        "modesTitle": "Modos disponíveis:",
+        "a1mini": "A1 Mini (Modo SWAP): Cria arquivos .swap.3mf para troca automática de placas usando o sistema Swapmod",
+        "a1": "A1 (Modo SWAP): Suporta sistemas JoBox, 3Print e Printflow para troca automática de placas",
+        "x1p1": "Série X1/P1 (Modo Push-off): Gera GCODE modificado com sequências de push-off automatizadas usando a cabeça de impressão",
+        "switchingTitle": "Alternando entre modos:",
+        "a1miniSwitch": "A1 Mini: Apenas Swapmod está disponível - nenhuma seleção de modo necessária",
+        "a1Switch": "A1: Clique nos logotipos (JoBox, 3Print, Printflow) no topo para alternar entre diferentes sistemas de troca de placas. IMPORTANTE: Você deve selecionar o modo correto que corresponde ao seu sistema de troca de placas fisicamente instalado. Usar o modo errado pode causar sérios danos à sua impressora!",
+        "x1p1Switch": "X1/P1: Usa modo push-off exclusivamente - nenhuma seleção de modo necessária"
+      },
+      "plates": {
+        "title": "Trabalhando com placas",
+        "select": "Selecionar placas: Clique em qualquer placa para selecioná-la e configurar definições específicas da placa",
+        "repeat": "Contagem de repetições: Altere o número ao lado de cada placa para imprimi-la várias vezes",
+        "remove": "Remover placas: Clique no botão \"×\" no canto superior direito de qualquer placa",
+        "duplicate": "Duplicar placas: Clique no botão \"+\" na imagem da placa para fazer uma cópia",
+        "reorder": "Reordenar placas: Arraste e solte placas na lista para reorganizar a ordem de impressão"
+      },
+      "filament": {
+        "title": "Filamento e Slots AMS",
+        "changeSlot": "Alterar atribuição de slot: Clique em qualquer amostra de filamento colorido em uma placa para reatribuí-la a um slot AMS diferente (1-4)",
+        "globalColors": "Cores de slot globais: Clique nas amostras de cores em \"Estatísticas de uso de filamento\" para personalizar cores de slot globais",
+        "tracking": "Rastreamento de uso: Visualize o consumo total de filamento por slot na área de estatísticas"
+      },
+      "settingsPanel": {
+        "title": "Opções do painel de configurações",
+        "general": "Configurações gerais:",
+        "generalCustomName": "Nome de arquivo personalizado: Defina seu nome de arquivo de saída preferido",
+        "generalLoopRepeats": "Repetições de loop: Número de vezes para repetir toda a fila de impressão",
+        "generalTestExport": "Exportação de arquivo de teste: Gere um arquivo de teste com apenas sequências de início/fim para depuração. Isso cria um pequeno arquivo que passa por todas as sequências de troca de placa sem imprimir os objetos reais. Perfeito para testar sua configuração sem desperdiçar tempo ou material. Você pode configurar o tempo de espera entre placas na configuração \"Tempo de espera do arquivo de teste\" (padrão: 30 segundos).",
+        "plateSpecific": "Configurações específicas da placa:",
+        "plateSpecificIntro": "Clique em uma placa acima para acessar essas configurações:",
+        "plateSpecificObjects": "Contagem e coordenadas de objetos: Configure o número de objetos na placa e suas posições X",
+        "plateSpecificNozzle": "Configurações de bico e filamento: Controle sequências de purga e comportamento do bico por placa",
+        "plateSpecificPushoff": "Configurações de push-off: Personalize o comportamento de ejeção para cada placa individual",
+        "advanced": "Opções avançadas X1/P1:",
+        "advancedBedLeveling": "\"Desativar nivelamento da mesa entre placas\" - Ignora o nivelamento da mesa para todas as placas após a primeira. Isso pode acelerar a impressão de múltiplas placas reutilizando os dados de nivelamento da impressão inicial. Teoria: A mesa já foi nivelada na inicialização da impressão, portanto, o renivelamento entre placas não deve ser necessário. Risco: Há um pequeno risco de que o processo de push-off possa ter afetado a calibração de nivelamento da cabeça de impressão. Use esta opção se a velocidade de impressão for mais importante do que a confiabilidade máxima.",
+        "advancedFirstLayer": "\"Desativar varredura da primeira camada\" - Desabilita a varredura de inspeção da primeira camada. Isso acelera o início da impressão, mas remove a verificação de qualidade automática. Use isso se você considerar a varredura desnecessária ou se preferir velocidade à garantia de qualidade adicional.",
+        "advancedPurge": "\"Desativar purga de filamento\" - Ignora a sequência de purga após a primeira placa (trabalhos de múltiplas placas mais rápidos). Habilite apenas se não houver trocas de filamento entre placas.",
+        "advancedLoadLine": "\"Ocultar linha de carga do bico no modelo\" - Extruda material extra no início da impressão para compensar a linha de carga removida. Previne subextrusão na camada inferior do objeto, mas pode ser visível se o início da impressão estiver na borda do objeto.",
+        "advancedCooling": "\"Elevar mesa para resfriamento\" - Move a mesa para a altura do ventilador para resfriamento mais rápido. Para objetos altos, remova a tampa de vidro superior da impressora para evitar colisões.",
+        "advancedSecurePushoff": "\"Sequência de push-off segura\" - Usa push-offs controlados em múltiplas alturas para garantir a ejeção segura de objetos acabados da impressora",
+        "advancedOverride": "\"Substituir configurações de projeto e filamento\" - Regenera metadados para novas atribuições de slot. Esta opção torna-se necessária quando os slots AMS são redefinidos.",
+        "cooldownSound": "Configurações globais de resfriamento e som:",
+        "cooldownSoundTarget": "Temperatura alvo da mesa: Resfriar até esta temperatura antes do push-out (padrão: 23°C)",
+        "cooldownSoundMax": "Tempo máximo de resfriamento: Tempo máximo de espera para resfriamento (padrão: 40 minutos)",
+        "cooldownSoundSounds": "Sons da impressora: Desabilitar todos os sons ou apenas sons entre placas (apenas A1/A1M)",
+        "cooldownSoundAms": "Otimização AMS: Remover trocas de filamento redundantes entre placas (apenas A1/A1M)",
+        "progressDisplay": "Configurações de exibição de progresso:",
+        "progressDisplayPerPlate": "Progresso percentual - Por placa: Mostra porcentagem de progresso e tempo restante apenas para a placa atual (comportamento padrão)",
+        "progressDisplayGlobal": "Progresso percentual - Global: Mostra porcentagem de progresso geral e tempo restante em todas as placas em toda a fila. Útil para rastrear a conclusão total do trabalho."
+      }
+    },
+    "dataSecurity": {
+      "title": "Segurança de dados",
+      "content": "Este aplicativo usa seu navegador como ambiente e é executado localmente em seu computador. Isso significa que nenhum de seus dados é enviado para nosso servidor ou qualquer provedor de nuvem de terceiros. Você pode até salvar este aplicativo como uma página da web e usá-lo completamente offline. Este site também não usa cookies ou armazena informações pessoais em seu dispositivo."
+    }
+  },
+  "plate": {
+    "title": "Placa",
+    "slot": "Slot",
+    "weight": "g",
+    "length": "m"
+  },
+  "errors": {
+    "fileNotFound": "Arquivo não encontrado",
+    "invalidFormat": "Formato de arquivo inválido",
+    "parseError": "Falha ao analisar arquivo",
+    "localeLoadFailed": "Falha ao carregar arquivo de idioma",
+    "defaultError": "Por favor, use arquivos fatiados nos formatos *.3mf ou *.gcode.3mf. O uso de arquivos *.gcode simples não é suportado.",
+    "fileNotReadable": "Arquivo não legível.",
+    "noSlicedData": "Nenhum dado fatiado encontrado.",
+    "errorReading": "Erro ao ler {{fileName}}: {{error}}",
+    "noActivePlates": "Nenhuma placa ativa (Repetições=0).",
+    "gcodeExportFailed": "Exportação de GCODE falhou: {{error}}",
+    "exportFailed": "Exportação falhou: {{error}}",
+    "printerNotSupported": "Este modelo de impressora ainda não é suportado neste aplicativo (arquivo: {{fileName}}).",
+    "missingCoordinates": "Aviso: Algumas coordenadas X estão faltando (0). Por favor, insira valores válidos antes de exportar.",
+    "swapModeOnlyA1": "O modo SWAP está disponível apenas para impressoras A1 Mini e A1. Para outras impressoras, use o modo Push Off.",
+    "incompatibleSlots": "Slots AMS incompatíveis detectados. Esta placa usa slots que não são compatíveis com placas anteriores. Por favor, verifique sua configuração de filamento.",
+    "tooManyColors": "Muitas cores/materiais diferentes detectados. A impressora suporta apenas 4 slots AMS.",
+    "colorConflict": "Conflito de cores detectado. Materiais diferentes são atribuídos ao mesmo slot.",
+    "slotMismatch": "Incompatibilidade de slot AMS detectada entre placas."
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português"
+  },
+  "colorPicker": {
+    "title": "Informações do Slot {{slot}}",
+    "color": "Cor:",
+    "producer": "Fabricante:",
+    "material": "Material:",
+    "filamentId": "ID do filamento:",
+    "cancel": "Cancelar",
+    "save": "Salvar"
+  },
+  "appInfo": {
+    "title": "Informações do aplicativo",
+    "version": "AutoEject Versão V1.5",
+    "inspiredBy": "Inspirado em Swaplist.app",
+    "howToUse": {
+      "title": "Como usar este aplicativo",
+      "supportedPrinters": {
+        "title": "Impressoras suportadas",
+        "intro": "Este aplicativo suporta os seguintes modelos de impressoras Bambu Lab:",
+        "a1Mini": "<strong>A1 Mini</strong> - modo SWAP com sistema Swapmod",
+        "a1": "<strong>A1</strong> - modo SWAP com sistemas JoBox, 3Print ou Printflow",
+        "x1": "<strong>Série X1</strong> - modo Push-off (push-off direto com cabeça de impressão)",
+        "p1": "<strong>Série P1</strong> - modo Push-off (push-off direto com cabeça de impressão)",
+        "autoDetect": "O aplicativo detecta automaticamente o modelo da sua impressora a partir do arquivo GCODE."
+      },
+      "gettingStarted": {
+        "title": "Começando",
+        "step1": "<strong>Carregue seus arquivos:</strong> Arraste e solte seus arquivos <code>.gcode.3mf</code> fatiados do Bambu Studio ou Orca Slicer na zona de soltar acima.<br><strong>Importante:</strong> Apenas arquivos de projeto totalmente fatiados (formato: <code>nomedoarquivo.gcode.3mf</code>) são aceitos. Arquivos de modelo 3D não fatiados ou arquivos <code>.gcode</code> simples não são suportados.",
+        "step2": "<strong>Detecção de impressora:</strong> O aplicativo detecta automaticamente o modelo da sua impressora e mostra o modo correspondente (A1 Mini, X1 ou P1).",
+        "step3": "<strong>Configure as definições:</strong> Ajuste as opções no painel Configurações que aparece abaixo de suas placas carregadas.",
+        "step4": "<strong>Exportar:</strong> Clique em \"Gerar arquivo SWAP\" ou \"Exportar GCODE\" para criar seus arquivos processados."
+      },
+      "automation": {
+        "title": "Modo de automação",
+        "intro": "Este aplicativo suporta tanto sistemas de troca de placas (Swapmod, JoBox, 3Print, Printflow) quanto push-off direto com a cabeça de impressão.",
+        "modesTitle": "Modos disponíveis:",
+        "a1Mini": "<strong>A1 Mini (Modo SWAP):</strong> Cria arquivos .swap.3mf para troca automática de placas usando o sistema Swapmod",
+        "a1": "<strong>A1 (Modo SWAP):</strong> Suporta sistemas JoBox, 3Print e Printflow para troca automática de placas",
+        "x1p1": "<strong>Série X1/P1 (Modo Push-off):</strong> Gera GCODE modificado com sequências de push-off automatizadas usando a cabeça de impressão",
+        "switchingTitle": "Alternando entre modos:",
+        "a1MiniSwitch": "<strong>A1 Mini:</strong> Apenas Swapmod está disponível - nenhuma seleção de modo necessária",
+        "a1Switch": "<strong>A1:</strong> Clique nos logotipos (JoBox, 3Print, Printflow) no topo para alternar entre diferentes sistemas de troca de placas. <strong>IMPORTANTE:</strong> Você deve selecionar o modo correto que corresponde ao seu sistema de troca de placas fisicamente instalado. <span style=\"color: #ff4444; font-weight: bold;\">Usar o modo errado pode causar sérios danos à sua impressora!</span>",
+        "x1p1Switch": "<strong>X1/P1:</strong> Usa modo push-off exclusivamente - nenhuma seleção de modo necessária"
+      },
+      "plates": {
+        "title": "Trabalhando com placas",
+        "select": "<strong>Selecionar placas:</strong> Clique em qualquer placa para selecioná-la e configurar definições específicas da placa",
+        "repeat": "<strong>Contagem de repetições:</strong> Altere o número ao lado de cada placa para imprimi-la várias vezes",
+        "remove": "<strong>Remover placas:</strong> Clique no botão \"×\" no canto superior direito de qualquer placa",
+        "duplicate": "<strong>Duplicar placas:</strong> Clique no botão \"+\" na imagem da placa para fazer uma cópia",
+        "reorder": "<strong>Reordenar placas:</strong> Arraste e solte placas na lista para reorganizar a ordem de impressão"
+      },
+      "filament": {
+        "title": "Filamento e Slots AMS",
+        "changeSlot": "<strong>Alterar atribuição de slot:</strong> Clique em qualquer amostra de filamento colorido em uma placa para reatribuí-la a um slot AMS diferente (1-4)",
+        "globalColors": "<strong>Cores de slot globais:</strong> Clique nas amostras de cores em \"Estatísticas de uso de filamento\" para personalizar cores de slot globais",
+        "tracking": "<strong>Rastreamento de uso:</strong> Visualize o consumo total de filamento por slot na área de estatísticas"
+      },
+      "settingsPanel": {
+        "title": "Opções do painel de configurações",
+        "generalTitle": "Configurações gerais:",
+        "generalCustomName": "<strong>Nome de arquivo personalizado:</strong> Defina seu nome de arquivo de saída preferido",
+        "generalLoopRepeats": "<strong>Repetições de loop:</strong> Número de vezes para repetir toda a fila de impressão",
+        "generalTestExport": "<strong>Exportação de arquivo de teste:</strong> Gere um arquivo de teste com apenas sequências de início/fim para depuração. Isso cria um pequeno arquivo que passa por todas as sequências de troca de placa sem imprimir os objetos reais. Perfeito para testar sua configuração sem desperdiçar tempo ou material. Você pode configurar o tempo de espera entre placas na configuração \"Tempo de espera do arquivo de teste\" (padrão: 30 segundos).",
+        "plateSpecificTitle": "Configurações específicas da placa:",
+        "plateSpecificIntro": "<em>Clique em uma placa acima para acessar essas configurações:</em>",
+        "plateSpecificObjects": "<strong>Contagem e coordenadas de objetos:</strong> Configure o número de objetos na placa e suas posições X",
+        "plateSpecificNozzle": "<strong>Configurações de bico e filamento:</strong> Controle sequências de purga e comportamento do bico por placa",
+        "plateSpecificPushoff": "<strong>Configurações de push-off:</strong> Personalize o comportamento de ejeção para cada placa individual",
+        "advancedTitle": "Opções avançadas X1/P1:",
+        "advancedBedLeveling": "<strong>\"Desativar nivelamento da mesa entre placas\"</strong> - Ignora o nivelamento da mesa para todas as placas após a primeira. Isso pode acelerar a impressão de múltiplas placas reutilizando os dados de nivelamento da impressão inicial.<em>Teoria:</em> A mesa já foi nivelada na inicialização da impressão, portanto, o renivelamento entre placas não deve ser necessário.<em>Risco:</em> Há um pequeno risco de que o processo de push-off possa ter afetado a calibração de nivelamento da cabeça de impressão. Use esta opção se a velocidade de impressão for mais importante do que a confiabilidade máxima.",
+        "advancedFirstLayer": "<strong>\"Desativar varredura da primeira camada\"</strong> - Desabilita a varredura de inspeção da primeira camada. Isso acelera o início da impressão, mas remove a verificação de qualidade automática. Use isso se você considerar a varredura desnecessária ou se preferir velocidade à garantia de qualidade adicional.",
+        "advancedPurge": "<strong>\"Desativar purga de filamento\"</strong> - Ignora a sequência de purga após a primeira placa (trabalhos de múltiplas placas mais rápidos). Habilite apenas se não houver trocas de filamento entre placas.",
+        "advancedLoadLine": "<strong>\"Ocultar linha de carga do bico no modelo\"</strong> - Extruda material extra no início da impressão para compensar a linha de carga removida. Previne subextrusão na camada inferior do objeto, mas pode ser visível se o início da impressão estiver na borda do objeto.",
+        "advancedCooling": "<strong>\"Elevar mesa para resfriamento\"</strong> - Move a mesa para a altura do ventilador para resfriamento mais rápido. Para objetos altos, remova a tampa de vidro superior da impressora para evitar colisões.",
+        "advancedSecurePushoff": "<strong>\"Sequência de push-off segura\"</strong> - Usa push-offs controlados em múltiplas alturas para garantir a ejeção segura de objetos acabados da impressora",
+        "advancedOverride": "<strong>\"Substituir configurações de projeto e filamento\"</strong> - Regenera metadados para novas atribuições de slot. Esta opção torna-se necessária quando os slots AMS são redefinidos.",
+        "cooldownTitle": "Configurações globais de resfriamento e som:",
+        "cooldownTarget": "<strong>Temperatura alvo da mesa:</strong> Resfriar até esta temperatura antes do push-out (padrão: 23°C)",
+        "cooldownMax": "<strong>Tempo máximo de resfriamento:</strong> Tempo máximo de espera para resfriamento (padrão: 40 minutos)",
+        "cooldownSounds": "<strong>Sons da impressora:</strong> Desabilitar todos os sons ou apenas sons entre placas (apenas A1/A1M)",
+        "cooldownAms": "<strong>Otimização AMS:</strong> Remover trocas de filamento redundantes entre placas (apenas A1/A1M)",
+        "progressTitle": "Configurações de exibição de progresso:",
+        "progressPerPlate": "<strong>Progresso percentual - Por placa:</strong> Mostra porcentagem de progresso e tempo restante apenas para a placa atual (comportamento padrão)",
+        "progressGlobal": "<strong>Progresso percentual - Global:</strong> Mostra porcentagem de progresso geral e tempo restante em todas as placas em toda a fila. Útil para rastrear a conclusão total do trabalho."
+      }
+    },
+    "dataSecurity": {
+      "title": "Segurança de dados",
+      "content": "Este aplicativo usa seu navegador como ambiente e é executado localmente em seu computador. Isso significa que nenhum de seus dados é enviado para nosso servidor ou qualquer provedor de nuvem de terceiros. Você pode até salvar este aplicativo como uma página da web e usá-lo completamente offline. Este site também não usa cookies ou armazena informações pessoais em seu dispositivo."
+    }
+  }
+}

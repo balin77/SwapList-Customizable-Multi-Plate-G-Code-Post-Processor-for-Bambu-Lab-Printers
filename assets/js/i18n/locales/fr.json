@@ -1,0 +1,332 @@
+{
+  "app": {
+    "title": "CLEAR.bed",
+    "version": "AutoEject Version V1.5",
+    "inspiredBy": "Inspiré par Swaplist.app"
+  },
+  "ui": {
+    "buttons": {
+      "export": "Générer le fichier 3MF",
+      "exportGcode": "Exporter GCODE",
+      "reset": "Réinitialiser",
+      "remove": "×"
+    },
+    "dropzone": {
+      "title": "DÉPOSEZ VOS FICHIERS ICI",
+      "subtitle": "...ou cliquez pour sélectionner"
+    },
+    "modes": {
+      "swap": "Mode SWAP",
+      "pushoff": "Mode Push Off"
+    },
+    "printerInfo": {
+      "label": "Modèle d'imprimante:",
+      "unknown": "Inconnu"
+    }
+  },
+  "statistics": {
+    "title": "Statistiques générales:",
+    "duration": "Durée:",
+    "plates": "Plateaux:",
+    "totalWeight": "Poids total:",
+    "totalCost": "Coût total:",
+    "costPerKg": "$/kg",
+    "filamentTitle": "Statistiques d'utilisation du filament:",
+    "slot": "Slot"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "loopRepeats": {
+      "label": "Répétitions de boucle",
+      "help": "Ce nombre définit combien de fois la file d'attente entière sera réimprimée.",
+      "example": "Exemple: Le plateau \"A\" est réglé sur 3 répétitions, le plateau \"B\" sur 1 répétition et les \"Répétitions de boucle\" sur 2. Cela donnera l'ordre d'impression suivant:",
+      "exampleOrder": "A A A B A A A B ."
+    },
+    "plateSettings": {
+      "title": "Paramètres du plateau",
+      "instruction": "Cliquez sur un plateau ci-dessus pour configurer ses paramètres",
+      "objects": {
+        "title": "Objets sur ce plateau",
+        "count": "Nombre d'objets:"
+      },
+      "nozzleFilament": {
+        "title": "Buse & Filament",
+        "hideLoadLine": "Masquer la ligne de chargement de la buse dans le modèle",
+        "hideLoadLineHelp": "Activez cette option pour obtenir la bonne pression de buse lors du démarrage d'une nouvelle impression. Si désactivée, cela peut causer une légère sous-extrusion en bas du premier objet.",
+        "purgeOff": "Désactiver la purge du filament",
+        "purgeOffHelp": "Désactive la séquence de purge du filament au début de ce plateau. Cela peut accélérer les travaux multi-plateaux mais peut causer des problèmes si le plateau précédent utilisait des matériaux différents."
+      },
+      "pushoff": {
+        "title": "Push-off & Éjection",
+        "bedRaiseOffset": "Décalage de levée du plateau avant l'éjection (mm)",
+        "bedRaiseOffsetHelp": "Définit de combien le plateau est levé avant d'effectuer la séquence d'éjection.",
+        "securePushoff": "Séquence de push-off sécurisée",
+        "securePushoffHelp": "Lorsqu'activé, l'application effectue plusieurs push-offs contrôlés à des hauteurs Z décroissantes avant le push final à Z=1. Cela permet d'éviter les collisions et d'adoucir l'éjection.",
+        "additionalLevels": "Niveaux de push-off supplémentaires",
+        "additionalLevelsHelp": "Définit comment la hauteur Z maximale est divisée. Exemple: si Z max est de 100 mm et que vous entrez 2, les push-offs se produisent autour de Z≈50 et le final à Z=1. Si vous entrez 5, il y aura 5 push-offs supplémentaires, le dernier toujours à Z=1. Une valeur de 1 signifie seulement un push final à Z=1."
+      }
+    },
+    "globalSettings": {
+      "title": "Paramètres globaux",
+      "cooling": {
+        "title": "Refroidissement & Température du plateau",
+        "raiseBed": "Lever le plateau pour le refroidissement",
+        "raiseBedHelp": "Activez cette option pour lever le plateau à la hauteur du ventilateur pour un refroidissement plus rapide. <b>Attention:</b> Pour les grandes impressions, le couvercle de l'imprimante doit être retiré pour éviter les collisions.",
+        "targetTemp": "Température cible de refroidissement du plateau (°C)",
+        "targetTempHelp": "Spécifie la température du plateau qui doit être atteinte avant la séquence d'éjection.",
+        "maxTime": "Temps de refroidissement max (min)",
+        "maxTimeHelp": "Définit la durée maximale de refroidissement en minutes. L'application insérera des commandes <code>M190</code> répétées pour attendre le plateau jusqu'à ce que ce temps total soit atteint. Par défaut 40 minutes."
+      },
+      "sounds": {
+        "title": "Sons de l'imprimante",
+        "disable": "Désactiver les sons de l'imprimante",
+        "disableHelp": "Contrôle la suppression des sons de l'imprimante pour les imprimantes A1/A1M. Lorsqu'activé, vous pouvez choisir de supprimer tous les sons ou seulement les sons entre les plateaux. Ce paramètre n'affecte que les imprimantes A1/A1M.",
+        "removeAll": "Supprimer tous les sons de l'imprimante",
+        "removeBetweenPlates": "Supprimer les sons uniquement entre les plateaux"
+      },
+      "ams": {
+        "title": "Optimisation AMS",
+        "enable": "Activer la suppression de la redondance AMS",
+        "enableHelp": "Lorsqu'activé, l'application supprime automatiquement les changements de filament AMS redondants entre les plateaux. Cela élimine les séquences inutiles \"décharger tout\" + \"charger le même slot\", rendant les impressions multi-plateaux plus efficaces. Disponible uniquement pour les imprimantes A1/A1M."
+      },
+      "startsequence": {
+        "title": "Séquence de démarrage",
+        "disableBedLeveling": "Désactiver le nivellement du plateau entre les plateaux",
+        "disableBedLevelingHelp": "Lorsqu'activé, le nivellement du plateau est ignoré pour tous les plateaux après le premier. Cela accélère l'impression multi-plateaux en réutilisant les données de nivellement du premier plateau. Disponible uniquement pour les imprimantes X1/P1 en mode push-off.",
+        "disableFirstLayerScan": "Désactiver le scan de première couche",
+        "disableFirstLayerScanHelp": "Lorsqu'activé, le scan d'inspection de la première couche est désactivé. Cela peut accélérer le démarrage de l'impression mais supprime le contrôle qualité automatique. Disponible uniquement pour les imprimantes X1 en mode push-off."
+      },
+      "project": {
+        "title": "Paramètres du projet",
+        "overrideMetadata": "Remplacer les paramètres du projet & filament",
+        "overrideMetadataHelp": "Lorsqu'activé, l'application régénère les entrées de filament et les paramètres matériau/imprimante. Ceci est essentiel si vous utilisez de nouvelles affectations de slots AMS qui n'étaient pas présentes dans le G-code original. Lorsque désactivé, les métadonnées 3MF d'origine sont conservées telles quelles; si vous remappez vers des slots AMS qui n'étaient pas définis à l'origine, l'imprimante ou Studio peut signaler une incompatibilité."
+      },
+      "progress": {
+        "title": "Affichage de la progression",
+        "percentageProgress": "Progression en pourcentage",
+        "percentageProgressHelp": "Contrôle comment le pourcentage et le temps restant sont calculés:",
+        "perPlate": "Par plateau",
+        "perPlateDesc": "La progression affiche le pourcentage/temps pour le plateau actuel uniquement (comportement par défaut)",
+        "global": "Global (sur tous les plateaux)",
+        "globalDesc": "La progression affiche le pourcentage/temps global sur tous les plateaux de la file",
+        "helpText": "Contrôle comment le pourcentage et le temps restant sont calculés:<ul><li><strong>Par plateau:</strong> La progression affiche le pourcentage/temps pour le plateau actuel uniquement (comportement par défaut)</li><li><strong>Global:</strong> La progression affiche le pourcentage/temps global sur tous les plateaux de la file</li></ul>"
+      },
+      "file": {
+        "title": "Paramètres de fichier",
+        "customName": "Nom de fichier personnalisé:",
+        "testExport": "Générer un fichier de test (séquences début/fin uniquement)",
+        "testExportHelp": "Lorsqu'activé, exporte uniquement les séquences de début et de fin sans le code d'impression réel. Cela crée un petit fichier de test parfait pour vérifier la logique de changement de plateau sans exécuter une impression complète. Le fichier de test passera par tous les changements de plateau mais sautera l'impression réelle des objets.",
+        "testWaitTime": "Temps d'attente du fichier de test (secondes):"
+      }
+    }
+  },
+  "info": {
+    "title": "Informations sur l'application",
+    "howToUse": {
+      "title": "Comment utiliser cette application",
+      "supportedPrinters": {
+        "title": "Imprimantes supportées",
+        "intro": "Cette application prend en charge les modèles d'imprimantes Bambu Lab suivants:",
+        "a1mini": "A1 Mini - Mode SWAP avec système Swapmod",
+        "a1": "A1 - Mode SWAP avec systèmes JoBox, 3Print ou Printflow",
+        "x1": "Série X1 - Mode push-off (éjection directe avec la tête d'impression)",
+        "p1": "Série P1 - Mode push-off (éjection directe avec la tête d'impression)",
+        "autoDetect": "L'application détecte automatiquement votre modèle d'imprimante à partir du fichier GCODE."
+      },
+      "gettingStarted": {
+        "title": "Pour commencer",
+        "step1": "Charger vos fichiers: Glissez-déposez vos fichiers .gcode.3mf découpés depuis Bambu Studio ou Orca Slicer dans la zone de dépôt ci-dessus.",
+        "step1important": "Important: Seuls les fichiers de projet entièrement découpés (format: filename.gcode.3mf) sont acceptés. Les fichiers de modèles 3D non découpés ou les fichiers .gcode simples ne sont pas pris en charge.",
+        "step2": "Détection de l'imprimante: L'application détecte automatiquement votre modèle d'imprimante et affiche le mode correspondant (A1 Mini, X1 ou P1).",
+        "step3": "Configurer les paramètres: Ajustez les options dans le panneau des paramètres qui apparaît sous vos plateaux chargés.",
+        "step4": "Exporter: Cliquez sur \"Générer le fichier SWAP\" ou \"Exporter GCODE\" pour créer vos fichiers traités."
+      },
+      "automation": {
+        "title": "Mode d'automatisation",
+        "intro": "Cette application prend en charge à la fois les systèmes d'échange de plateaux (Swapmod, JoBox, 3Print, Printflow) et l'éjection directe avec la tête d'impression.",
+        "modesTitle": "Modes disponibles:",
+        "a1mini": "A1 Mini (Mode SWAP): Crée des fichiers .swap.3mf pour l'échange automatique de plateaux en utilisant le système Swapmod",
+        "a1": "A1 (Mode SWAP): Prend en charge les systèmes JoBox, 3Print et Printflow pour l'échange automatique de plateaux",
+        "x1p1": "Série X1/P1 (Mode Push-off): Génère du GCODE modifié avec des séquences d'éjection automatisées utilisant la tête d'impression",
+        "switchingTitle": "Changement entre les modes:",
+        "a1miniSwitch": "A1 Mini: Seul Swapmod est disponible - aucune sélection de mode nécessaire",
+        "a1Switch": "A1: Cliquez sur les logos (JoBox, 3Print, Printflow) en haut pour basculer entre différents systèmes d'échange de plateaux. IMPORTANT: Vous devez sélectionner le mode correct qui correspond à votre système d'échange de plateaux physiquement installé. L'utilisation du mauvais mode peut causer de graves dommages à votre imprimante!",
+        "x1p1Switch": "X1/P1: Utilise exclusivement le mode push-off - aucune sélection de mode nécessaire"
+      },
+      "plates": {
+        "title": "Travailler avec les plateaux",
+        "select": "Sélectionner les plateaux: Cliquez sur n'importe quel plateau pour le sélectionner et configurer les paramètres spécifiques au plateau",
+        "repeat": "Nombre de répétitions: Changez le nombre à côté de chaque plateau pour l'imprimer plusieurs fois",
+        "remove": "Supprimer les plateaux: Cliquez sur le bouton \"×\" dans le coin supérieur droit de n'importe quel plateau",
+        "duplicate": "Dupliquer les plateaux: Cliquez sur le bouton \"+\" sur l'image du plateau pour faire une copie",
+        "reorder": "Réorganiser les plateaux: Glissez-déposez les plateaux dans la liste pour réorganiser l'ordre d'impression"
+      },
+      "filament": {
+        "title": "Filament & Slots AMS",
+        "changeSlot": "Changer l'affectation de slot: Cliquez sur n'importe quel échantillon de filament coloré sur un plateau pour le réaffecter à un slot AMS différent (1-4)",
+        "globalColors": "Couleurs de slots globales: Cliquez sur les échantillons de couleur dans \"Statistiques d'utilisation du filament\" pour personnaliser les couleurs de slots globales",
+        "tracking": "Suivi de l'utilisation: Visualisez la consommation totale de filament par slot dans la zone des statistiques"
+      },
+      "settingsPanel": {
+        "title": "Options du panneau des paramètres",
+        "general": "Paramètres généraux:",
+        "generalCustomName": "Nom de fichier personnalisé: Définissez votre nom de fichier de sortie préféré",
+        "generalLoopRepeats": "Répétitions de boucle: Nombre de fois pour répéter toute la file d'impression",
+        "generalTestExport": "Export de fichier de test: Génère un fichier de test avec uniquement les séquences début/fin pour le débogage. Cela crée un petit fichier qui passe par toutes les séquences de changement de plateau sans imprimer les objets réels. Parfait pour tester votre configuration sans perdre de temps ou de matériel. Vous pouvez configurer le temps d'attente entre les plateaux dans le paramètre \"Temps d'attente du fichier de test\" (par défaut: 30 secondes).",
+        "plateSpecific": "Paramètres spécifiques au plateau:",
+        "plateSpecificIntro": "Cliquez sur un plateau ci-dessus pour accéder à ces paramètres:",
+        "plateSpecificObjects": "Nombre d'objets & coordonnées: Configurez le nombre d'objets sur le plateau et leurs positions X",
+        "plateSpecificNozzle": "Paramètres de buse & filament: Contrôlez les séquences de purge et le comportement de la buse par plateau",
+        "plateSpecificPushoff": "Paramètres de push-off: Personnalisez le comportement d'éjection pour chaque plateau individuel",
+        "advanced": "Options avancées X1/P1:",
+        "advancedBedLeveling": "\"Désactiver le nivellement du plateau entre les plateaux\" - Ignore le nivellement du plateau pour tous les plateaux après le premier. Cela peut accélérer l'impression multi-plateaux en réutilisant les données de nivellement de l'impression initiale. Théorie: Le plateau a déjà été nivelé lors de l'initialisation de l'impression, donc un nouveau nivellement entre les plateaux ne devrait pas être nécessaire. Risque: Il y a un petit risque que le processus d'éjection ait affecté le calibrage de nivellement de la tête d'impression. Utilisez cette option si la vitesse d'impression est plus importante que la fiabilité maximale.",
+        "advancedFirstLayer": "\"Désactiver le scan de première couche\" - Désactive le scan d'inspection de la première couche. Cela accélère le démarrage de l'impression mais supprime le contrôle qualité automatique. Utilisez ceci si vous considérez le scan comme inutile ou si vous préférez la vitesse à l'assurance qualité supplémentaire.",
+        "advancedPurge": "\"Désactiver la purge du filament\" - Ignore la séquence de purge après le premier plateau (travaux multi-plateaux plus rapides). N'activez que s'il n'y a pas de changement de filament entre les plateaux.",
+        "advancedLoadLine": "\"Masquer la ligne de chargement de la buse dans le modèle\" - Extrude du matériel supplémentaire au démarrage de l'impression pour compenser la ligne de chargement supprimée. Empêche la sous-extrusion sur la couche inférieure de l'objet, mais peut être visible si le démarrage de l'impression est au bord de l'objet.",
+        "advancedCooling": "\"Lever le plateau pour le refroidissement\" - Déplace le plateau à la hauteur du ventilateur pour un refroidissement plus rapide. Pour les objets hauts, retirez le couvercle en verre supérieur de l'imprimante pour éviter les collisions.",
+        "advancedSecurePushoff": "\"Séquence de push-off sécurisée\" - Utilise des push-offs contrôlés à plusieurs hauteurs pour garantir une éjection sûre des objets finis de l'imprimante",
+        "advancedOverride": "\"Remplacer les paramètres du projet & filament\" - Régénère les métadonnées pour les nouvelles affectations de slots. Cette option devient nécessaire lorsque les slots AMS sont redéfinis.",
+        "cooldownSound": "Paramètres globaux de refroidissement & son:",
+        "cooldownSoundTarget": "Température cible du plateau: Refroidir à cette température avant l'éjection (par défaut: 23°C)",
+        "cooldownSoundMax": "Temps de refroidissement max: Temps maximum d'attente pour le refroidissement (par défaut: 40 minutes)",
+        "cooldownSoundSounds": "Sons de l'imprimante: Désactiver tous les sons ou seulement les sons entre les plateaux (A1/A1M uniquement)",
+        "cooldownSoundAms": "Optimisation AMS: Supprimer les changements de filament redondants entre les plateaux (A1/A1M uniquement)",
+        "progressDisplay": "Paramètres d'affichage de la progression:",
+        "progressDisplayPerPlate": "Progression en pourcentage - Par plateau: Affiche le pourcentage de progression et le temps restant pour le plateau actuel uniquement (comportement par défaut)",
+        "progressDisplayGlobal": "Progression en pourcentage - Global: Affiche le pourcentage de progression global et le temps restant sur tous les plateaux de toute la file. Utile pour suivre l'achèvement total du travail."
+      }
+    },
+    "dataSecurity": {
+      "title": "Sécurité des données",
+      "content": "Cette application utilise votre navigateur comme environnement et s'exécute localement sur votre ordinateur. Cela signifie qu'aucune de vos données n'est envoyée à notre serveur ou à un fournisseur cloud tiers. Vous pouvez même enregistrer cette application en tant que page web et l'utiliser complètement hors ligne. Ce site n'utilise pas non plus de cookies ni ne stocke d'informations personnelles sur votre appareil."
+    }
+  },
+  "plate": {
+    "title": "Plateau",
+    "slot": "Slot",
+    "weight": "g",
+    "length": "m"
+  },
+  "errors": {
+    "fileNotFound": "Fichier non trouvé",
+    "invalidFormat": "Format de fichier invalide",
+    "parseError": "Échec de l'analyse du fichier",
+    "localeLoadFailed": "Échec du chargement du fichier de langue",
+    "defaultError": "Veuillez utiliser des fichiers découpés aux formats *.3mf ou *.gcode.3mf. L'utilisation de fichiers *.gcode simples n'est pas prise en charge.",
+    "fileNotReadable": "Fichier non lisible.",
+    "noSlicedData": "Aucune donnée découpée trouvée.",
+    "errorReading": "Erreur lors de la lecture de {{fileName}}: {{error}}",
+    "noActivePlates": "Aucun plateau actif (Répétitions=0).",
+    "gcodeExportFailed": "Échec de l'export GCODE: {{error}}",
+    "exportFailed": "Échec de l'export: {{error}}",
+    "printerNotSupported": "Ce modèle d'imprimante n'est pas encore pris en charge dans cette application (fichier: {{fileName}}).",
+    "missingCoordinates": "Attention: Certaines coordonnées X sont manquantes (0). Veuillez entrer des valeurs valides avant l'export.",
+    "swapModeOnlyA1": "Le mode SWAP n'est disponible que pour les imprimantes A1 Mini et A1. Pour les autres imprimantes, veuillez utiliser le mode Push Off.",
+    "incompatibleSlots": "Slots AMS incompatibles détectés. Ce plateau utilise des slots qui ne sont pas compatibles avec les plateaux précédents. Veuillez vérifier votre configuration de filament.",
+    "tooManyColors": "Trop de couleurs/matériaux différents détectés. L'imprimante ne prend en charge que 4 slots AMS.",
+    "colorConflict": "Conflit de couleur détecté. Des matériaux différents sont affectés au même slot.",
+    "slotMismatch": "Incompatibilité de slot AMS détectée entre les plateaux."
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português",
+    "ru": "Русский",
+    "zh": "中文"
+  },
+  "colorPicker": {
+    "title": "Informations Slot {{slot}}",
+    "color": "Couleur:",
+    "producer": "Producteur:",
+    "material": "Matériau:",
+    "filamentId": "ID Filament:",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "appInfo": {
+    "title": "Informations sur l'application",
+    "version": "AutoEject Version V1.5",
+    "inspiredBy": "Inspiré par Swaplist.app",
+    "howToUse": {
+      "title": "Comment utiliser cette application",
+      "supportedPrinters": {
+        "title": "Imprimantes supportées",
+        "intro": "Cette application prend en charge les modèles d'imprimantes Bambu Lab suivants:",
+        "a1Mini": "<strong>A1 Mini</strong> - Mode SWAP avec système Swapmod",
+        "a1": "<strong>A1</strong> - Mode SWAP avec systèmes JoBox, 3Print ou Printflow",
+        "x1": "<strong>Série X1</strong> - Mode push-off (éjection directe avec la tête d'impression)",
+        "p1": "<strong>Série P1</strong> - Mode push-off (éjection directe avec la tête d'impression)",
+        "autoDetect": "L'application détecte automatiquement votre modèle d'imprimante à partir du fichier GCODE."
+      },
+      "gettingStarted": {
+        "title": "Pour commencer",
+        "step1": "<strong>Charger vos fichiers:</strong> Glissez-déposez vos fichiers <code>.gcode.3mf</code> découpés depuis Bambu Studio ou Orca Slicer dans la zone de dépôt ci-dessus.<br><strong>Important:</strong> Seuls les fichiers de projet entièrement découpés (format: <code>filename.gcode.3mf</code>) sont acceptés. Les fichiers de modèles 3D non découpés ou les fichiers <code>.gcode</code> simples ne sont pas pris en charge.",
+        "step2": "<strong>Détection de l'imprimante:</strong> L'application détecte automatiquement votre modèle d'imprimante et affiche le mode correspondant (A1 Mini, X1 ou P1).",
+        "step3": "<strong>Configurer les paramètres:</strong> Ajustez les options dans le panneau des paramètres qui apparaît sous vos plateaux chargés.",
+        "step4": "<strong>Exporter:</strong> Cliquez sur \"Générer le fichier SWAP\" ou \"Exporter GCODE\" pour créer vos fichiers traités."
+      },
+      "automation": {
+        "title": "Mode d'automatisation",
+        "intro": "Cette application prend en charge à la fois les systèmes d'échange de plateaux (Swapmod, JoBox, 3Print, Printflow) et l'éjection directe avec la tête d'impression.",
+        "modesTitle": "Modes disponibles:",
+        "a1Mini": "<strong>A1 Mini (Mode SWAP):</strong> Crée des fichiers .swap.3mf pour l'échange automatique de plateaux en utilisant le système Swapmod",
+        "a1": "<strong>A1 (Mode SWAP):</strong> Prend en charge les systèmes JoBox, 3Print et Printflow pour l'échange automatique de plateaux",
+        "x1p1": "<strong>Série X1/P1 (Mode Push-off):</strong> Génère du GCODE modifié avec des séquences d'éjection automatisées utilisant la tête d'impression",
+        "switchingTitle": "Changement entre les modes:",
+        "a1MiniSwitch": "<strong>A1 Mini:</strong> Seul Swapmod est disponible - aucune sélection de mode nécessaire",
+        "a1Switch": "<strong>A1:</strong> Cliquez sur les logos (JoBox, 3Print, Printflow) en haut pour basculer entre différents systèmes d'échange de plateaux. <strong>IMPORTANT:</strong> Vous devez sélectionner le mode correct qui correspond à votre système d'échange de plateaux physiquement installé. <span style=\"color: #ff4444; font-weight: bold;\">L'utilisation du mauvais mode peut causer de graves dommages à votre imprimante!</span>",
+        "x1p1Switch": "<strong>X1/P1:</strong> Utilise exclusivement le mode push-off - aucune sélection de mode nécessaire"
+      },
+      "plates": {
+        "title": "Travailler avec les plateaux",
+        "select": "<strong>Sélectionner les plateaux:</strong> Cliquez sur n'importe quel plateau pour le sélectionner et configurer les paramètres spécifiques au plateau",
+        "repeat": "<strong>Nombre de répétitions:</strong> Changez le nombre à côté de chaque plateau pour l'imprimer plusieurs fois",
+        "remove": "<strong>Supprimer les plateaux:</strong> Cliquez sur le bouton \"×\" dans le coin supérieur droit de n'importe quel plateau",
+        "duplicate": "<strong>Dupliquer les plateaux:</strong> Cliquez sur le bouton \"+\" sur l'image du plateau pour faire une copie",
+        "reorder": "<strong>Réorganiser les plateaux:</strong> Glissez-déposez les plateaux dans la liste pour réorganiser l'ordre d'impression"
+      },
+      "filament": {
+        "title": "Filament & Slots AMS",
+        "changeSlot": "<strong>Changer l'affectation de slot:</strong> Cliquez sur n'importe quel échantillon de filament coloré sur un plateau pour le réaffecter à un slot AMS différent (1-4)",
+        "globalColors": "<strong>Couleurs de slots globales:</strong> Cliquez sur les échantillons de couleur dans \"Statistiques d'utilisation du filament\" pour personnaliser les couleurs de slots globales",
+        "tracking": "<strong>Suivi de l'utilisation:</strong> Visualisez la consommation totale de filament par slot dans la zone des statistiques"
+      },
+      "settingsPanel": {
+        "title": "Options du panneau des paramètres",
+        "generalTitle": "Paramètres généraux:",
+        "generalCustomName": "<strong>Nom de fichier personnalisé:</strong> Définissez votre nom de fichier de sortie préféré",
+        "generalLoopRepeats": "<strong>Répétitions de boucle:</strong> Nombre de fois pour répéter toute la file d'impression",
+        "generalTestExport": "<strong>Export de fichier de test:</strong> Génère un fichier de test avec uniquement les séquences début/fin pour le débogage. Cela crée un petit fichier qui passe par toutes les séquences de changement de plateau sans imprimer les objets réels. Parfait pour tester votre configuration sans perdre de temps ou de matériel. Vous pouvez configurer le temps d'attente entre les plateaux dans le paramètre \"Temps d'attente du fichier de test\" (par défaut: 30 secondes).",
+        "plateSpecificTitle": "Paramètres spécifiques au plateau:",
+        "plateSpecificIntro": "<em>Cliquez sur un plateau ci-dessus pour accéder à ces paramètres:</em>",
+        "plateSpecificObjects": "<strong>Nombre d'objets & coordonnées:</strong> Configurez le nombre d'objets sur le plateau et leurs positions X",
+        "plateSpecificNozzle": "<strong>Paramètres de buse & filament:</strong> Contrôlez les séquences de purge et le comportement de la buse par plateau",
+        "plateSpecificPushoff": "<strong>Paramètres de push-off:</strong> Personnalisez le comportement d'éjection pour chaque plateau individuel",
+        "advancedTitle": "Options avancées X1/P1:",
+        "advancedBedLeveling": "<strong>\"Désactiver le nivellement du plateau entre les plateaux\"</strong> - Ignore le nivellement du plateau pour tous les plateaux après le premier. Cela peut accélérer l'impression multi-plateaux en réutilisant les données de nivellement de l'impression initiale.<em>Théorie:</em> Le plateau a déjà été nivelé lors de l'initialisation de l'impression, donc un nouveau nivellement entre les plateaux ne devrait pas être nécessaire.<em>Risque:</em> Il y a un petit risque que le processus d'éjection ait affecté le calibrage de nivellement de la tête d'impression. Utilisez cette option si la vitesse d'impression est plus importante que la fiabilité maximale.",
+        "advancedFirstLayer": "<strong>\"Désactiver le scan de première couche\"</strong> - Désactive le scan d'inspection de la première couche. Cela accélère le démarrage de l'impression mais supprime le contrôle qualité automatique. Utilisez ceci si vous considérez le scan comme inutile ou si vous préférez la vitesse à l'assurance qualité supplémentaire.",
+        "advancedPurge": "<strong>\"Désactiver la purge du filament\"</strong> - Ignore la séquence de purge après le premier plateau (travaux multi-plateaux plus rapides). N'activez que s'il n'y a pas de changement de filament entre les plateaux.",
+        "advancedLoadLine": "<strong>\"Masquer la ligne de chargement de la buse dans le modèle\"</strong> - Extrude du matériel supplémentaire au démarrage de l'impression pour compenser la ligne de chargement supprimée. Empêche la sous-extrusion sur la couche inférieure de l'objet, mais peut être visible si le démarrage de l'impression est au bord de l'objet.",
+        "advancedCooling": "<strong>\"Lever le plateau pour le refroidissement\"</strong> - Déplace le plateau à la hauteur du ventilateur pour un refroidissement plus rapide. Pour les objets hauts, retirez le couvercle en verre supérieur de l'imprimante pour éviter les collisions.",
+        "advancedSecurePushoff": "<strong>\"Séquence de push-off sécurisée\"</strong> - Utilise des push-offs contrôlés à plusieurs hauteurs pour garantir une éjection sûre des objets finis de l'imprimante",
+        "advancedOverride": "<strong>\"Remplacer les paramètres du projet & filament\"</strong> - Régénère les métadonnées pour les nouvelles affectations de slots. Cette option devient nécessaire lorsque les slots AMS sont redéfinis.",
+        "cooldownTitle": "Paramètres globaux de refroidissement & son:",
+        "cooldownTarget": "<strong>Température cible du plateau:</strong> Refroidir à cette température avant l'éjection (par défaut: 23°C)",
+        "cooldownMax": "<strong>Temps de refroidissement max:</strong> Temps maximum d'attente pour le refroidissement (par défaut: 40 minutes)",
+        "cooldownSounds": "<strong>Sons de l'imprimante:</strong> Désactiver tous les sons ou seulement les sons entre les plateaux (A1/A1M uniquement)",
+        "cooldownAms": "<strong>Optimisation AMS:</strong> Supprimer les changements de filament redondants entre les plateaux (A1/A1M uniquement)",
+        "progressTitle": "Paramètres d'affichage de la progression:",
+        "progressPerPlate": "<strong>Progression en pourcentage - Par plateau:</strong> Affiche le pourcentage de progression et le temps restant pour le plateau actuel uniquement (comportement par défaut)",
+        "progressGlobal": "<strong>Progression en pourcentage - Global:</strong> Affiche le pourcentage de progression global et le temps restant sur tous les plateaux de toute la file. Utile pour suivre l'achèvement total du travail."
+      }
+    },
+    "dataSecurity": {
+      "title": "Sécurité des données",
+      "content": "Cette application utilise votre navigateur comme environnement et s'exécute localement sur votre ordinateur. Cela signifie qu'aucune de vos données n'est envoyée à notre serveur ou à un fournisseur cloud tiers. Vous pouvez même enregistrer cette application en tant que page web et l'utiliser complètement hors ligne. Ce site n'utilise pas non plus de cookies ni ne stocke d'informations personnelles sur votre appareil."
+    }
+  }
+}

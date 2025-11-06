@@ -1,0 +1,329 @@
+{
+  "app": {
+    "title": "CLEAR.bed",
+    "version": "AutoEject Versione V1.5",
+    "inspiredBy": "Ispirato da Swaplist.app"
+  },
+  "ui": {
+    "buttons": {
+      "export": "Genera file 3MF",
+      "exportGcode": "Esporta GCODE",
+      "reset": "Ripristina",
+      "remove": "×"
+    },
+    "dropzone": {
+      "title": "TRASCINA I FILE QUI",
+      "subtitle": "...o clicca per selezionare"
+    },
+    "modes": {
+      "swap": "Modalità SWAP",
+      "pushoff": "Modalità Push Off"
+    },
+    "printerInfo": {
+      "label": "Modello stampante:",
+      "unknown": "Sconosciuto"
+    }
+  },
+  "statistics": {
+    "title": "Statistiche generali:",
+    "duration": "Durata:",
+    "plates": "Piastre:",
+    "totalWeight": "Peso totale:",
+    "totalCost": "Costo totale:",
+    "costPerKg": "€/kg",
+    "filamentTitle": "Statistiche utilizzo filamento:",
+    "slot": "Slot"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "language": "Lingua",
+    "loopRepeats": {
+      "label": "Ripetizioni ciclo",
+      "help": "Questo numero definisce quante volte verrà ripetuta l'intera coda di stampa.",
+      "example": "Esempio: La piastra \"A\" è impostata su 3 ripetizioni, la piastra \"B\" è impostata su 1 ripetizione e le \"Ripetizioni ciclo\" sono impostate su 2. L'ordine di stampa risultante sarà:",
+      "exampleOrder": "A A A B A A A B ."
+    },
+    "plateSettings": {
+      "title": "Impostazioni piastra",
+      "instruction": "Clicca su una piastra sopra per configurare le sue impostazioni",
+      "objects": {
+        "title": "Oggetti su questa piastra",
+        "count": "Numero di oggetti:"
+      },
+      "nozzleFilament": {
+        "title": "Ugello e Filamento",
+        "hideLoadLine": "Nascondi linea di caricamento ugello nel modello",
+        "hideLoadLineHelp": "Attiva questa opzione per ottenere la corretta pressione dell'ugello all'inizio di una nuova stampa. Se disattivata, potrebbe causare una leggera sotto-estrusione nella parte inferiore del primo oggetto.",
+        "purgeOff": "Disattiva spurgo filamento",
+        "purgeOffHelp": "Disabilita la sequenza di spurgo filamento all'inizio di questa piastra. Questo può accelerare i lavori multi-piastra ma potrebbe causare problemi se la piastra precedente utilizzava materiali diversi."
+      },
+      "pushoff": {
+        "title": "Push-off ed Espulsione",
+        "bedRaiseOffset": "Sollevamento piatto prima del push-out (mm)",
+        "bedRaiseOffsetHelp": "Definisce di quanto viene sollevato il piatto prima di eseguire la sequenza di push-out.",
+        "securePushoff": "Sequenza push-off sicura",
+        "securePushoffHelp": "Se abilitata, l'app esegue più push-off controllati a altezze Z decrescenti prima del push finale a Z=1. Questo aiuta ad evitare collisioni e facilita l'espulsione.",
+        "additionalLevels": "Livelli push-off aggiuntivi",
+        "additionalLevelsHelp": "Definisce come viene divisa l'altezza Z massima. Esempio: se l'altezza Z massima è 100 mm e inserisci 2, i push-off avverranno a Z≈50 e quello finale a Z=1. Se inserisci 5, ci saranno 5 push-off extra, con l'ultimo sempre a Z=1. Un valore di 1 significa solo un push finale a Z=1."
+      }
+    },
+    "globalSettings": {
+      "title": "Impostazioni globali",
+      "cooling": {
+        "title": "Raffreddamento e Temperatura piatto",
+        "raiseBed": "Solleva piatto per raffreddamento",
+        "raiseBedHelp": "Attiva questa opzione per sollevare il piatto all'altezza della ventola per un raffreddamento più rapido. <b>Attenzione:</b> Per stampe grandi è necessario rimuovere il coperchio della stampante per evitare collisioni.",
+        "targetTemp": "Temperatura target piatto per raffreddamento (°C)",
+        "targetTempHelp": "Specifica la temperatura del piatto che deve essere raggiunta prima della sequenza di push-out.",
+        "maxTime": "Tempo massimo raffreddamento (min)",
+        "maxTimeHelp": "Definisce la durata massima del raffreddamento in minuti. L'app inserirà comandi <code>M190</code> ripetuti per attendere il piatto fino al raggiungimento di questo tempo totale. Il valore predefinito è 40 minuti."
+      },
+      "sounds": {
+        "title": "Suoni stampante",
+        "disable": "Disabilita suoni stampante",
+        "disableHelp": "Controlla la rimozione dei suoni della stampante per stampanti A1/A1M. Se abilitato, puoi scegliere di rimuovere tutti i suoni o solo i suoni tra le piastre. Questa impostazione riguarda solo le stampanti A1/A1M.",
+        "removeAll": "Rimuovi tutti i suoni della stampante",
+        "removeBetweenPlates": "Rimuovi solo i suoni tra le piastre"
+      },
+      "ams": {
+        "title": "Ottimizzazione AMS",
+        "enable": "Abilita rimozione ridondanze AMS",
+        "enableHelp": "Se attivata, l'app rimuove automaticamente i cambi filamento AMS ridondanti tra le piastre. Questo elimina le sequenze inutili \"scarica tutto\" + \"carica stesso slot\", rendendo le stampe multi-piastra più efficienti. Disponibile solo per stampanti A1/A1M."
+      },
+      "startsequence": {
+        "title": "Sequenza di avvio",
+        "disableBedLeveling": "Disabilita livellamento piatto tra piastre",
+        "disableBedLevelingHelp": "Se attivata, il livellamento del piatto viene saltato per tutte le piastre dopo la prima. Questo accelera la stampa multi-piastra riutilizzando i dati di livellamento della prima piastra. Disponibile solo per stampanti X1/P1 in modalità push-off.",
+        "disableFirstLayerScan": "Disabilita scansione primo strato",
+        "disableFirstLayerScanHelp": "Se attivata, la scansione di ispezione del primo strato viene disabilitata. Questo può accelerare l'avvio della stampa ma rimuove il controllo qualità automatico. Disponibile solo per stampanti X1 in modalità push-off."
+      },
+      "project": {
+        "title": "Impostazioni progetto",
+        "overrideMetadata": "Sovrascrivi impostazioni progetto e filamento",
+        "overrideMetadataHelp": "Se attivata, l'app rigenera le voci filamento e le impostazioni materiale/stampante. Questo è essenziale se utilizzi nuove assegnazioni slot AMS che non erano presenti nel G-code originale. Se disattivata, i metadati 3MF originali vengono mantenuti così come sono; se riassegni a slot AMS che non erano originariamente definiti, la stampante o Studio potrebbe segnalare una discrepanza."
+      },
+      "progress": {
+        "title": "Visualizzazione progresso",
+        "percentageProgress": "Progresso percentuale",
+        "percentageProgressHelp": "Controlla come vengono calcolati percentuale e tempo rimanente:",
+        "perPlate": "Per piastra",
+        "perPlateDesc": "Il progresso mostra percentuale/tempo solo per la piastra corrente (comportamento predefinito)",
+        "global": "Globale (su tutte le piastre)",
+        "globalDesc": "Il progresso mostra percentuale/tempo complessivo su tutte le piastre in coda",
+        "helpText": "Controlla come vengono calcolati percentuale e tempo rimanente:<ul><li><strong>Per piastra:</strong> Il progresso mostra percentuale/tempo solo per la piastra corrente (comportamento predefinito)</li><li><strong>Globale:</strong> Il progresso mostra percentuale/tempo complessivo su tutte le piastre in coda</li></ul>"
+      },
+      "file": {
+        "title": "Impostazioni file",
+        "customName": "Nome file personalizzato:",
+        "testExport": "Genera file di test (solo sequenze inizio/fine)",
+        "testExportHelp": "Se abilitata, esporta solo le sequenze di inizio e fine senza il codice di stampa effettivo. Questo crea un piccolo file di test perfetto per verificare la logica di cambio piastra senza eseguire una stampa completa. Il file di test attraverserà tutti i cambi piastra ma salterà la stampa degli oggetti effettivi.",
+        "testWaitTime": "Tempo di attesa file di test (secondi):"
+      }
+    }
+  },
+  "info": {
+    "title": "Informazioni app",
+    "howToUse": {
+      "title": "Come usare questa app",
+      "supportedPrinters": {
+        "title": "Stampanti supportate",
+        "intro": "Questa app supporta i seguenti modelli di stampanti Bambu Lab:",
+        "a1mini": "A1 Mini - modalità SWAP con sistema Swapmod",
+        "a1": "A1 - modalità SWAP con sistemi JoBox, 3Print o Printflow",
+        "x1": "Serie X1 - modalità Push-off (push-off diretto con testina di stampa)",
+        "p1": "Serie P1 - modalità Push-off (push-off diretto con testina di stampa)",
+        "autoDetect": "L'app rileva automaticamente il modello della tua stampante dal file GCODE."
+      },
+      "gettingStarted": {
+        "title": "Come iniziare",
+        "step1": "Carica i tuoi file: Trascina e rilascia i tuoi file .gcode.3mf tagliati da Bambu Studio o Orca Slicer nella zona di rilascio sopra.",
+        "step1important": "Importante: Sono accettati solo file di progetto completamente tagliati (formato: nomefile.gcode.3mf). File di modelli 3D non tagliati o semplici file .gcode non sono supportati.",
+        "step2": "Rilevamento stampante: L'app rileva automaticamente il modello della tua stampante e mostra la modalità corrispondente (A1 Mini, X1 o P1).",
+        "step3": "Configura impostazioni: Regola le opzioni nel pannello Impostazioni che appare sotto le tue piastre caricate.",
+        "step4": "Esporta: Clicca su \"Genera file SWAP\" o \"Esporta GCODE\" per creare i tuoi file elaborati."
+      },
+      "automation": {
+        "title": "Modalità di automazione",
+        "intro": "Questa app supporta sia i sistemi di cambio piastra (Swapmod, JoBox, 3Print, Printflow) sia il push-off diretto con la testina di stampa.",
+        "modesTitle": "Modalità disponibili:",
+        "a1mini": "A1 Mini (Modalità SWAP): Crea file .swap.3mf per il cambio automatico delle piastre utilizzando il sistema Swapmod",
+        "a1": "A1 (Modalità SWAP): Supporta i sistemi JoBox, 3Print e Printflow per il cambio automatico delle piastre",
+        "x1p1": "Serie X1/P1 (Modalità Push-off): Genera GCODE modificato con sequenze di push-off automatizzate utilizzando la testina di stampa",
+        "switchingTitle": "Passaggio tra modalità:",
+        "a1miniSwitch": "A1 Mini: È disponibile solo Swapmod - non è necessaria la selezione della modalità",
+        "a1Switch": "A1: Clicca sui loghi (JoBox, 3Print, Printflow) in alto per passare tra diversi sistemi di cambio piastra. IMPORTANTE: Devi selezionare la modalità corretta che corrisponde al tuo sistema di cambio piastra fisicamente installato. L'uso della modalità sbagliata può causare gravi danni alla tua stampante!",
+        "x1p1Switch": "X1/P1: Utilizza esclusivamente la modalità push-off - non è necessaria la selezione della modalità"
+      },
+      "plates": {
+        "title": "Lavorare con le piastre",
+        "select": "Seleziona piastre: Clicca su qualsiasi piastra per selezionarla e configurare impostazioni specifiche",
+        "repeat": "Numero ripetizioni: Cambia il numero accanto a ogni piastra per stamparla più volte",
+        "remove": "Rimuovi piastre: Clicca sul pulsante \"×\" nell'angolo in alto a destra di qualsiasi piastra",
+        "duplicate": "Duplica piastre: Clicca sul pulsante \"+\" sull'immagine della piastra per fare una copia",
+        "reorder": "Riordina piastre: Trascina e rilascia le piastre nell'elenco per riorganizzare l'ordine di stampa"
+      },
+      "filament": {
+        "title": "Filamento e Slot AMS",
+        "changeSlot": "Cambia assegnazione slot: Clicca su qualsiasi campione di filamento colorato su una piastra per riassegnarlo a uno slot AMS diverso (1-4)",
+        "globalColors": "Colori slot globali: Clicca sui campioni di colore in \"Statistiche utilizzo filamento\" per personalizzare i colori slot globali",
+        "tracking": "Tracciamento utilizzo: Visualizza il consumo totale di filamento per slot nell'area statistiche"
+      },
+      "settingsPanel": {
+        "title": "Opzioni pannello impostazioni",
+        "general": "Impostazioni generali:",
+        "generalCustomName": "Nome file personalizzato: Imposta il nome file di output preferito",
+        "generalLoopRepeats": "Ripetizioni ciclo: Numero di volte per ripetere l'intera coda di stampa",
+        "generalTestExport": "Esportazione file di test: Genera un file di test con solo sequenze inizio/fine per il debug. Questo crea un piccolo file che attraversa tutte le sequenze di cambio piastra senza stampare gli oggetti effettivi. Perfetto per testare la tua configurazione senza sprecare tempo o materiale. Puoi configurare il tempo di attesa tra le piastre nell'impostazione \"Tempo di attesa file di test\" (predefinito: 30 secondi).",
+        "plateSpecific": "Impostazioni specifiche per piastra:",
+        "plateSpecificIntro": "Clicca su una piastra sopra per accedere a queste impostazioni:",
+        "plateSpecificObjects": "Numero oggetti e coordinate: Configura il numero di oggetti sulla piastra e le loro posizioni X",
+        "plateSpecificNozzle": "Impostazioni ugello e filamento: Controlla le sequenze di spurgo e il comportamento dell'ugello per piastra",
+        "plateSpecificPushoff": "Impostazioni push-off: Personalizza il comportamento di espulsione per ogni singola piastra",
+        "advanced": "Opzioni avanzate X1/P1:",
+        "advancedBedLeveling": "\"Disabilita livellamento piatto tra piastre\" - Salta il livellamento del piatto per tutte le piastre dopo la prima. Questo può accelerare la stampa multi-piastra riutilizzando i dati di livellamento dalla stampa iniziale. Teoria: Il piatto era già livellato all'inizializzazione della stampa, quindi il rilivellamento tra le piastre non dovrebbe essere necessario. Rischio: C'è un piccolo rischio che il processo di push-off possa aver influenzato la calibrazione del livellamento della testina di stampa. Usa questa opzione se la velocità di stampa è più importante della massima affidabilità.",
+        "advancedFirstLayer": "\"Disabilita scansione primo strato\" - Disabilita la scansione di ispezione del primo strato. Questo accelera l'avvio della stampa ma rimuove il controllo qualità automatico. Usa questo se ritieni che la scansione sia non necessaria o se preferisci la velocità alla garanzia qualità aggiuntiva.",
+        "advancedPurge": "\"Disattiva spurgo filamento\" - Salta la sequenza di spurgo dopo la prima piastra (lavori multi-piastra più veloci). Abilita solo se non ci sono cambi di filamento tra le piastre.",
+        "advancedLoadLine": "\"Nascondi linea di caricamento ugello nel modello\" - Estrude materiale extra all'inizio della stampa per compensare la linea di caricamento rimossa. Previene la sotto-estrusione sullo strato inferiore dell'oggetto, ma potrebbe essere visibile se l'inizio della stampa è sul bordo dell'oggetto.",
+        "advancedCooling": "\"Solleva piatto per raffreddamento\" - Sposta il piatto all'altezza della ventola per un raffreddamento più rapido. Per oggetti alti, rimuovere il coperchio di vetro superiore della stampante per prevenire collisioni.",
+        "advancedSecurePushoff": "\"Sequenza push-off sicura\" - Utilizza push-off controllati a più altezze per garantire l'espulsione sicura degli oggetti finiti dalla stampante",
+        "advancedOverride": "\"Sovrascrivi impostazioni progetto e filamento\" - Rigenera i metadati per nuove assegnazioni slot. Questa opzione diventa necessaria quando gli slot AMS vengono ridefiniti.",
+        "cooldownSound": "Impostazioni globali raffreddamento e suoni:",
+        "cooldownSoundTarget": "Temperatura target piatto: Raffreddare a questa temperatura prima del push-out (predefinito: 23°C)",
+        "cooldownSoundMax": "Tempo massimo raffreddamento: Tempo massimo di attesa per il raffreddamento (predefinito: 40 minuti)",
+        "cooldownSoundSounds": "Suoni stampante: Disabilita tutti i suoni o solo i suoni tra le piastre (solo A1/A1M)",
+        "cooldownSoundAms": "Ottimizzazione AMS: Rimuovi cambi filamento ridondanti tra le piastre (solo A1/A1M)",
+        "progressDisplay": "Impostazioni visualizzazione progresso:",
+        "progressDisplayPerPlate": "Progresso percentuale - Per piastra: Mostra percentuale di progresso e tempo rimanente solo per la piastra corrente (comportamento predefinito)",
+        "progressDisplayGlobal": "Progresso percentuale - Globale: Mostra percentuale di progresso complessivo e tempo rimanente su tutte le piastre nell'intera coda. Utile per tracciare il completamento totale del lavoro."
+      }
+    },
+    "dataSecurity": {
+      "title": "Sicurezza dei dati",
+      "content": "Questa app utilizza il tuo browser come ambiente ed è eseguita localmente sul tuo computer. Questo significa che nessuno dei tuoi dati viene inviato al nostro server o a qualsiasi fornitore cloud di terze parti. Puoi anche salvare questa app come pagina web e usarla completamente offline. Questo sito inoltre non utilizza cookie o memorizza informazioni personali sul tuo dispositivo."
+    }
+  },
+  "plate": {
+    "title": "Piastra",
+    "slot": "Slot",
+    "weight": "g",
+    "length": "m"
+  },
+  "errors": {
+    "fileNotFound": "File non trovato",
+    "invalidFormat": "Formato file non valido",
+    "parseError": "Impossibile analizzare il file",
+    "localeLoadFailed": "Impossibile caricare il file della lingua",
+    "defaultError": "Si prega di utilizzare file tagliati nei formati *.3mf o *.gcode.3mf. L'uso di file *.gcode semplici non è supportato.",
+    "fileNotReadable": "File non leggibile.",
+    "noSlicedData": "Nessun dato tagliato trovato.",
+    "errorReading": "Errore durante la lettura di {{fileName}}: {{error}}",
+    "noActivePlates": "Nessuna piastra attiva (Ripetizioni=0).",
+    "gcodeExportFailed": "Esportazione GCODE fallita: {{error}}",
+    "exportFailed": "Esportazione fallita: {{error}}",
+    "printerNotSupported": "Questo modello di stampante non è ancora supportato in questa app (file: {{fileName}}).",
+    "missingCoordinates": "Attenzione: Alcune coordinate X mancano (0). Si prega di inserire valori validi prima di esportare.",
+    "swapModeOnlyA1": "La modalità SWAP è disponibile solo per stampanti A1 Mini e A1. Per altre stampanti, si prega di utilizzare la modalità Push Off.",
+    "incompatibleSlots": "Rilevati slot AMS incompatibili. Questa piastra utilizza slot non compatibili con le piastre precedenti. Si prega di controllare la configurazione del filamento.",
+    "tooManyColors": "Troppi colori/materiali diversi rilevati. La stampante supporta solo 4 slot AMS.",
+    "colorConflict": "Rilevato conflitto di colore. Materiali diversi sono assegnati allo stesso slot.",
+    "slotMismatch": "Rilevata discrepanza slot AMS tra le piastre."
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano"
+  },
+  "colorPicker": {
+    "title": "Informazioni Slot {{slot}}",
+    "color": "Colore:",
+    "producer": "Produttore:",
+    "material": "Materiale:",
+    "filamentId": "ID Filamento:",
+    "cancel": "Annulla",
+    "save": "Salva"
+  },
+  "appInfo": {
+    "title": "Informazioni app",
+    "version": "AutoEject Versione V1.5",
+    "inspiredBy": "Ispirato da Swaplist.app",
+    "howToUse": {
+      "title": "Come usare questa app",
+      "supportedPrinters": {
+        "title": "Stampanti supportate",
+        "intro": "Questa app supporta i seguenti modelli di stampanti Bambu Lab:",
+        "a1Mini": "<strong>A1 Mini</strong> - modalità SWAP con sistema Swapmod",
+        "a1": "<strong>A1</strong> - modalità SWAP con sistemi JoBox, 3Print o Printflow",
+        "x1": "<strong>Serie X1</strong> - modalità Push-off (push-off diretto con testina di stampa)",
+        "p1": "<strong>Serie P1</strong> - modalità Push-off (push-off diretto con testina di stampa)",
+        "autoDetect": "L'app rileva automaticamente il modello della tua stampante dal file GCODE."
+      },
+      "gettingStarted": {
+        "title": "Come iniziare",
+        "step1": "<strong>Carica i tuoi file:</strong> Trascina e rilascia i tuoi file <code>.gcode.3mf</code> tagliati da Bambu Studio o Orca Slicer nella zona di rilascio sopra.<br><strong>Importante:</strong> Sono accettati solo file di progetto completamente tagliati (formato: <code>nomefile.gcode.3mf</code>). File di modelli 3D non tagliati o semplici file <code>.gcode</code> non sono supportati.",
+        "step2": "<strong>Rilevamento stampante:</strong> L'app rileva automaticamente il modello della tua stampante e mostra la modalità corrispondente (A1 Mini, X1 o P1).",
+        "step3": "<strong>Configura impostazioni:</strong> Regola le opzioni nel pannello Impostazioni che appare sotto le tue piastre caricate.",
+        "step4": "<strong>Esporta:</strong> Clicca su \"Genera file SWAP\" o \"Esporta GCODE\" per creare i tuoi file elaborati."
+      },
+      "automation": {
+        "title": "Modalità di automazione",
+        "intro": "Questa app supporta sia i sistemi di cambio piastra (Swapmod, JoBox, 3Print, Printflow) sia il push-off diretto con la testina di stampa.",
+        "modesTitle": "Modalità disponibili:",
+        "a1Mini": "<strong>A1 Mini (Modalità SWAP):</strong> Crea file .swap.3mf per il cambio automatico delle piastre utilizzando il sistema Swapmod",
+        "a1": "<strong>A1 (Modalità SWAP):</strong> Supporta i sistemi JoBox, 3Print e Printflow per il cambio automatico delle piastre",
+        "x1p1": "<strong>Serie X1/P1 (Modalità Push-off):</strong> Genera GCODE modificato con sequenze di push-off automatizzate utilizzando la testina di stampa",
+        "switchingTitle": "Passaggio tra modalità:",
+        "a1MiniSwitch": "<strong>A1 Mini:</strong> È disponibile solo Swapmod - non è necessaria la selezione della modalità",
+        "a1Switch": "<strong>A1:</strong> Clicca sui loghi (JoBox, 3Print, Printflow) in alto per passare tra diversi sistemi di cambio piastra. <strong>IMPORTANTE:</strong> Devi selezionare la modalità corretta che corrisponde al tuo sistema di cambio piastra fisicamente installato. <span style=\"color: #ff4444; font-weight: bold;\">L'uso della modalità sbagliata può causare gravi danni alla tua stampante!</span>",
+        "x1p1Switch": "<strong>X1/P1:</strong> Utilizza esclusivamente la modalità push-off - non è necessaria la selezione della modalità"
+      },
+      "plates": {
+        "title": "Lavorare con le piastre",
+        "select": "<strong>Seleziona piastre:</strong> Clicca su qualsiasi piastra per selezionarla e configurare impostazioni specifiche",
+        "repeat": "<strong>Numero ripetizioni:</strong> Cambia il numero accanto a ogni piastra per stamparla più volte",
+        "remove": "<strong>Rimuovi piastre:</strong> Clicca sul pulsante \"×\" nell'angolo in alto a destra di qualsiasi piastra",
+        "duplicate": "<strong>Duplica piastre:</strong> Clicca sul pulsante \"+\" sull'immagine della piastra per fare una copia",
+        "reorder": "<strong>Riordina piastre:</strong> Trascina e rilascia le piastre nell'elenco per riorganizzare l'ordine di stampa"
+      },
+      "filament": {
+        "title": "Filamento e Slot AMS",
+        "changeSlot": "<strong>Cambia assegnazione slot:</strong> Clicca su qualsiasi campione di filamento colorato su una piastra per riassegnarlo a uno slot AMS diverso (1-4)",
+        "globalColors": "<strong>Colori slot globali:</strong> Clicca sui campioni di colore in \"Statistiche utilizzo filamento\" per personalizzare i colori slot globali",
+        "tracking": "<strong>Tracciamento utilizzo:</strong> Visualizza il consumo totale di filamento per slot nell'area statistiche"
+      },
+      "settingsPanel": {
+        "title": "Opzioni pannello impostazioni",
+        "generalTitle": "Impostazioni generali:",
+        "generalCustomName": "<strong>Nome file personalizzato:</strong> Imposta il nome file di output preferito",
+        "generalLoopRepeats": "<strong>Ripetizioni ciclo:</strong> Numero di volte per ripetere l'intera coda di stampa",
+        "generalTestExport": "<strong>Esportazione file di test:</strong> Genera un file di test con solo sequenze inizio/fine per il debug. Questo crea un piccolo file che attraversa tutte le sequenze di cambio piastra senza stampare gli oggetti effettivi. Perfetto per testare la tua configurazione senza sprecare tempo o materiale. Puoi configurare il tempo di attesa tra le piastre nell'impostazione \"Tempo di attesa file di test\" (predefinito: 30 secondi).",
+        "plateSpecificTitle": "Impostazioni specifiche per piastra:",
+        "plateSpecificIntro": "<em>Clicca su una piastra sopra per accedere a queste impostazioni:</em>",
+        "plateSpecificObjects": "<strong>Numero oggetti e coordinate:</strong> Configura il numero di oggetti sulla piastra e le loro posizioni X",
+        "plateSpecificNozzle": "<strong>Impostazioni ugello e filamento:</strong> Controlla le sequenze di spurgo e il comportamento dell'ugello per piastra",
+        "plateSpecificPushoff": "<strong>Impostazioni push-off:</strong> Personalizza il comportamento di espulsione per ogni singola piastra",
+        "advancedTitle": "Opzioni avanzate X1/P1:",
+        "advancedBedLeveling": "<strong>\"Disabilita livellamento piatto tra piastre\"</strong> - Salta il livellamento del piatto per tutte le piastre dopo la prima. Questo può accelerare la stampa multi-piastra riutilizzando i dati di livellamento dalla stampa iniziale.<em>Teoria:</em> Il piatto era già livellato all'inizializzazione della stampa, quindi il rilivellamento tra le piastre non dovrebbe essere necessario.<em>Rischio:</em> C'è un piccolo rischio che il processo di push-off possa aver influenzato la calibrazione del livellamento della testina di stampa. Usa questa opzione se la velocità di stampa è più importante della massima affidabilità.",
+        "advancedFirstLayer": "<strong>\"Disabilita scansione primo strato\"</strong> - Disabilita la scansione di ispezione del primo strato. Questo accelera l'avvio della stampa ma rimuove il controllo qualità automatico. Usa questo se ritieni che la scansione sia non necessaria o se preferisci la velocità alla garanzia qualità aggiuntiva.",
+        "advancedPurge": "<strong>\"Disattiva spurgo filamento\"</strong> - Salta la sequenza di spurgo dopo la prima piastra (lavori multi-piastra più veloci). Abilita solo se non ci sono cambi di filamento tra le piastre.",
+        "advancedLoadLine": "<strong>\"Nascondi linea di caricamento ugello nel modello\"</strong> - Estrude materiale extra all'inizio della stampa per compensare la linea di caricamento rimossa. Previene la sotto-estrusione sullo strato inferiore dell'oggetto, ma potrebbe essere visibile se l'inizio della stampa è sul bordo dell'oggetto.",
+        "advancedCooling": "<strong>\"Solleva piatto per raffreddamento\"</strong> - Sposta il piatto all'altezza della ventola per un raffreddamento più rapido. Per oggetti alti, rimuovere il coperchio di vetro superiore della stampante per prevenire collisioni.",
+        "advancedSecurePushoff": "<strong>\"Sequenza push-off sicura\"</strong> - Utilizza push-off controllati a più altezze per garantire l'espulsione sicura degli oggetti finiti dalla stampante",
+        "advancedOverride": "<strong>\"Sovrascrivi impostazioni progetto e filamento\"</strong> - Rigenera i metadati per nuove assegnazioni slot. Questa opzione diventa necessaria quando gli slot AMS vengono ridefiniti.",
+        "cooldownTitle": "Impostazioni globali raffreddamento e suoni:",
+        "cooldownTarget": "<strong>Temperatura target piatto:</strong> Raffreddare a questa temperatura prima del push-out (predefinito: 23°C)",
+        "cooldownMax": "<strong>Tempo massimo raffreddamento:</strong> Tempo massimo di attesa per il raffreddamento (predefinito: 40 minuti)",
+        "cooldownSounds": "<strong>Suoni stampante:</strong> Disabilita tutti i suoni o solo i suoni tra le piastre (solo A1/A1M)",
+        "cooldownAms": "<strong>Ottimizzazione AMS:</strong> Rimuovi cambi filamento ridondanti tra le piastre (solo A1/A1M)",
+        "progressTitle": "Impostazioni visualizzazione progresso:",
+        "progressPerPlate": "<strong>Progresso percentuale - Per piastra:</strong> Mostra percentuale di progresso e tempo rimanente solo per la piastra corrente (comportamento predefinito)",
+        "progressGlobal": "<strong>Progresso percentuale - Globale:</strong> Mostra percentuale di progresso complessivo e tempo rimanente su tutte le piastre nell'intera coda. Utile per tracciare il completamento totale del lavoro."
+      }
+    },
+    "dataSecurity": {
+      "title": "Sicurezza dei dati",
+      "content": "Questa app utilizza il tuo browser come ambiente ed è eseguita localmente sul tuo computer. Questo significa che nessuno dei tuoi dati viene inviato al nostro server o a qualsiasi fornitore cloud di terze parti. Puoi anche salvare questa app come pagina web e usarla completamente offline. Questo sito inoltre non utilizza cookie o memorizza informazioni personali sul tuo dispositivo."
+    }
+  }
+}

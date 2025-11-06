@@ -46,6 +46,15 @@ export async function initialize_page() {
   // Language selector
   const languageSelect = document.getElementById("language_select");
   if (languageSelect) {
+    // Populate language options dynamically
+    languageSelect.innerHTML = '';
+    i18n.supportedLocales.forEach(locale => {
+      const option = document.createElement('option');
+      option.value = locale;
+      option.textContent = i18n.t(`languages.${locale}`);
+      languageSelect.appendChild(option);
+    });
+
     // Set initial value
     languageSelect.value = i18n.getCurrentLocale();
 
