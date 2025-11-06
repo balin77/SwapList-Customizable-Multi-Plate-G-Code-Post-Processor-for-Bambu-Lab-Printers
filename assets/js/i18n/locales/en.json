@@ -1,0 +1,326 @@
+{
+  "app": {
+    "title": "CLEAR.bed",
+    "version": "AutoEject Version V1.4",
+    "inspiredBy": "Inspired by Swaplist.app"
+  },
+  "ui": {
+    "buttons": {
+      "export": "Generate 3MF file",
+      "exportGcode": "Export GCODE",
+      "reset": "Reset",
+      "remove": "×"
+    },
+    "dropzone": {
+      "title": "DROP YOUR FILE(S) HERE",
+      "subtitle": "...or click to select"
+    },
+    "modes": {
+      "swap": "SWAP Mode",
+      "pushoff": "Push Off Mode"
+    },
+    "printerInfo": {
+      "label": "Printer Model:",
+      "unknown": "Unknown"
+    }
+  },
+  "statistics": {
+    "title": "General statistics:",
+    "duration": "Duration:",
+    "plates": "Plates:",
+    "totalWeight": "Total weight:",
+    "totalCost": "Total cost:",
+    "costPerKg": "$/kg",
+    "filamentTitle": "Filament usage statistics:",
+    "slot": "Slot"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "loopRepeats": {
+      "label": "Loop repeats",
+      "help": "This number defines how many times the entire queue will be reprinted.",
+      "example": "Example: Plate \"A\" is set to 3 repeats, plate \"B\" is set to 1 repeat and the \"Loop repeats\" is set to 2. This will result in following printing order:",
+      "exampleOrder": "A A A B A A A B ."
+    },
+    "plateSettings": {
+      "title": "Plate Settings",
+      "instruction": "Click on a plate above to configure its settings",
+      "objects": {
+        "title": "Objects on this plate",
+        "count": "Number of objects:"
+      },
+      "nozzleFilament": {
+        "title": "Nozzle & Filament",
+        "hideLoadLine": "Hide nozzle load line in model",
+        "hideLoadLineHelp": "Activate this option to achieve the correct nozzle pressure when starting a new print. If deactivated, this may cause slight under-extrusion at the bottom of the first object.",
+        "purgeOff": "Turn off filament purge",
+        "purgeOffHelp": "Disable the filament purge sequence at the start of this plate. This can speed up multi-plate jobs but might cause issues if the plate before used different materials."
+      },
+      "pushoff": {
+        "title": "Push-off & Ejection",
+        "bedRaiseOffset": "Bed raise offset before push-out (mm)",
+        "bedRaiseOffsetHelp": "Defines how much the bed is raised before performing the push-out sequence.",
+        "securePushoff": "Secure push‑off sequence",
+        "securePushoffHelp": "When enabled, the app performs multiple controlled push‑offs at decreasing Z heights before the final push at Z=1. This helps avoid collisions and smooths the ejection.",
+        "additionalLevels": "Additional push‑off levels",
+        "additionalLevelsHelp": "Defines how the maximum Z height is divided. Example: if max Z is 100 mm and you enter 2, push‑offs occur around Z≈50 and the final one at Z=1. If you enter 5, there will be 5 extra push‑offs, with the last always at Z=1. A value of 1 means only a final push at Z=1."
+      }
+    },
+    "globalSettings": {
+      "title": "Global Settings",
+      "cooling": {
+        "title": "Cooling & Bed Temperature",
+        "raiseBed": "Raise Bed Level for cooling",
+        "raiseBedHelp": "Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large prints the printer cover must be removed to avoid collision.",
+        "targetTemp": "Cooldown target bed temperature (°C)",
+        "targetTempHelp": "Specifies the bed temperature that should be reached before the push-out sequence.",
+        "maxTime": "Max cooldown time (min)",
+        "maxTimeHelp": "Defines the maximum cooldown duration in minutes. The app will insert repeated <code>M190</code> commands to wait for the bed until this total time is reached. Default is 40 minutes."
+      },
+      "sounds": {
+        "title": "Printer Sounds",
+        "disable": "Disable printer sounds",
+        "disableHelp": "Controls printer sound removal for A1/A1M printers. When enabled, you can choose to remove all sounds or only sounds between plates. This setting only affects A1/A1M printers.",
+        "removeAll": "Remove all printer sounds",
+        "removeBetweenPlates": "Remove sounds only between plates"
+      },
+      "ams": {
+        "title": "AMS Optimization",
+        "enable": "Enable AMS redundancy removal",
+        "enableHelp": "When on, the app automatically removes redundant AMS filament swaps between plates. This eliminates unnecessary \"unload all\" + \"load same slot\" sequences, making multi-plate prints more efficient. Only available for A1/A1M printers."
+      },
+      "startsequence": {
+        "title": "Startsequence",
+        "disableBedLeveling": "Disable bed leveling between plates",
+        "disableBedLevelingHelp": "When on, bed leveling is skipped for all plates after the first one. This speeds up multi-plate printing by reusing the leveling data from the first plate. Only available for X1/P1 printers in push-off mode.",
+        "disableFirstLayerScan": "Disable first layer scan",
+        "disableFirstLayerScanHelp": "When on, the first layer inspection scan is disabled. This can speed up the print start but removes the automatic quality check. Only available for X1 printers in push-off mode."
+      },
+      "project": {
+        "title": "Project Settings",
+        "overrideMetadata": "Override project & filament settings",
+        "overrideMetadataHelp": "When on, the app regenerates the filament entries and material/printer settings. This is essential if you use new AMS slot assignments that weren't present in the original G-code. When off, the original 3MF metadata is kept as-is; if you remap to AMS slots that weren't originally defined, the printer or Studio may report a mismatch."
+      },
+      "progress": {
+        "title": "Progress Display",
+        "percentageProgress": "Percentage Progress",
+        "percentageProgressHelp": "Controls how percentage and time remaining are calculated:",
+        "perPlate": "Per plate",
+        "perPlateDesc": "Progress shows percentage/time for current plate only (default behavior)",
+        "global": "Global (across all plates)",
+        "globalDesc": "Progress shows overall percentage/time across all plates in the queue",
+        "helpText": "Controls how percentage and time remaining are calculated:<ul><li><strong>Per plate:</strong> Progress shows percentage/time for current plate only (default behavior)</li><li><strong>Global:</strong> Progress shows overall percentage/time across all plates in the queue</li></ul>"
+      },
+      "file": {
+        "title": "File Settings",
+        "customName": "Custom file name:",
+        "testExport": "Generate test file (start/end sequences only)",
+        "testExportHelp": "When enabled, exports only the start and end sequences without the actual print code. This creates a small test file perfect for verifying plate-swap logic without running a full print. The test file will go through all plate changes but skip the actual object printing.",
+        "testWaitTime": "Test file wait time (seconds):"
+      }
+    }
+  },
+  "info": {
+    "title": "App Information",
+    "howToUse": {
+      "title": "How to use this app",
+      "supportedPrinters": {
+        "title": "Supported Printers",
+        "intro": "This app supports the following Bambu Lab printer models:",
+        "a1mini": "A1 Mini - SWAP mode with Swapmod system",
+        "a1": "A1 - SWAP mode with JoBox, 3Print, or Printflow systems",
+        "x1": "X1 Series - Push-off mode (direct push-off with print head)",
+        "p1": "P1 Series - Push-off mode (direct push-off with print head)",
+        "autoDetect": "The app automatically detects your printer model from the GCODE file."
+      },
+      "gettingStarted": {
+        "title": "Getting Started",
+        "step1": "Load your files: Drag & drop your sliced .gcode.3mf files from Bambu Studio or Orca Slicer into the drop zone above.",
+        "step1important": "Important: Only fully sliced project files (format: filename.gcode.3mf) are accepted. Unsliced 3D model files or plain .gcode files are not supported.",
+        "step2": "Printer detection: The app automatically detects your printer model and shows the corresponding mode (A1 Mini, X1, or P1).",
+        "step3": "Configure settings: Adjust options in the Settings panel that appears below your loaded plates.",
+        "step4": "Export: Click \"Generate SWAP file\" or \"Export GCODE\" to create your processed files."
+      },
+      "automation": {
+        "title": "Automatisation Mode",
+        "intro": "This app supports both plate-swapper systems (Swapmod, JoBox, 3Print, Printflow) and direct push-off with the print head.",
+        "modesTitle": "Available Modes:",
+        "a1mini": "A1 Mini (SWAP Mode): Creates .swap.3mf files for automatic plate swapping using Swapmod system",
+        "a1": "A1 (SWAP Mode): Supports JoBox, 3Print, and Printflow systems for automatic plate swapping",
+        "x1p1": "X1/P1 Series (Push-off Mode): Generates modified GCODE with automated push-off sequences using the print head",
+        "switchingTitle": "Switching Between Modes:",
+        "a1miniSwitch": "A1 Mini: Only Swapmod is available - no mode selection needed",
+        "a1Switch": "A1: Click the logos (JoBox, 3Print, Printflow) at the top to switch between different plate-swapper systems. IMPORTANT: You must select the correct mode that matches your physically installed plate-swapper system. Using the wrong mode can cause serious damage to your printer!",
+        "x1p1Switch": "X1/P1: Uses push-off mode exclusively - no mode selection needed"
+      },
+      "plates": {
+        "title": "Working with Plates",
+        "select": "Select plates: Click on any plate to select it and configure plate-specific settings",
+        "repeat": "Repeat count: Change the number next to each plate to print it multiple times",
+        "remove": "Remove plates: Click the \"×\" button in the top-right corner of any plate",
+        "duplicate": "Duplicate plates: Click the \"+\" button on the plate image to make a copy",
+        "reorder": "Reorder plates: Drag and drop plates in the list to rearrange the printing order"
+      },
+      "filament": {
+        "title": "Filament & AMS Slots",
+        "changeSlot": "Change slot assignment: Click any colored filament swatch on a plate to reassign it to a different AMS slot (1-4)",
+        "globalColors": "Global slot colors: Click color swatches in \"Filament usage statistics\" to customize global slot colors",
+        "tracking": "Usage tracking: View total filament consumption per slot in the statistics area"
+      },
+      "settingsPanel": {
+        "title": "Settings Panel Options",
+        "general": "General Settings:",
+        "generalCustomName": "Custom file name: Set your preferred output filename",
+        "generalLoopRepeats": "Loop repeats: Number of times to repeat the entire print queue",
+        "generalTestExport": "Test file export: Generate a test file with only start/end sequences for debugging. This creates a small file that goes through all plate-swap sequences without printing the actual objects. Perfect for testing your setup without wasting time or material. You can configure the wait time between plates in the \"Test file wait time\" setting (default: 30 seconds).",
+        "plateSpecific": "Plate-Specific Settings:",
+        "plateSpecificIntro": "Click on a plate above to access these settings:",
+        "plateSpecificObjects": "Object count & coordinates: Configure number of objects on the plate and their X positions",
+        "plateSpecificNozzle": "Nozzle & filament settings: Control purge sequences and nozzle behavior per plate",
+        "plateSpecificPushoff": "Push-off settings: Customize ejection behavior for each individual plate",
+        "advanced": "X1/P1 Advanced Options:",
+        "advancedBedLeveling": "\"Disable bed leveling between plates\" - Skips bed leveling for all plates after the first one. This can speed up multi-plate printing by reusing the leveling data from the initial print. Theory: The bed was already leveled at print initialization, so re-leveling between plates should not be necessary. Risk: There is a small risk that the push-off process may have affected the print head's leveling calibration. Use this option if print speed is more important than maximum reliability.",
+        "advancedFirstLayer": "\"Disable first layer scan\" - Disables the first layer inspection scan. This speeds up print start but removes the automatic quality check. Use this if you consider the scan to be unnecessary or if you prefer speed over the additional quality assurance.",
+        "advancedPurge": "\"Turn off filament purge\" - Skips purge sequence after first plate (faster multi-plate jobs). Only enable if there are no filament changes between plates.",
+        "advancedLoadLine": "\"Hide nozzle load line in model\" - Extrudes extra material at print start to compensate for the removed load line. Prevents under-extrusion on the object's bottom layer, but may be visible if print start is at the object's edge.",
+        "advancedCooling": "\"Raise Bed Level for cooling\" - Moves bed to fan height for faster cooling. For tall objects, remove the printer's top glass cover to prevent collisions.",
+        "advancedSecurePushoff": "\"Secure push‑off sequence\" - Uses controlled push-offs at multiple heights to guarantee safe ejection of finished objects from the printer",
+        "advancedOverride": "\"Override project & filament settings\" - Regenerates metadata for new slot assignments. This option becomes necessary when AMS slots are redefined.",
+        "cooldownSound": "Global Cooldown & Sound Settings:",
+        "cooldownSoundTarget": "Target bed temperature: Cool down to this temperature before push-out (default: 23°C)",
+        "cooldownSoundMax": "Max cooldown time: Maximum time to wait for cooling (default: 40 minutes)",
+        "cooldownSoundSounds": "Printer sounds: Disable all sounds or only sounds between plates (A1/A1M only)",
+        "cooldownSoundAms": "AMS optimization: Remove redundant filament swaps between plates (A1/A1M only)",
+        "progressDisplay": "Progress Display Settings:",
+        "progressDisplayPerPlate": "Percentage Progress - Per plate: Shows progress percentage and time remaining for the current plate only (default behavior)",
+        "progressDisplayGlobal": "Percentage Progress - Global: Shows overall progress percentage and time remaining across all plates in the entire queue. Useful for tracking the total job completion."
+      }
+    },
+    "dataSecurity": {
+      "title": "Data security",
+      "content": "This app uses your browser as an environment and runs locally on your computer. This means none of your data is sent to our server or any third party cloud provider. You can even save this app as a web page and use it completely offline. This site also does not use cookies or store any personal information on your device."
+    }
+  },
+  "plate": {
+    "title": "Plate",
+    "slot": "Slot",
+    "weight": "g",
+    "length": "m"
+  },
+  "errors": {
+    "fileNotFound": "File not found",
+    "invalidFormat": "Invalid file format",
+    "parseError": "Failed to parse file",
+    "localeLoadFailed": "Failed to load language file",
+    "defaultError": "Please use sliced files in *.3mf or *.gcode.3mf formats. Usage of plane *.gcode files is not supported.",
+    "fileNotReadable": "File not readable.",
+    "noSlicedData": "No sliced data found.",
+    "errorReading": "Error reading {{fileName}}: {{error}}",
+    "noActivePlates": "No active plates (Repeats=0).",
+    "gcodeExportFailed": "GCODE export failed: {{error}}",
+    "exportFailed": "Export failed: {{error}}",
+    "printerNotSupported": "This printer model is not supported yet in this app (file: {{fileName}}).",
+    "missingCoordinates": "Warning: Some X coordinates are missing (0). Please enter valid values before exporting.",
+    "swapModeOnlyA1": "SWAP Mode is only available for A1 Mini and A1 printers. For other printers, please use Push Off Mode.",
+    "incompatibleSlots": "Incompatible AMS slots detected. This plate uses slots that are not compatible with previous plates. Please check your filament configuration.",
+    "tooManyColors": "Too many different colors/materials detected. The printer supports only 4 AMS slots.",
+    "colorConflict": "Color conflict detected. Different materials are assigned to the same slot.",
+    "slotMismatch": "AMS slot mismatch detected between plates."
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "colorPicker": {
+    "title": "Slot {{slot}} Information",
+    "color": "Color:",
+    "producer": "Producer:",
+    "material": "Material:",
+    "filamentId": "Filament ID:",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "appInfo": {
+    "title": "App Information",
+    "version": "AutoEject Version V1.4",
+    "inspiredBy": "Inspired by Swaplist.app",
+    "howToUse": {
+      "title": "How to use this app",
+      "supportedPrinters": {
+        "title": "Supported Printers",
+        "intro": "This app supports the following Bambu Lab printer models:",
+        "a1Mini": "<strong>A1 Mini</strong> - SWAP mode with Swapmod system",
+        "a1": "<strong>A1</strong> - SWAP mode with JoBox, 3Print, or Printflow systems",
+        "x1": "<strong>X1 Series</strong> - Push-off mode (direct push-off with print head)",
+        "p1": "<strong>P1 Series</strong> - Push-off mode (direct push-off with print head)",
+        "autoDetect": "The app automatically detects your printer model from the GCODE file."
+      },
+      "gettingStarted": {
+        "title": "Getting Started",
+        "step1": "<strong>Load your files:</strong> Drag & drop your sliced <code>.gcode.3mf</code> files from Bambu Studio or Orca Slicer into the drop zone above.<br><strong>Important:</strong> Only fully sliced project files (format: <code>filename.gcode.3mf</code>) are accepted. Unsliced 3D model files or plain <code>.gcode</code> files are not supported.",
+        "step2": "<strong>Printer detection:</strong> The app automatically detects your printer model and shows the corresponding mode (A1 Mini, X1, or P1).",
+        "step3": "<strong>Configure settings:</strong> Adjust options in the Settings panel that appears below your loaded plates.",
+        "step4": "<strong>Export:</strong> Click \"Generate SWAP file\" or \"Export GCODE\" to create your processed files."
+      },
+      "automation": {
+        "title": "Automatisation Mode",
+        "intro": "This app supports both plate-swapper systems (Swapmod, JoBox, 3Print, Printflow) and direct push-off with the print head.",
+        "modesTitle": "Available Modes:",
+        "a1Mini": "<strong>A1 Mini (SWAP Mode):</strong> Creates .swap.3mf files for automatic plate swapping using Swapmod system",
+        "a1": "<strong>A1 (SWAP Mode):</strong> Supports JoBox, 3Print, and Printflow systems for automatic plate swapping",
+        "x1p1": "<strong>X1/P1 Series (Push-off Mode):</strong> Generates modified GCODE with automated push-off sequences using the print head",
+        "switchingTitle": "Switching Between Modes:",
+        "a1MiniSwitch": "<strong>A1 Mini:</strong> Only Swapmod is available - no mode selection needed",
+        "a1Switch": "<strong>A1:</strong> Click the logos (JoBox, 3Print, Printflow) at the top to switch between different plate-swapper systems. <strong>IMPORTANT:</strong> You must select the correct mode that matches your physically installed plate-swapper system. <span style=\"color: #ff4444; font-weight: bold;\">Using the wrong mode can cause serious damage to your printer!</span>",
+        "x1p1Switch": "<strong>X1/P1:</strong> Uses push-off mode exclusively - no mode selection needed"
+      },
+      "plates": {
+        "title": "Working with Plates",
+        "select": "<strong>Select plates:</strong> Click on any plate to select it and configure plate-specific settings",
+        "repeat": "<strong>Repeat count:</strong> Change the number next to each plate to print it multiple times",
+        "remove": "<strong>Remove plates:</strong> Click the \"×\" button in the top-right corner of any plate",
+        "duplicate": "<strong>Duplicate plates:</strong> Click the \"+\" button on the plate image to make a copy",
+        "reorder": "<strong>Reorder plates:</strong> Drag and drop plates in the list to rearrange the printing order"
+      },
+      "filament": {
+        "title": "Filament & AMS Slots",
+        "changeSlot": "<strong>Change slot assignment:</strong> Click any colored filament swatch on a plate to reassign it to a different AMS slot (1-4)",
+        "globalColors": "<strong>Global slot colors:</strong> Click color swatches in \"Filament usage statistics\" to customize global slot colors",
+        "tracking": "<strong>Usage tracking:</strong> View total filament consumption per slot in the statistics area"
+      },
+      "settingsPanel": {
+        "title": "Settings Panel Options",
+        "generalTitle": "General Settings:",
+        "generalCustomName": "<strong>Custom file name:</strong> Set your preferred output filename",
+        "generalLoopRepeats": "<strong>Loop repeats:</strong> Number of times to repeat the entire print queue",
+        "generalTestExport": "<strong>Test file export:</strong> Generate a test file with only start/end sequences for debugging. This creates a small file that goes through all plate-swap sequences without printing the actual objects. Perfect for testing your setup without wasting time or material. You can configure the wait time between plates in the \"Test file wait time\" setting (default: 30 seconds).",
+        "plateSpecificTitle": "Plate-Specific Settings:",
+        "plateSpecificIntro": "<em>Click on a plate above to access these settings:</em>",
+        "plateSpecificObjects": "<strong>Object count & coordinates:</strong> Configure number of objects on the plate and their X positions",
+        "plateSpecificNozzle": "<strong>Nozzle & filament settings:</strong> Control purge sequences and nozzle behavior per plate",
+        "plateSpecificPushoff": "<strong>Push-off settings:</strong> Customize ejection behavior for each individual plate",
+        "advancedTitle": "X1/P1 Advanced Options:",
+        "advancedBedLeveling": "<strong>\"Disable bed leveling between plates\"</strong> - Skips bed leveling for all plates after the first one. This can speed up multi-plate printing by reusing the leveling data from the initial print.<em>Theory:</em> The bed was already leveled at print initialization, so re-leveling between plates should not be necessary.<em>Risk:</em> There is a small risk that the push-off process may have affected the print head's leveling calibration. Use this option if print speed is more important than maximum reliability.",
+        "advancedFirstLayer": "<strong>\"Disable first layer scan\"</strong> - Disables the first layer inspection scan. This speeds up print start but removes the automatic quality check. Use this if you consider the scan to be unnecessary or if you prefer speed over the additional quality assurance.",
+        "advancedPurge": "<strong>\"Turn off filament purge\"</strong> - Skips purge sequence after first plate (faster multi-plate jobs). Only enable if there are no filament changes between plates.",
+        "advancedLoadLine": "<strong>\"Hide nozzle load line in model\"</strong> - Extrudes extra material at print start to compensate for the removed load line. Prevents under-extrusion on the object's bottom layer, but may be visible if print start is at the object's edge.",
+        "advancedCooling": "<strong>\"Raise Bed Level for cooling\"</strong> - Moves bed to fan height for faster cooling. For tall objects, remove the printer's top glass cover to prevent collisions.",
+        "advancedSecurePushoff": "<strong>\"Secure push‑off sequence\"</strong> - Uses controlled push-offs at multiple heights to guarantee safe ejection of finished objects from the printer",
+        "advancedOverride": "<strong>\"Override project & filament settings\"</strong> - Regenerates metadata for new slot assignments. This option becomes necessary when AMS slots are redefined.",
+        "cooldownTitle": "Global Cooldown & Sound Settings:",
+        "cooldownTarget": "<strong>Target bed temperature:</strong> Cool down to this temperature before push-out (default: 23°C)",
+        "cooldownMax": "<strong>Max cooldown time:</strong> Maximum time to wait for cooling (default: 40 minutes)",
+        "cooldownSounds": "<strong>Printer sounds:</strong> Disable all sounds or only sounds between plates (A1/A1M only)",
+        "cooldownAms": "<strong>AMS optimization:</strong> Remove redundant filament swaps between plates (A1/A1M only)",
+        "progressTitle": "Progress Display Settings:",
+        "progressPerPlate": "<strong>Percentage Progress - Per plate:</strong> Shows progress percentage and time remaining for the current plate only (default behavior)",
+        "progressGlobal": "<strong>Percentage Progress - Global:</strong> Shows overall progress percentage and time remaining across all plates in the entire queue. Useful for tracking the total job completion."
+      }
+    },
+    "dataSecurity": {
+      "title": "Data security",
+      "content": "This app uses your browser as an environment and runs locally on your computer. This means none of your data is sent to our server or any third party cloud provider. You can even save this app as a web page and use it completely offline. This site also does not use cookies or store any personal information on your device."
+    }
+  }
+}

@@ -798,29 +798,32 @@ export function openStatsSlotDialog(slotIndex) {
   // Lookup vendor by tray_info_idx
   const curVendor = lookupVendorByFilamentId(trayInfoIdx);
 
+  // Get i18n instance
+  const i18n = window.i18nInstance;
+
   // Modal bauen (Farbe editierbar, Rest read-only)
   const backdrop = document.createElement("div");
   backdrop.className = "slot-modal-backdrop";
   const modal = document.createElement("div");
   modal.className = "slot-modal";
   modal.innerHTML = `
-    <h4>Slot ${slotIndex + 1} Information</h4>
+    <h4>${i18n ? i18n.t('colorPicker.title', { slot: slotIndex + 1 }) : `Slot ${slotIndex + 1} Information`}</h4>
     <div class="row">
-      <label>Color:</label>
+      <label>${i18n ? i18n.t('colorPicker.color') : 'Color:'}</label>
       <input type="color" id="slotColor" value="${curColor}">
     </div>
     <div class="row">
-      <label>Producer:</label>
+      <label>${i18n ? i18n.t('colorPicker.producer') : 'Producer:'}</label>
       <span style="font-weight: bold;">${curVendor}</span>
     </div>
     <div class="row">
-      <label>Material:</label>
+      <label>${i18n ? i18n.t('colorPicker.material') : 'Material:'}</label>
       <span style="font-weight: bold;">${curType}</span>
     </div>
-    ${trayInfoIdx ? `<div class="row"><label>Filament ID:</label><span style="font-family: monospace; color: #666;">${trayInfoIdx}</span></div>` : ''}
+    ${trayInfoIdx ? `<div class="row"><label>${i18n ? i18n.t('colorPicker.filamentId') : 'Filament ID:'}</label><span style="font-family: monospace; color: #666;">${trayInfoIdx}</span></div>` : ''}
     <div class="actions">
-      <button id="slotCancel">Cancel</button>
-      <button id="slotSave">Save</button>
+      <button id="slotCancel">${i18n ? i18n.t('colorPicker.cancel') : 'Cancel'}</button>
+      <button id="slotSave">${i18n ? i18n.t('colorPicker.save') : 'Save'}</button>
     </div>
   `;
   backdrop.appendChild(modal);

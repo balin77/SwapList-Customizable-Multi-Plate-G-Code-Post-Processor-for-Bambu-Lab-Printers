@@ -1,0 +1,61 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - 'version.json'
+      - '.github/**'
+      - '**.md'
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+
+    # Only run if commit message doesn't contain [skip-version]
+    if: "!contains(github.event.head_commit.message, '[skip-version]')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine version bump type
+        id: bump-type
+        run: |
+          # Check commit message for version bump keywords
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+          if echo "$COMMIT_MSG" | grep -qiE '\[major\]|BREAKING CHANGE'; then
+            echo "type=major" >> $GITHUB_OUTPUT
+          elif echo "$COMMIT_MSG" | grep -qiE '\[minor\]|feat:'; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          elif echo "$COMMIT_MSG" | grep -qiE '\[patch\]|fix:'; then
+            echo "type=patch" >> $GITHUB_OUTPUT
+          else
+            echo "type=build" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version
+        run: |
+          node scripts/update-version.mjs ${{ steps.bump-type.outputs.type }}
+
+      - name: Commit version bump
+        run: |
+          git add version.json assets/js/i18n/locales/*.json index.html
+          git commit -m "chore: auto version bump [skip-version]" || exit 0
+          git push

@@ -15,6 +15,7 @@ import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
 import { toggle_settings, custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
 import { initInfobox, showError, showWarning, showInfo, showSuccess } from "../ui/infobox.js";
+import { i18n } from "../i18n/i18n.js";
 
 import {
   wirePlateSwatches,
@@ -26,7 +27,12 @@ import {
   openStatsSlotDialog
 } from "../ui/filamentColors.js";
 
-export function initialize_page() {
+export async function initialize_page() {
+
+  // Initialize i18n (detect and load user's preferred language)
+  const preferredLocale = i18n.detectPreferredLocale();
+  await i18n.loadLocale(preferredLocale);
+  i18n.translatePage();
 
   // Initialize CSS variables from JavaScript config
   initializeCSSVariables();
@@ -36,6 +42,26 @@ export function initialize_page() {
 
   // Initialize infobox
   initInfobox();
+
+  // Language selector
+  const languageSelect = document.getElementById("language_select");
+  if (languageSelect) {
+    // Set initial value
+    languageSelect.value = i18n.getCurrentLocale();
+
+    languageSelect.addEventListener("change", async (e) => {
+      const newLocale = e.target.value;
+      await i18n.setLocale(newLocale);
+      i18n.translatePage();
+      // Update dynamic content that was generated with JavaScript
+      update_statistics();
+      updateFilenamePreview();
+      console.log("Language changed to:", newLocale);
+    });
+  }
+
+  // Export i18n globally so other modules can use it
+  window.i18nInstance = i18n;
 
   //buttons
   document.getElementById("export")?.addEventListener("click", export_3mf);

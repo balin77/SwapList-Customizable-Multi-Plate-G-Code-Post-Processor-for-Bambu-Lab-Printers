@@ -164,11 +164,11 @@ export function handleFile(f) {
       // Eine GCODE-Datei öffnen (reicht für Modelldetektion)
       const firstPlateText = await firstPlateEntry.async("text");
 
-      // Check for clearbed comment at the beginning of GCODE (fallback method)
-      const clearbedCommentMatch = firstPlateText.match(/^\s*;\s*clearbed\s+printer:/mi);
-      if (clearbedCommentMatch) {
-        console.warn("[read3mf] File contains clearbed comment:", clearbedCommentMatch[0]);
-        reject_file("This file has already been processed by Clearbed and cannot be imported again.");
+      // Check for autoeject comment at the beginning of GCODE (fallback method)
+      const autoejectCommentMatch = firstPlateText.match(/^\s*;\s*autoeject\s+printer:/mi);
+      if (autoejectCommentMatch) {
+        console.warn("[read3mf] File contains autoeject comment:", autoejectCommentMatch[0]);
+        reject_file("This file has already been processed by AutoEject and cannot be imported again.");
         return;
       }
 
@@ -225,10 +225,10 @@ export function handleFile(f) {
       var slicer_config_xml = parser.parseFromString(await slice_config_file, "text/xml");
 
       // Check for custom header that marks this as already processed
-      const clearbedProcessedHeader = slicer_config_xml.querySelector("header_item[key='X-BBL-Clearbed-Processed']");
-      if (clearbedProcessedHeader) {
-        console.warn("[read3mf] File already processed by Clearbed:", clearbedProcessedHeader.getAttribute("value"));
-        reject_file("This file has already been processed by Clearbed and cannot be imported again.");
+      const autoejectProcessedHeader = slicer_config_xml.querySelector("header_item[key='X-BBL-AutoEject-Processed']");
+      if (autoejectProcessedHeader) {
+        console.warn("[read3mf] File already processed by AutoEject:", autoejectProcessedHeader.getAttribute("value"));
+        reject_file("This file has already been processed by AutoEject and cannot be imported again.");
         return;
       }
 

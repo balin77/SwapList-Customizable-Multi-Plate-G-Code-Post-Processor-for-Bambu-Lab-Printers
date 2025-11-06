@@ -5,10 +5,10 @@
   <meta charset="utf-8" />
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CLEAR.bed</title>
+  <title>AutoEject</title>
 
-  <link rel="icon" type="image/png" href="assets/img/favicon_clearbed.png">
-  <link rel="shortcut icon" href="assets/img/favicon_clearbed.png">
+  <link rel="icon" type="image/png" href="assets/img/favicon_autoeject.png">
+  <link rel="shortcut icon" href="assets/img/favicon_autoeject.png">
 
   <!-- Styles -->
   <link rel="stylesheet" href="assets/css/styles.css" />
@@ -20,12 +20,19 @@
     <!-- Logo Section - Full Width -->
     <div id="app_logo">
       <img id="logo" src="assets/img/logo_swaplist_app.png" height="42" alt="swaplist logo" class="hidden">
-      <img id="logo_pushoff" src="assets/img/logo_clearbed_app.png" height="42" alt="clearbed logo">
+      <img id="logo_pushoff" src="assets/img/logo_autoeject.png" height="42" alt="autoeject logo">
       <div id="swap_mode_logos" class="hidden">
         <img id="logo_jobox" src="assets/img/Jbox.png" height="42" alt="jobox logo" class="swap-logo active">
         <img id="logo_3print" src="assets/img/3Print.png" height="42" alt="3print logo" class="swap-logo inactive">
         <img id="logo_printflow" src="assets/img/printflowlogo.png" height="42" alt="printflow logo"
           class="swap-logo inactive">
+      </div>
+      <!-- Language Selector -->
+      <div id="language_selector">
+        <select id="language_select" autocomplete="off">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+        </select>
       </div>
     </div>
 
@@ -33,29 +40,29 @@
       <div>
         <div id="statistics" class="hidden">
           <div id="queue_statistics">
-            <h3>General statistics:</h3>
+            <h3 data-i18n="statistics.title">General statistics:</h3>
             <div>
-              <span> Duration: </span>
+              <span data-i18n="statistics.duration"> Duration: </span>
               <span id="total_time"> 19m 12s </span>
             </div>
             <div>
-              <span> Plates: </span>
+              <span data-i18n="statistics.plates"> Plates: </span>
               <span id="used_plates"> 3 </span>
             </div>
             <div>
-              <span> Total weight: </span>
+              <span data-i18n="statistics.totalWeight"> Total weight: </span>
               <span id="total_weight"> 0g </span>
             </div>
             <div>
-              <span> Total cost: </span>
+              <span data-i18n="statistics.totalCost"> Total cost: </span>
               <span id="total_cost">$0.00</span>
               <span> @ </span>
               <input id="cost_per_kg" type="number" min="0" max="9999" step="0.1" value="25.4">
-              <span> $/kg </span>
+              <span data-i18n="statistics.costPerKg"> $/kg </span>
             </div>
           </div>
           <div id="filament_statistics">
-            <h3>Filament usage statistics:</h3>
+            <h3 data-i18n="statistics.filamentTitle">Filament usage statistics:</h3>
             <div id="filament_total">
               <div title="1">Slot 1: <br> 0.08m <br> 0.23g</div>
               <div title="2">Slot 2: <br> 0.08m <br> 0.23g</div>
@@ -71,29 +78,29 @@
             <label class="mode-switch">
               <input type="checkbox" id="mode_toggle_checkbox">
               <span class="mode-slider">
-                <span class="mode-label mode-swap">SWAP Mode</span>
-                <span class="mode-label mode-pushoff">Push Off Mode</span>
+                <span class="mode-label mode-swap" data-i18n="ui.modes.swap">SWAP Mode</span>
+                <span class="mode-label mode-pushoff" data-i18n="ui.modes.pushoff">Push Off Mode</span>
               </span>
             </label>
           </div>
           <!-- Printer Model Info -->
           <div id="printer_model_info" class="printer-info hidden">
-            <span class="info-label">Printer Model:</span>
+            <span class="info-label" data-i18n="ui.printerInfo.label">Printer Model:</span>
             <span id="current_printer_model" class="info-value">Unknown</span>
           </div>
         </div>
         <div id="action_buttons" class="hidden">
           <!-- Generate + Export Buttons -->
-          <button id="export">Generate 3MF file</button>
+          <button id="export" data-i18n="ui.buttons.export">Generate 3MF file</button>
 
-          <button id="export_gcode">Export GCODE</button>
+          <button id="export_gcode" data-i18n="ui.buttons.exportGcode">Export GCODE</button>
 
           <div id="progress_bar" style="opacity: 0; width: 100%;">
             <div id="progress_scale" style="width: 0%; display: flex;"> </div>
           </div>
 
           <!-- Reset Button -->
-          <button id="reset">Reset</button>
+          <button id="reset" data-i18n="ui.buttons.reset">Reset</button>
 
         </div>
       </div>
@@ -105,7 +112,7 @@
       <div id="plates_wrapper">
         <div id="drop_zones_wrapper">
           <div id="drop_zone" class="">
-            <p>DROP YOUR FILE(S) HERE</p><i>...or click to select</i>
+            <p data-i18n="ui.dropzone.title">DROP YOUR FILE(S) HERE</p><i data-i18n="ui.dropzone.subtitle">...or click to select</i>
           </div>
         </div>
         <ol id="playlist_ol"></ol>
@@ -114,23 +121,23 @@
       <!-- Settings Section: Below plates when loaded -->
       <div id="settings_panel" class="hidden">
         <div id="settings_content">
-          <h3>Settings</h3>
+          <h3 data-i18n="settings.title">Settings</h3>
 
           <!-- Loop Repeats - Top Level -->
           <div id="loop_repeats_section">
             <div class="settings-col">
               <label for="loops">
                 <input id="loops" autocomplete="off" type="number" min="1" max="9999" step="1" value="1">
-                Loop repeats
+                <span data-i18n="settings.loopRepeats.label">Loop repeats</span>
                 <details class="tool_info">
                   <summary></summary>
-                  <p>This number defines how many times the entire
+                  <p data-i18n="settings.loopRepeats.help">This number defines how many times the entire
                     queue will be reprinted.</p>
-                  <p> Example: Plate "A"
+                  <p data-i18n="settings.loopRepeats.example"> Example: Plate "A"
                     is set to 3 repeats, plate "B" is set to 1
                     repeat and the "Loop repeats" is set to 2.
                     This will result in following printing order: </p>
-                  <p> A A A B A A A B .</p>
+                  <p data-i18n="settings.loopRepeats.exampleOrder"> A A A B A A A B .</p>
                 </details>
               </label>
             </div>
@@ -138,8 +145,8 @@
 
           <!-- Plate Settings -->
           <div id="plate_settings_section">
-            <h4>Plate Settings</h4>
-            <p class="settings-instruction">Click on a plate above to configure its settings</p>
+            <h4 data-i18n="settings.plateSettings.title">Plate Settings</h4>
+            <p class="settings-instruction" data-i18n="settings.plateSettings.instruction">Click on a plate above to configure its settings</p>
 
             <!-- Per-Plate Settings Container -->
             <div id="plate_specific_settings" class="hidden">
@@ -149,37 +156,37 @@
 
           <!-- Global Settings -->
           <div id="global_settings_section">
-            <h4>Global Settings</h4>
+            <h4 data-i18n="settings.globalSettings.title">Global Settings</h4>
 
             <!-- Cooling Settings (Global) -->
             <div class="settings-group">
-              <h4>Cooling & Bed Temperature</h4>
+              <h4 data-i18n="settings.globalSettings.cooling.title">Cooling & Bed Temperature</h4>
               <label id="bedlevel_cooling_container">
                 <input type="checkbox" id="opt_bedlevel_cooling">
-                Raise Bed Level for cooling
+                <span data-i18n="settings.globalSettings.cooling.raiseBed">Raise Bed Level for cooling</span>
                 <details class="tool_info">
                   <summary></summary>
-                  <p>Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
+                  <p data-i18n="settings.globalSettings.cooling.raiseBedHelp">Activate this option to raise the bed to fan height for faster cooling. <b>Warning:</b> For large
                     prints the printer cover must be removed to avoid collision.</p>
                 </details>
               </label>
 
               <div class="settings-row">
                 <div class="settings-col">
-                  <label for="cooldown_target_bed_temp">Cooldown target bed temperature (°C)</label>
+                  <label for="cooldown_target_bed_temp"><span data-i18n="settings.globalSettings.cooling.targetTemp">Cooldown target bed temperature (°C)</span></label>
                   <input id="cooldown_target_bed_temp" type="number" step="1" min="15" max="35" value="23">
                   <details class="tool_info">
                     <summary></summary>
-                    <p>Specifies the bed temperature that should be reached before the push-out sequence.</p>
+                    <p data-i18n="settings.globalSettings.cooling.targetTempHelp">Specifies the bed temperature that should be reached before the push-out sequence.</p>
                   </details>
                 </div>
 
                 <div class="settings-col">
-                  <label for="cooldown_max_time">Max cooldown time (min)</label>
+                  <label for="cooldown_max_time"><span data-i18n="settings.globalSettings.cooling.maxTime">Max cooldown time (min)</span></label>
                   <input id="cooldown_max_time" type="number" step="1" min="5" max="120" value="40">
                   <details class="tool_info">
                     <summary></summary>
-                    <p>
+                    <p data-i18n="settings.globalSettings.cooling.maxTimeHelp">
                       Defines the maximum cooldown duration in minutes.
                       The app will insert repeated <code>M190</code> commands to wait for the bed
                       until this total time is reached. Default is 40 minutes.
@@ -191,13 +198,13 @@
 
             <!-- Printer Sounds Settings (Global) -->
             <div class="settings-group printer-sounds-settings">
-              <h4>Printer Sounds</h4>
+              <h4 data-i18n="settings.globalSettings.sounds.title">Printer Sounds</h4>
               <label class="opt">
                 <input type="checkbox" id="opt_disable_printer_sounds" checked>
-                Disable printer sounds
+                <span data-i18n="settings.globalSettings.sounds.disable">Disable printer sounds</span>
                 <details class="tool_info">
                   <summary></summary>
-                  <p>
+                  <p data-i18n="settings.globalSettings.sounds.disableHelp">
                     Controls printer sound removal for A1/A1M printers. When enabled, you can choose to
                     remove all sounds or only sounds between plates. This setting only affects A1/A1M printers.
                   </p>
@@ -207,25 +214,25 @@
               <div id="sound_removal_options" class="settings-row" style="margin-left: 20px;">
                 <label>
                   <input type="radio" name="sound_removal_mode" id="sound_removal_all" value="all" checked>
-                  Remove all printer sounds
+                  <span data-i18n="settings.globalSettings.sounds.removeAll">Remove all printer sounds</span>
                 </label>
                 <label>
                   <input type="radio" name="sound_removal_mode" id="sound_removal_between_plates"
                     value="between_plates">
-                  Remove sounds only between plates
+                  <span data-i18n="settings.globalSettings.sounds.removeBetweenPlates">Remove sounds only between plates</span>
                 </label>
               </div>
             </div>
 
             <!-- AMS Optimization Settings (Global) -->
             <div class="settings-group ams-optimization-settings">
-              <h4>AMS Optimization</h4>
+              <h4 data-i18n="settings.globalSettings.ams.title">AMS Optimization</h4>
               <label class="opt">
                 <input type="checkbox" id="opt_ams_optimization" checked>
-                Enable AMS redundancy removal
+                <span data-i18n="settings.globalSettings.ams.enable">Enable AMS redundancy removal</span>
                 <details class="tool_info" id="opt_ams_optimization_help">
                   <summary></summary>
-                  <p>
+                  <p data-i18n="settings.globalSettings.ams.enableHelp">
                     When <b>on</b>, the app automatically removes redundant AMS filament swaps
                     between plates. This eliminates unnecessary "unload all" + "load same slot"
                     sequences, making multi-plate prints more efficient. Only available for A1/A1M printers.
@@ -236,13 +243,13 @@
 
             <!-- Startsequence Settings (Global) -->
             <div class="settings-group startsequence-settings">
-              <h4>Startsequence</h4>
+              <h4 data-i18n="settings.globalSettings.startsequence.title">Startsequence</h4>
               <label class="opt">
                 <input type="checkbox" id="opt_disable_bed_leveling">
-                Disable bed leveling between plates
+                <span data-i18n="settings.globalSettings.startsequence.disableBedLeveling">Disable bed leveling between plates</span>
                 <details class="tool_info">
                   <summary></summary>
-                  <p>
+                  <p data-i18n="settings.globalSettings.startsequence.disableBedLevelingHelp">
                     When <b>on</b>, bed leveling is skipped for all plates after the first one.
                     This speeds up multi-plate printing by reusing the leveling data from the first plate.
                     Only available for X1/P1 printers in push-off mode.
@@ -252,10 +259,10 @@
 
               <label class="opt">
                 <input type="checkbox" id="opt_disable_first_layer_scan">
-                Disable first layer scan
+                <span data-i18n="settings.globalSettings.startsequence.disableFirstLayerScan">Disable first layer scan</span>
                 <details class="tool_info">
                   <summary></summary>
-                  <p>
+                  <p data-i18n="settings.globalSettings.startsequence.disableFirstLayerScanHelp">
                     When <b>on</b>, the first layer inspection scan is disabled.
                     This can speed up the print start but removes the automatic quality check.
                     Only available for X1 printers in push-off mode.
@@ -266,13 +273,13 @@
 
             <!-- Override Settings (Global) -->
             <div class="settings-group">
-              <h4>Project Settings</h4>
+              <h4 data-i18n="settings.globalSettings.project.title">Project Settings</h4>
               <label class="opt">
                 <input type="checkbox" id="opt_override_metadata">
-                Override project &amp; filament settings
+                <span data-i18n="settings.globalSettings.project.overrideMetadata">Override project &amp; filament settings</span>
                 <details class="tool_info" id="opt_override_metadata_help">
                   <summary></summary>
-                  <p>
+                  <p data-i18n="settings.globalSettings.project.overrideMetadataHelp">
                     When <b>on</b>, the app regenerates
                     the filament entries and material/printer settings. This is essential if you use new
                     AMS slot assignments that weren't present in the original G-code. When <b>off</b>,
@@ -285,15 +292,15 @@
             
             <!-- Progress Display Settings (Global) -->
             <div class="settings-group">
-              <h4>Progress Display</h4>
+              <h4 data-i18n="settings.globalSettings.progress.title">Progress Display</h4>
 
               <!-- Percentage Progress -->
               <div>
                 <div style="margin-bottom: 8px; position: relative;">
-                  <strong style="margin: 0;">Percentage Progress</strong>
+                  <strong style="margin: 0;" data-i18n="settings.globalSettings.progress.percentageProgress">Percentage Progress</strong>
                   <details class="tool_info tool_info_inline">
                     <summary style="display: inline;"></summary>
-                    <div style="clear: both; padding-top: 4px;">
+                    <div style="clear: both; padding-top: 4px;" data-i18n="settings.globalSettings.progress.helpText">
                       <p>
                         Controls how percentage and time remaining are calculated:
                       </p>
@@ -306,21 +313,21 @@
                 </div>
                 <label style="display: block; margin-bottom: 4px;">
                   <input type="radio" name="percentage_progress_mode" id="percentage_progress_per_plate" value="per_plate" checked>
-                  Per plate
+                  <span data-i18n="settings.globalSettings.progress.perPlate">Per plate</span>
                 </label>
                 <label style="display: block;">
                   <input type="radio" name="percentage_progress_mode" id="percentage_progress_global" value="global">
-                  Global (across all plates)
+                  <span data-i18n="settings.globalSettings.progress.global">Global (across all plates)</span>
                 </label>
               </div>
             </div>            
 
             <!-- Custom File Name Settings (Global) -->
             <div class="settings-group">
-              <h4>File Settings</h4>
+              <h4 data-i18n="settings.globalSettings.file.title">File Settings</h4>
               <div class="settings-row">
                 <div class="settings-col">
-                  <label for="file_name">Custom file name:</label>
+                  <label for="file_name"><span data-i18n="settings.globalSettings.file.customName">Custom file name:</span></label>
                   <input id="file_name" autocomplete="off" type="text" style="width: 18ch"
                     placeholder="output_file_name">
                   <span id="filename_extension_preview"> .swap.3mf</span>
@@ -329,10 +336,10 @@
 
               <label class="opt" id="test_file_export_container">
                 <input type="checkbox" id="opt_test_file_export">
-                Generate test file (start/end sequences only)
+                <span data-i18n="settings.globalSettings.file.testExport">Generate test file (start/end sequences only)</span>
                 <details class="tool_info">
                   <summary></summary>
-                  <p>
+                  <p data-i18n="settings.globalSettings.file.testExportHelp">
                     When enabled, exports only the start and end sequences without the actual print code.
                     This creates a small test file perfect for verifying plate-swap logic without running a full print. The test file will go through all
                     plate changes but skip the actual object printing.
@@ -342,7 +349,7 @@
 
               <div class="settings-row" id="test_wait_time_container" style="display: none;">
                 <div class="settings-col">
-                  <label for="test_wait_time">Test file wait time (seconds):</label>
+                  <label for="test_wait_time"><span data-i18n="settings.globalSettings.file.testWaitTime">Test file wait time (seconds):</span></label>
                   <input id="test_wait_time" type="number" min="0" max="200" value="30" style="width: 6ch">
                 </div>
               </div>
@@ -357,9 +364,9 @@
         <div class="plate-settings-content">
           <!-- Objects Settings (from plate template) -->
           <div class="settings-group">
-            <h5>Objects on this plate</h5>
+            <h5 data-i18n="settings.plateSettings.objects.title">Objects on this plate</h5>
             <label class="obj-count-label">
-              <span>Number of objects:</span>
+              <span data-i18n="settings.plateSettings.objects.count">Number of objects:</span>
               <select class="obj-count" autocomplete="off">
                 <option value="1" selected>1</option>
                 <option value="2">2</option>
@@ -388,23 +395,23 @@
 
           <!-- Nozzle and Filament Settings (Per-Plate) -->
           <div class="settings-group plate-nozzle-settings">
-            <h5>Nozzle & Filament</h5>
+            <h5 data-i18n="settings.plateSettings.nozzleFilament.title">Nozzle & Filament</h5>
             <label>
               <input type="checkbox" class="opt_purge_plate" autocomplete="off" checked />
-              Hide nozzle load line in model
+              <span data-i18n="settings.plateSettings.nozzleFilament.hideLoadLine">Hide nozzle load line in model</span>
               <details class="tool_info">
                 <summary></summary>
-                <p>Activate this option to achieve the correct nozzle pressure when starting a new print. If
+                <p data-i18n="settings.plateSettings.nozzleFilament.hideLoadLineHelp">Activate this option to achieve the correct nozzle pressure when starting a new print. If
                   deactivated, this may cause slight under-extrusion at the bottom of the first object.</p>
               </details>
             </label>
 
             <label class="purge-off-wrapper" style="display: none;">
               <input type="checkbox" class="opt_filament_purge_off_plate">
-              Turn off filament purge
+              <span data-i18n="settings.plateSettings.nozzleFilament.purgeOff">Turn off filament purge</span>
               <details class="tool_info">
                 <summary></summary>
-                <p>Disable the filament purge sequence at the start of this plate.
+                <p data-i18n="settings.plateSettings.nozzleFilament.purgeOffHelp">Disable the filament purge sequence at the start of this plate.
                   This can speed up multi-plate jobs but might cause issues if the plate before used different
                   materials.</p>
               </details>
@@ -413,12 +420,12 @@
 
           <!-- Push-off Settings (Per-Plate) -->
           <div class="settings-group plate-pushoff-settings">
-            <h5>Push-off & Ejection</h5>
-            <label>Bed raise offset before push-out (mm)
+            <h5 data-i18n="settings.plateSettings.pushoff.title">Push-off & Ejection</h5>
+            <label><span data-i18n="settings.plateSettings.pushoff.bedRaiseOffset">Bed raise offset before push-out (mm)</span>
               <input class="raisebed_offset_mm_plate" type="number" step="1" min="5" max="200" value="30">
               <details class="tool_info">
                 <summary></summary>
-                <p>Defines how much the bed is raised before performing the push-out sequence.</p>
+                <p data-i18n="settings.plateSettings.pushoff.bedRaiseOffsetHelp">Defines how much the bed is raised before performing the push-out sequence.</p>
               </details>
             </label>
 
@@ -426,10 +433,10 @@
 
             <label>
               <input type="checkbox" class="opt_secure_pushoff_plate" checked>
-              Secure push‑off sequence
+              <span data-i18n="settings.plateSettings.pushoff.securePushoff">Secure push‑off sequence</span>
               <details class="tool_info">
                 <summary></summary>
-                <p>
+                <p data-i18n="settings.plateSettings.pushoff.securePushoffHelp">
                   When enabled, the app performs multiple controlled push‑offs at decreasing Z heights
                   before the final push at Z=1. This helps avoid collisions and smooths the ejection.
                 </p>
@@ -440,12 +447,12 @@
 
             <div class="extra_pushoff_container_plate">
               <label class="extra_pushoff_levels_label_plate">
-                Additional push‑off levels
+                <span data-i18n="settings.plateSettings.pushoff.additionalLevels">Additional push‑off levels</span>
                 <input class="extra_pushoff_levels_plate" type="number" step="1" min="1" max="10" value="2">
               </label>
               <details class="tool_info">
                 <summary></summary>
-                <p>
+                <p data-i18n="settings.plateSettings.pushoff.additionalLevelsHelp">
                   Defines how the maximum Z height is divided. Example: if max Z is 100&nbsp;mm
                   and you enter <b>2</b>, push‑offs occur around Z≈50 and the final one at Z=1.
                   If you enter <b>5</b>, there will be 5 extra push‑offs, with the last always at Z=1.
@@ -493,135 +500,135 @@
   <div id="site-info">
 
     <details id="app-info-container">
-      <summary>App Information</summary>
+      <summary data-i18n="appInfo.title">App Information</summary>
       <div id="app-info-content">
         <div class="version-info">
-          <p><strong>Clearbed Version V1.3</strong></p>
-          <p>Inspired by Swaplist.app</p>
+          <p data-i18n="appInfo.version"><strong>AutoEject Version V1.4</strong></p>
+          <p data-i18n="appInfo.inspiredBy">Inspired by Swaplist.app</p>
         </div>
 
         <details open>
-          <summary>How to use this app</summary>
+          <summary data-i18n="appInfo.howToUse.title">How to use this app</summary>
           <div class="usage-guide">
-            <h3>Supported Printers</h3>
-            <p>This app supports the following Bambu Lab printer models:</p>
+            <h3 data-i18n="appInfo.howToUse.supportedPrinters.title">Supported Printers</h3>
+            <p data-i18n="appInfo.howToUse.supportedPrinters.intro">This app supports the following Bambu Lab printer models:</p>
             <ul>
-              <li><strong>A1 Mini</strong> - SWAP mode with Swapmod system</li>
-              <li><strong>A1</strong> - SWAP mode with JoBox, 3Print, or Printflow systems</li>
-              <li><strong>X1 Series</strong> - Push-off mode (direct push-off with print head)</li>
-              <li><strong>P1 Series</strong> - Push-off mode (direct push-off with print head)</li>
+              <li data-i18n="appInfo.howToUse.supportedPrinters.a1Mini"><strong>A1 Mini</strong> - SWAP mode with Swapmod system</li>
+              <li data-i18n="appInfo.howToUse.supportedPrinters.a1"><strong>A1</strong> - SWAP mode with JoBox, 3Print, or Printflow systems</li>
+              <li data-i18n="appInfo.howToUse.supportedPrinters.x1"><strong>X1 Series</strong> - Push-off mode (direct push-off with print head)</li>
+              <li data-i18n="appInfo.howToUse.supportedPrinters.p1"><strong>P1 Series</strong> - Push-off mode (direct push-off with print head)</li>
             </ul>
-            <p>The app automatically detects your printer model from the GCODE file.</p>
+            <p data-i18n="appInfo.howToUse.supportedPrinters.autoDetect">The app automatically detects your printer model from the GCODE file.</p>
 
-            <h3>Getting Started</h3>
+            <h3 data-i18n="appInfo.howToUse.gettingStarted.title">Getting Started</h3>
             <ol>
-              <li><strong>Load your files:</strong> Drag & drop your sliced <code>.gcode.3mf</code> files from Bambu Studio or Orca Slicer into the drop zone above.
+              <li data-i18n="appInfo.howToUse.gettingStarted.step1"><strong>Load your files:</strong> Drag & drop your sliced <code>.gcode.3mf</code> files from Bambu Studio or Orca Slicer into the drop zone above.
                 <br><strong>Important:</strong> Only fully sliced project files (format: <code>filename.gcode.3mf</code>) are accepted. Unsliced 3D model files or plain <code>.gcode</code> files are not supported.</li>
-              <li><strong>Printer detection:</strong> The app automatically detects your printer model and shows the
+              <li data-i18n="appInfo.howToUse.gettingStarted.step2"><strong>Printer detection:</strong> The app automatically detects your printer model and shows the
                 corresponding mode (A1 Mini, X1, or P1).</li>
-              <li><strong>Configure settings:</strong> Adjust options in the Settings panel that appears below your
+              <li data-i18n="appInfo.howToUse.gettingStarted.step3"><strong>Configure settings:</strong> Adjust options in the Settings panel that appears below your
                 loaded plates.</li>
-              <li><strong>Export:</strong> Click "Generate SWAP file" or "Export GCODE" to create your processed files.
+              <li data-i18n="appInfo.howToUse.gettingStarted.step4"><strong>Export:</strong> Click "Generate SWAP file" or "Export GCODE" to create your processed files.
               </li>
             </ol>
 
-            <h3>Automatisation Mode</h3>
-            <p>This app supports both plate-swapper systems (Swapmod, JoBox, 3Print, Printflow) and direct push-off with the print head.</p>
+            <h3 data-i18n="appInfo.howToUse.automation.title">Automatisation Mode</h3>
+            <p data-i18n="appInfo.howToUse.automation.intro">This app supports both plate-swapper systems (Swapmod, JoBox, 3Print, Printflow) and direct push-off with the print head.</p>
 
-            <h4>Available Modes:</h4>
+            <h4 data-i18n="appInfo.howToUse.automation.modesTitle">Available Modes:</h4>
             <ul>
-              <li><strong>A1 Mini (SWAP Mode):</strong> Creates .swap.3mf files for automatic plate swapping using
+              <li data-i18n="appInfo.howToUse.automation.a1Mini"><strong>A1 Mini (SWAP Mode):</strong> Creates .swap.3mf files for automatic plate swapping using
                 Swapmod system</li>
-              <li><strong>A1 (SWAP Mode):</strong> Supports JoBox, 3Print, and Printflow systems for automatic plate swapping
+              <li data-i18n="appInfo.howToUse.automation.a1"><strong>A1 (SWAP Mode):</strong> Supports JoBox, 3Print, and Printflow systems for automatic plate swapping
               </li>
-              <li><strong>X1/P1 Series (Push-off Mode):</strong> Generates modified GCODE with automated push-off
+              <li data-i18n="appInfo.howToUse.automation.x1p1"><strong>X1/P1 Series (Push-off Mode):</strong> Generates modified GCODE with automated push-off
                 sequences using the print head</li>
             </ul>
 
-            <h4>Switching Between Modes:</h4>
+            <h4 data-i18n="appInfo.howToUse.automation.switchingTitle">Switching Between Modes:</h4>
             <ul>
-              <li><strong>A1 Mini:</strong> Only Swapmod is available - no mode selection needed</li>
-              <li><strong>A1:</strong> Click the logos (JoBox, 3Print, Printflow) at the top to switch between different plate-swapper systems. <strong>IMPORTANT:</strong> You must select the correct mode that matches your physically installed plate-swapper system. <span style="color: #ff4444; font-weight: bold;">Using the wrong mode can cause serious damage to your printer!</span></li>
-              <li><strong>X1/P1:</strong> Uses push-off mode exclusively - no mode selection needed</li>
+              <li data-i18n="appInfo.howToUse.automation.a1MiniSwitch"><strong>A1 Mini:</strong> Only Swapmod is available - no mode selection needed</li>
+              <li data-i18n="appInfo.howToUse.automation.a1Switch"><strong>A1:</strong> Click the logos (JoBox, 3Print, Printflow) at the top to switch between different plate-swapper systems. <strong>IMPORTANT:</strong> You must select the correct mode that matches your physically installed plate-swapper system. <span style="color: #ff4444; font-weight: bold;">Using the wrong mode can cause serious damage to your printer!</span></li>
+              <li data-i18n="appInfo.howToUse.automation.x1p1Switch"><strong>X1/P1:</strong> Uses push-off mode exclusively - no mode selection needed</li>
             </ul>
 
-            <h3>Working with Plates</h3>
+            <h3 data-i18n="appInfo.howToUse.plates.title">Working with Plates</h3>
             <ul>
-              <li><strong>Select plates:</strong> Click on any plate to select it and configure plate-specific settings
+              <li data-i18n="appInfo.howToUse.plates.select"><strong>Select plates:</strong> Click on any plate to select it and configure plate-specific settings
               </li>
-              <li><strong>Repeat count:</strong> Change the number next to each plate to print it multiple times</li>
-              <li><strong>Remove plates:</strong> Click the "×" button in the top-right corner of any plate</li>
-              <li><strong>Duplicate plates:</strong> Click the "+" button on the plate image to make a copy</li>
-              <li><strong>Reorder plates:</strong> Drag and drop plates in the list to rearrange the printing order</li>
+              <li data-i18n="appInfo.howToUse.plates.repeat"><strong>Repeat count:</strong> Change the number next to each plate to print it multiple times</li>
+              <li data-i18n="appInfo.howToUse.plates.remove"><strong>Remove plates:</strong> Click the "×" button in the top-right corner of any plate</li>
+              <li data-i18n="appInfo.howToUse.plates.duplicate"><strong>Duplicate plates:</strong> Click the "+" button on the plate image to make a copy</li>
+              <li data-i18n="appInfo.howToUse.plates.reorder"><strong>Reorder plates:</strong> Drag and drop plates in the list to rearrange the printing order</li>
             </ul>
 
-            <h3>Filament & AMS Slots</h3>
+            <h3 data-i18n="appInfo.howToUse.filament.title">Filament & AMS Slots</h3>
             <ul>
-              <li><strong>Change slot assignment:</strong> Click any colored filament swatch on a plate to reassign it
+              <li data-i18n="appInfo.howToUse.filament.changeSlot"><strong>Change slot assignment:</strong> Click any colored filament swatch on a plate to reassign it
                 to a different AMS slot (1-4)</li>
-              <li><strong>Global slot colors:</strong> Click color swatches in "Filament usage statistics" to customize
+              <li data-i18n="appInfo.howToUse.filament.globalColors"><strong>Global slot colors:</strong> Click color swatches in "Filament usage statistics" to customize
                 global slot colors</li>
-              <li><strong>Usage tracking:</strong> View total filament consumption per slot in the statistics area</li>
+              <li data-i18n="appInfo.howToUse.filament.tracking"><strong>Usage tracking:</strong> View total filament consumption per slot in the statistics area</li>
             </ul>
 
-            <h3>Settings Panel Options</h3>
-            <h4>General Settings:</h4>
+            <h3 data-i18n="appInfo.howToUse.settingsPanel.title">Settings Panel Options</h3>
+            <h4 data-i18n="appInfo.howToUse.settingsPanel.generalTitle">General Settings:</h4>
             <ul>
-              <li><strong>Custom file name:</strong> Set your preferred output filename</li>
-              <li><strong>Loop repeats:</strong> Number of times to repeat the entire print queue</li>
-              <li><strong>Test file export:</strong> Generate a test file with only start/end sequences for debugging. This creates a small file that goes through all plate-swap sequences without printing the actual objects. Perfect for testing your setup without wasting time or material. You can configure the wait time between plates in the "Test file wait time" setting (default: 30 seconds).</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.generalCustomName"><strong>Custom file name:</strong> Set your preferred output filename</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.generalLoopRepeats"><strong>Loop repeats:</strong> Number of times to repeat the entire print queue</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.generalTestExport"><strong>Test file export:</strong> Generate a test file with only start/end sequences for debugging. This creates a small file that goes through all plate-swap sequences without printing the actual objects. Perfect for testing your setup without wasting time or material. You can configure the wait time between plates in the "Test file wait time" setting (default: 30 seconds).</li>
             </ul>
 
-            <h4>Plate-Specific Settings:</h4>
-            <p><em>Click on a plate above to access these settings:</em></p>
+            <h4 data-i18n="appInfo.howToUse.settingsPanel.plateSpecificTitle">Plate-Specific Settings:</h4>
+            <p data-i18n="appInfo.howToUse.settingsPanel.plateSpecificIntro"><em>Click on a plate above to access these settings:</em></p>
             <ul>
-              <li><strong>Object count & coordinates:</strong> Configure number of objects on the plate and their X
+              <li data-i18n="appInfo.howToUse.settingsPanel.plateSpecificObjects"><strong>Object count & coordinates:</strong> Configure number of objects on the plate and their X
                 positions</li>
-              <li><strong>Nozzle & filament settings:</strong> Control purge sequences and nozzle behavior per plate
+              <li data-i18n="appInfo.howToUse.settingsPanel.plateSpecificNozzle"><strong>Nozzle & filament settings:</strong> Control purge sequences and nozzle behavior per plate
               </li>
-              <li><strong>Push-off settings:</strong> Customize ejection behavior for each individual plate</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.plateSpecificPushoff"><strong>Push-off settings:</strong> Customize ejection behavior for each individual plate</li>
             </ul>
 
-            <h4>X1/P1 Advanced Options:</h4>
+            <h4 data-i18n="appInfo.howToUse.settingsPanel.advancedTitle">X1/P1 Advanced Options:</h4>
             <ul>
-              <li><strong>"Disable bed leveling between plates"</strong> - Skips bed leveling for all plates after the first one. This can speed up multi-plate printing by reusing the leveling data from the initial print.
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedBedLeveling"><strong>"Disable bed leveling between plates"</strong> - Skips bed leveling for all plates after the first one. This can speed up multi-plate printing by reusing the leveling data from the initial print.
                 <em>Theory:</em> The bed was already leveled at print initialization, so re-leveling between plates should not be necessary.
                 <em>Risk:</em> There is a small risk that the push-off process may have affected the print head's leveling calibration. Use this option if print speed is more important than maximum reliability.</li>
-              <li><strong>"Disable first layer scan"</strong> - Disables the first layer inspection scan. This speeds up print start but removes the automatic quality check. Use this if you consider the scan to be unnecessary or if you prefer speed over the additional quality assurance.</li>
-              <li><strong>"Turn off filament purge"</strong> - Skips purge sequence after first plate (faster
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedFirstLayer"><strong>"Disable first layer scan"</strong> - Disables the first layer inspection scan. This speeds up print start but removes the automatic quality check. Use this if you consider the scan to be unnecessary or if you prefer speed over the additional quality assurance.</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedPurge"><strong>"Turn off filament purge"</strong> - Skips purge sequence after first plate (faster
                 multi-plate jobs). Only enable if there are no filament changes between plates.</li>
-              <li><strong>"Hide nozzle load line in model"</strong> - Extrudes extra material at print start to
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedLoadLine"><strong>"Hide nozzle load line in model"</strong> - Extrudes extra material at print start to
                 compensate for the removed load line. Prevents under-extrusion on the object's bottom layer, but may be
                 visible if print start is at the object's edge.</li>
-              <li><strong>"Raise Bed Level for cooling"</strong> - Moves bed to fan height for faster cooling. For tall
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedCooling"><strong>"Raise Bed Level for cooling"</strong> - Moves bed to fan height for faster cooling. For tall
                 objects, remove the printer's top glass cover to prevent collisions.</li>
-              <li><strong>"Secure push‑off sequence"</strong> - Uses controlled push-offs at multiple heights to
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedSecurePushoff"><strong>"Secure push‑off sequence"</strong> - Uses controlled push-offs at multiple heights to
                 guarantee safe ejection of finished objects from the printer</li>
-              <li><strong>"Override project & filament settings"</strong> - Regenerates metadata for new slot
+              <li data-i18n="appInfo.howToUse.settingsPanel.advancedOverride"><strong>"Override project & filament settings"</strong> - Regenerates metadata for new slot
                 assignments. This option becomes necessary when AMS slots are redefined.</li>
             </ul>
 
-            <h4>Global Cooldown & Sound Settings:</h4>
+            <h4 data-i18n="appInfo.howToUse.settingsPanel.cooldownTitle">Global Cooldown & Sound Settings:</h4>
             <ul>
-              <li><strong>Target bed temperature:</strong> Cool down to this temperature before push-out (default: 23°C)
+              <li data-i18n="appInfo.howToUse.settingsPanel.cooldownTarget"><strong>Target bed temperature:</strong> Cool down to this temperature before push-out (default: 23°C)
               </li>
-              <li><strong>Max cooldown time:</strong> Maximum time to wait for cooling (default: 40 minutes)</li>
-              <li><strong>Printer sounds:</strong> Disable all sounds or only sounds between plates (A1/A1M only)</li>
-              <li><strong>AMS optimization:</strong> Remove redundant filament swaps between plates (A1/A1M only)</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.cooldownMax"><strong>Max cooldown time:</strong> Maximum time to wait for cooling (default: 40 minutes)</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.cooldownSounds"><strong>Printer sounds:</strong> Disable all sounds or only sounds between plates (A1/A1M only)</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.cooldownAms"><strong>AMS optimization:</strong> Remove redundant filament swaps between plates (A1/A1M only)</li>
             </ul>
 
-            <h4>Progress Display Settings:</h4>
+            <h4 data-i18n="appInfo.howToUse.settingsPanel.progressTitle">Progress Display Settings:</h4>
             <ul>
-              <li><strong>Percentage Progress - Per plate:</strong> Shows progress percentage and time remaining for the current plate only (default behavior)</li>
-              <li><strong>Percentage Progress - Global:</strong> Shows overall progress percentage and time remaining across all plates in the entire queue. Useful for tracking the total job completion.</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.progressPerPlate"><strong>Percentage Progress - Per plate:</strong> Shows progress percentage and time remaining for the current plate only (default behavior)</li>
+              <li data-i18n="appInfo.howToUse.settingsPanel.progressGlobal"><strong>Percentage Progress - Global:</strong> Shows overall progress percentage and time remaining across all plates in the entire queue. Useful for tracking the total job completion.</li>
             </ul>
 
           </div>
         </details>
 
         <details>
-          <summary>Data security</summary>
-          <p>
+          <summary data-i18n="appInfo.dataSecurity.title">Data security</summary>
+          <p data-i18n="appInfo.dataSecurity.content">
             This app uses your browser as an environment and runs locally on your computer.
             This means none of your data is sent to our server or any third party cloud provider.
             You can even save this app as a web page and use it completely offline.

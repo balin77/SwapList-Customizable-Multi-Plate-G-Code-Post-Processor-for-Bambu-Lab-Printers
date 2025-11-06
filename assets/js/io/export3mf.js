@@ -588,11 +588,11 @@ export async function export_3mf() {
 
       // Add custom header item to mark this as processed
       const customHeaderItem = slicer_config_xml.createElement("header_item");
-      customHeaderItem.setAttribute("key", "X-BBL-Clearbed-Processed");
+      customHeaderItem.setAttribute("key", "X-BBL-AutoEject-Processed");
       customHeaderItem.setAttribute("value", new Date().toISOString());
       headerElement.appendChild(customHeaderItem);
 
-      console.log("Added X-BBL-Clearbed-Processed header to slice_info.config");
+      console.log("Added X-BBL-AutoEject-Processed header to slice_info.config");
     }
 
     // auf eine Plate reduzieren

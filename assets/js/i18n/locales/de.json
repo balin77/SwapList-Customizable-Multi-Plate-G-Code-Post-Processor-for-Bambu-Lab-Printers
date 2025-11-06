@@ -1,0 +1,326 @@
+{
+  "app": {
+    "title": "CLEAR.bed",
+    "version": "AutoEject Version V1.4",
+    "inspiredBy": "Inspiriert von Swaplist.app"
+  },
+  "ui": {
+    "buttons": {
+      "export": "3MF-Datei erstellen",
+      "exportGcode": "GCODE exportieren",
+      "reset": "Zurücksetzen",
+      "remove": "×"
+    },
+    "dropzone": {
+      "title": "DATEIEN HIER ABLEGEN",
+      "subtitle": "...oder klicken zum Auswählen"
+    },
+    "modes": {
+      "swap": "SWAP-Modus",
+      "pushoff": "Pushoff-Modus"
+    },
+    "printerInfo": {
+      "label": "Druckermodell:",
+      "unknown": "Unbekannt"
+    }
+  },
+  "statistics": {
+    "title": "Allgemeine Statistiken:",
+    "duration": "Dauer:",
+    "plates": "Platten:",
+    "totalWeight": "Gesamtgewicht:",
+    "totalCost": "Gesamtkosten:",
+    "costPerKg": "€/kg",
+    "filamentTitle": "Filamentverbrauch Statistiken:",
+    "slot": "Slot"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "loopRepeats": {
+      "label": "Schleifenwiederholungen",
+      "help": "Diese Zahl definiert, wie oft die gesamte Warteschlange wiederholt gedruckt wird.",
+      "example": "Beispiel: Platte \"A\" ist auf 3 Wiederholungen eingestellt, Platte \"B\" ist auf 1 Wiederholung eingestellt und die \"Schleifenwiederholungen\" sind auf 2 eingestellt. Dies ergibt folgende Druckreihenfolge:",
+      "exampleOrder": "A A A B A A A B ."
+    },
+    "plateSettings": {
+      "title": "Platteneinstellungen",
+      "instruction": "Klicke auf eine Platte oben, um ihre Einstellungen zu konfigurieren",
+      "objects": {
+        "title": "Objekte auf dieser Platte",
+        "count": "Anzahl der Objekte:"
+      },
+      "nozzleFilament": {
+        "title": "Düse & Filament",
+        "hideLoadLine": "Düsen-Ladelinie im Modell ausblenden",
+        "hideLoadLineHelp": "Aktiviere diese Option, um den korrekten Düsendruck beim Start eines neuen Drucks zu erreichen. Wenn deaktiviert, kann dies zu einer leichten Unterextrusion am Boden des ersten Objekts führen.",
+        "purgeOff": "Filament-Spülung deaktivieren",
+        "purgeOffHelp": "Deaktiviert die Filament-Spülsequenz am Anfang dieser Platte. Dies kann Multi-Platten-Aufträge beschleunigen, kann aber Probleme verursachen, wenn die vorherige Platte andere Materialien verwendet hat."
+      },
+      "pushoff": {
+        "title": "Push-Off & Auswurf",
+        "bedRaiseOffset": "Bettanhebung vor Push-Out (mm)",
+        "bedRaiseOffsetHelp": "Definiert, wie viel das Bett angehoben wird, bevor die Push-Out-Sequenz ausgeführt wird.",
+        "securePushoff": "Sichere Push-Off-Sequenz",
+        "securePushoffHelp": "Wenn aktiviert, führt die App mehrere kontrollierte Push-Offs bei abnehmenden Z-Höhen durch, bevor der finale Push bei Z=1 erfolgt. Dies hilft, Kollisionen zu vermeiden und erleichtert den Auswurf.",
+        "additionalLevels": "Zusätzliche Push-Off-Ebenen",
+        "additionalLevelsHelp": "Definiert, wie die maximale Z-Höhe aufgeteilt wird. Beispiel: Wenn die maximale Z-Höhe 100 mm beträgt und du 2 eingibst, erfolgen Push-Offs bei Z≈50 und der finale bei Z=1. Wenn du 5 eingibst, gibt es 5 zusätzliche Push-Offs, wobei der letzte immer bei Z=1 stattfindet. Ein Wert von 1 bedeutet nur einen finalen Push bei Z=1."
+      }
+    },
+    "globalSettings": {
+      "title": "Globale Einstellungen",
+      "cooling": {
+        "title": "Kühlung & Betttemperatur",
+        "raiseBed": "Bett zum Kühlen anheben",
+        "raiseBedHelp": "Aktiviere diese Option, um das Bett auf Lüfterhöhe anzuheben für schnellere Kühlung. <b>Warnung:</b> Bei großen Drucken muss die Druckerabdeckung entfernt werden, um Kollisionen zu vermeiden.",
+        "targetTemp": "Ziel-Betttemperatur zum Abkühlen (°C)",
+        "targetTempHelp": "Gibt die Betttemperatur an, die vor der Push-Out-Sequenz erreicht werden soll.",
+        "maxTime": "Maximale Abkühlzeit (min)",
+        "maxTimeHelp": "Definiert die maximale Abkühldauer in Minuten. Die App fügt wiederholte <code>M190</code>-Befehle ein, um auf das Bett zu warten, bis diese Gesamtzeit erreicht ist. Standard sind 40 Minuten."
+      },
+      "sounds": {
+        "title": "Druckergeräusche",
+        "disable": "Druckergeräusche deaktivieren",
+        "disableHelp": "Steuert die Entfernung von Druckergeräuschen für A1/A1M-Drucker. Wenn aktiviert, kannst du wählen, ob alle Geräusche oder nur Geräusche zwischen Platten entfernt werden sollen. Diese Einstellung betrifft nur A1/A1M-Drucker.",
+        "removeAll": "Alle Druckergeräusche entfernen",
+        "removeBetweenPlates": "Nur Geräusche zwischen Platten entfernen"
+      },
+      "ams": {
+        "title": "AMS-Optimierung",
+        "enable": "AMS-Redundanzentfernung aktivieren",
+        "enableHelp": "Wenn aktiviert, entfernt die App automatisch redundante AMS-Filamentwechsel zwischen Platten. Dies eliminiert unnötige \"Alle entladen\" + \"Gleichen Slot laden\"-Sequenzen und macht Multi-Platten-Drucke effizienter. Nur verfügbar für A1/A1M-Drucker."
+      },
+      "startsequence": {
+        "title": "Startsequenz",
+        "disableBedLeveling": "Bettnivellierung zwischen Platten deaktivieren",
+        "disableBedLevelingHelp": "Wenn aktiviert, wird die Bettnivellierung für alle Platten nach der ersten übersprungen. Dies beschleunigt den Multi-Platten-Druck durch Wiederverwendung der Nivellierdaten von der ersten Platte. Nur verfügbar für X1/P1-Drucker im Push-Off-Modus.",
+        "disableFirstLayerScan": "Erste-Schicht-Scan deaktivieren",
+        "disableFirstLayerScanHelp": "Wenn aktiviert, wird der Erste-Schicht-Inspektionsscan deaktiviert. Dies kann den Druckstart beschleunigen, entfernt aber die automatische Qualitätsprüfung. Nur verfügbar für X1-Drucker im Push-Off-Modus."
+      },
+      "project": {
+        "title": "Projekteinstellungen",
+        "overrideMetadata": "Projekt- & Filamenteinstellungen überschreiben",
+        "overrideMetadataHelp": "Wenn aktiviert, regeneriert die App die Filamenteinträge und Material-/Druckereinstellungen. Dies ist unerlässlich, wenn du neue AMS-Slot-Zuweisungen verwendest, die im ursprünglichen G-Code nicht vorhanden waren. Wenn deaktiviert, werden die ursprünglichen 3MF-Metadaten beibehalten; wenn du auf AMS-Slots neu zuordnest, die ursprünglich nicht definiert waren, kann der Drucker oder Studio eine Nichtübereinstimmung melden."
+      },
+      "progress": {
+        "title": "Fortschrittsanzeige",
+        "percentageProgress": "Prozentfortschritt",
+        "percentageProgressHelp": "Steuert, wie Prozent und verbleibende Zeit berechnet werden:",
+        "perPlate": "Pro Platte",
+        "perPlateDesc": "Fortschritt zeigt Prozent/Zeit nur für aktuelle Platte (Standardverhalten)",
+        "global": "Global (über alle Platten)",
+        "globalDesc": "Fortschritt zeigt Gesamtprozent/Zeit über alle Platten in der Warteschlange",
+        "helpText": "Steuert, wie Prozent und verbleibende Zeit berechnet werden:<ul><li><strong>Pro Platte:</strong> Fortschritt zeigt Prozent/Zeit nur für aktuelle Platte (Standardverhalten)</li><li><strong>Global:</strong> Fortschritt zeigt Gesamtprozent/Zeit über alle Platten in der Warteschlange</li></ul>"
+      },
+      "file": {
+        "title": "Dateieinstellungen",
+        "customName": "Benutzerdefinierter Dateiname:",
+        "testExport": "Testdatei erstellen (nur Start-/Endsequenzen)",
+        "testExportHelp": "Wenn aktiviert, werden nur die Start- und Endsequenzen ohne den tatsächlichen Druckcode exportiert. Dies erstellt eine kleine Testdatei, die perfekt zum Überprüfen der Plattenwechsel-Logik geeignet ist, ohne einen vollständigen Druck durchzuführen. Die Testdatei durchläuft alle Plattenwechsel, überspringt aber das tatsächliche Objektdrucken.",
+        "testWaitTime": "Testdatei Wartezeit (Sekunden):"
+      }
+    }
+  },
+  "info": {
+    "title": "App-Information",
+    "howToUse": {
+      "title": "Wie man diese App verwendet",
+      "supportedPrinters": {
+        "title": "Unterstützte Drucker",
+        "intro": "Diese App unterstützt die folgenden Bambu Lab Druckermodelle:",
+        "a1mini": "A1 Mini - SWAP-Modus mit Swapmod-System",
+        "a1": "A1 - SWAP-Modus mit JoBox-, 3Print- oder Printflow-Systemen",
+        "x1": "X1 Serie - Push-Off-Modus (direkter Push-Off mit Druckkopf)",
+        "p1": "P1 Serie - Push-Off-Modus (direkter Push-Off mit Druckkopf)",
+        "autoDetect": "Die App erkennt dein Druckermodell automatisch aus der GCODE-Datei."
+      },
+      "gettingStarted": {
+        "title": "Erste Schritte",
+        "step1": "Lade deine Dateien: Ziehe deine gesliceten .gcode.3mf-Dateien aus Bambu Studio oder Orca Slicer per Drag & Drop in die Ablagezone oben.",
+        "step1important": "Wichtig: Nur vollständig geslicete Projektdateien (Format: dateiname.gcode.3mf) werden akzeptiert. Ungeslicete 3D-Modelldateien oder einfache .gcode-Dateien werden nicht unterstützt.",
+        "step2": "Druckererkennung: Die App erkennt dein Druckermodell automatisch und zeigt den entsprechenden Modus an (A1 Mini, X1 oder P1).",
+        "step3": "Einstellungen konfigurieren: Passe die Optionen im Einstellungsbereich an, der unter deinen geladenen Platten erscheint.",
+        "step4": "Exportieren: Klicke auf \"SWAP-Datei erstellen\" oder \"GCODE exportieren\", um deine verarbeiteten Dateien zu erstellen."
+      },
+      "automation": {
+        "title": "Automatisierungsmodus",
+        "intro": "Diese App unterstützt sowohl Plattenwechsler-Systeme (Swapmod, JoBox, 3Print, Printflow) als auch direktes Push-Off mit dem Druckkopf.",
+        "modesTitle": "Verfügbare Modi:",
+        "a1mini": "A1 Mini (SWAP-Modus): Erstellt .swap.3mf-Dateien für automatischen Plattenwechsel mit dem Swapmod-System",
+        "a1": "A1 (SWAP-Modus): Unterstützt JoBox-, 3Print- und Printflow-Systeme für automatischen Plattenwechsel",
+        "x1p1": "X1/P1 Serie (Push-Off-Modus): Erzeugt modifizierten GCODE mit automatisierten Push-Off-Sequenzen unter Verwendung des Druckkopfs",
+        "switchingTitle": "Zwischen Modi wechseln:",
+        "a1miniSwitch": "A1 Mini: Nur Swapmod ist verfügbar - keine Modusauswahl erforderlich",
+        "a1Switch": "A1: Klicke auf die Logos (JoBox, 3Print, Printflow) oben, um zwischen verschiedenen Plattenwechsler-Systemen zu wechseln. WICHTIG: Du musst den richtigen Modus auswählen, der zu deinem physisch installierten Plattenwechsler-System passt. Die Verwendung des falschen Modus kann schwere Schäden an deinem Drucker verursachen!",
+        "x1p1Switch": "X1/P1: Verwendet ausschließlich den Push-Off-Modus - keine Modusauswahl erforderlich"
+      },
+      "plates": {
+        "title": "Arbeiten mit Platten",
+        "select": "Platten auswählen: Klicke auf eine beliebige Platte, um sie auszuwählen und plattenspezifische Einstellungen zu konfigurieren",
+        "repeat": "Wiederholungszahl: Ändere die Zahl neben jeder Platte, um sie mehrmals zu drucken",
+        "remove": "Platten entfernen: Klicke auf die \"×\"-Schaltfläche in der oberen rechten Ecke einer Platte",
+        "duplicate": "Platten duplizieren: Klicke auf die \"+\"-Schaltfläche auf dem Plattenbild, um eine Kopie zu erstellen",
+        "reorder": "Platten neu anordnen: Ziehe Platten per Drag & Drop in der Liste, um die Druckreihenfolge zu ändern"
+      },
+      "filament": {
+        "title": "Filament & AMS-Slots",
+        "changeSlot": "Slot-Zuweisung ändern: Klicke auf ein farbiges Filament-Farbfeld auf einer Platte, um es einem anderen AMS-Slot (1-4) zuzuweisen",
+        "globalColors": "Globale Slot-Farben: Klicke auf Farbfelder in \"Filamentverbrauch Statistiken\", um globale Slot-Farben anzupassen",
+        "tracking": "Verbrauchsverfolgung: Zeige den gesamten Filamentverbrauch pro Slot im Statistikbereich an"
+      },
+      "settingsPanel": {
+        "title": "Optionen im Einstellungsbereich",
+        "general": "Allgemeine Einstellungen:",
+        "generalCustomName": "Benutzerdefinierter Dateiname: Lege deinen bevorzugten Ausgabedateinamen fest",
+        "generalLoopRepeats": "Schleifenwiederholungen: Anzahl der Wiederholungen der gesamten Druckwarteschlange",
+        "generalTestExport": "Testdatei-Export: Erstelle eine Testdatei nur mit Start-/Endsequenzen zum Debuggen. Dies erstellt eine kleine Datei, die alle Plattenwechsel-Sequenzen durchläuft, ohne die tatsächlichen Objekte zu drucken. Perfekt zum Testen deines Setups ohne Zeit- oder Materialverschwendung. Du kannst die Wartezeit zwischen Platten in der Einstellung \"Testdatei Wartezeit\" konfigurieren (Standard: 30 Sekunden).",
+        "plateSpecific": "Plattenspezifische Einstellungen:",
+        "plateSpecificIntro": "Klicke auf eine Platte oben, um auf diese Einstellungen zuzugreifen:",
+        "plateSpecificObjects": "Objektanzahl & Koordinaten: Konfiguriere die Anzahl der Objekte auf der Platte und ihre X-Positionen",
+        "plateSpecificNozzle": "Düsen- & Filamenteinstellungen: Steuere Spülsequenzen und Düsenverhalten pro Platte",
+        "plateSpecificPushoff": "Push-Off-Einstellungen: Passe das Auswurfverhalten für jede einzelne Platte an",
+        "advanced": "X1/P1 Erweiterte Optionen:",
+        "advancedBedLeveling": "\"Bettnivellierung zwischen Platten deaktivieren\" - Überspringt die Bettnivellierung für alle Platten nach der ersten. Dies kann den Multi-Platten-Druck beschleunigen, indem die Nivellierdaten vom initialen Druck wiederverwendet werden. Theorie: Das Bett wurde bereits bei der Druckinitialisierung nivelliert, daher sollte eine erneute Nivellierung zwischen Platten nicht notwendig sein. Risiko: Es besteht ein kleines Risiko, dass der Push-Off-Prozess die Nivellierungskalibrierung des Druckkopfs beeinträchtigt haben könnte. Verwende diese Option, wenn Druckgeschwindigkeit wichtiger ist als maximale Zuverlässigkeit.",
+        "advancedFirstLayer": "\"Erste-Schicht-Scan deaktivieren\" - Deaktiviert den Erste-Schicht-Inspektionsscan. Dies beschleunigt den Druckstart, entfernt aber die automatische Qualitätsprüfung. Verwende dies, wenn du den Scan für unnötig hältst oder Geschwindigkeit gegenüber zusätzlicher Qualitätssicherung bevorzugst.",
+        "advancedPurge": "\"Filament-Spülung deaktivieren\" - Überspringt die Spülsequenz nach der ersten Platte (schnellere Multi-Platten-Aufträge). Nur aktivieren, wenn es keine Filamentwechsel zwischen Platten gibt.",
+        "advancedLoadLine": "\"Düsen-Ladelinie im Modell ausblenden\" - Extrudiert zusätzliches Material beim Druckstart, um die entfernte Ladelinie zu kompensieren. Verhindert Unterextrusion an der unteren Schicht des Objekts, kann aber sichtbar sein, wenn der Druckstart am Rand des Objekts liegt.",
+        "advancedCooling": "\"Bett zum Kühlen anheben\" - Bewegt das Bett auf Lüfterhöhe für schnellere Kühlung. Bei hohen Objekten entferne die obere Glasabdeckung des Druckers, um Kollisionen zu verhindern.",
+        "advancedSecurePushoff": "\"Sichere Push-Off-Sequenz\" - Verwendet kontrollierte Push-Offs auf mehreren Höhen, um sicheren Auswurf fertiger Objekte vom Drucker zu garantieren",
+        "advancedOverride": "\"Projekt- & Filamenteinstellungen überschreiben\" - Regeneriert Metadaten für neue Slot-Zuweisungen. Diese Option wird notwendig, wenn AMS-Slots neu definiert werden.",
+        "cooldownSound": "Globale Abkühl- & Geräuscheinstellungen:",
+        "cooldownSoundTarget": "Ziel-Betttemperatur: Auf diese Temperatur abkühlen vor Push-Out (Standard: 23°C)",
+        "cooldownSoundMax": "Maximale Abkühlzeit: Maximale Wartezeit für Kühlung (Standard: 40 Minuten)",
+        "cooldownSoundSounds": "Druckergeräusche: Alle Geräusche oder nur Geräusche zwischen Platten deaktivieren (nur A1/A1M)",
+        "cooldownSoundAms": "AMS-Optimierung: Redundante Filamentwechsel zwischen Platten entfernen (nur A1/A1M)",
+        "progressDisplay": "Fortschrittsanzeigeeinstellungen:",
+        "progressDisplayPerPlate": "Prozentfortschritt - Pro Platte: Zeigt Fortschrittsprozent und verbleibende Zeit nur für die aktuelle Platte (Standardverhalten)",
+        "progressDisplayGlobal": "Prozentfortschritt - Global: Zeigt Gesamtfortschrittsprozent und verbleibende Zeit über alle Platten in der gesamten Warteschlange. Nützlich zur Verfolgung der gesamten Auftragserfüllung."
+      }
+    },
+    "dataSecurity": {
+      "title": "Datensicherheit",
+      "content": "Diese App nutzt deinen Browser als Umgebung und läuft lokal auf deinem Computer. Das bedeutet, dass keine deiner Daten an unseren Server oder einen Drittanbieter-Cloud-Dienst gesendet werden. Du kannst diese App sogar als Webseite speichern und vollständig offline nutzen. Diese Seite verwendet auch keine Cookies und speichert keine persönlichen Informationen auf deinem Gerät."
+    }
+  },
+  "plate": {
+    "title": "Platte",
+    "slot": "Slot",
+    "weight": "g",
+    "length": "m"
+  },
+  "errors": {
+    "fileNotFound": "Datei nicht gefunden",
+    "invalidFormat": "Ungültiges Dateiformat",
+    "parseError": "Fehler beim Parsen der Datei",
+    "localeLoadFailed": "Fehler beim Laden der Sprachdatei",
+    "defaultError": "Bitte verwende geslicete Dateien im Format *.3mf oder *.gcode.3mf. Die Verwendung von einfachen *.gcode-Dateien wird nicht unterstützt.",
+    "fileNotReadable": "Datei nicht lesbar.",
+    "noSlicedData": "Keine gesliceten Daten gefunden.",
+    "errorReading": "Fehler beim Lesen von {{fileName}}: {{error}}",
+    "noActivePlates": "Keine aktiven Platten (Wiederholungen=0).",
+    "gcodeExportFailed": "GCODE-Export fehlgeschlagen: {{error}}",
+    "exportFailed": "Export fehlgeschlagen: {{error}}",
+    "printerNotSupported": "Dieses Druckermodell wird in dieser App noch nicht unterstützt (Datei: {{fileName}}).",
+    "missingCoordinates": "Warnung: Einige X-Koordinaten fehlen (0). Bitte gib gültige Werte ein, bevor du exportierst.",
+    "swapModeOnlyA1": "SWAP-Modus ist nur für A1 Mini und A1 Drucker verfügbar. Für andere Drucker verwende bitte den Push-Off-Modus.",
+    "incompatibleSlots": "Inkompatible AMS-Slots erkannt. Diese Platte verwendet Slots, die nicht mit vorherigen Platten kompatibel sind. Bitte überprüfe deine Filamentkonfiguration.",
+    "tooManyColors": "Zu viele verschiedene Farben/Materialien erkannt. Der Drucker unterstützt nur 4 AMS-Slots.",
+    "colorConflict": "Farbkonflikt erkannt. Verschiedene Materialien sind demselben Slot zugewiesen.",
+    "slotMismatch": "AMS-Slot-Nichtübereinstimmung zwischen Platten erkannt."
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "colorPicker": {
+    "title": "Slot {{slot}} Information",
+    "color": "Farbe:",
+    "producer": "Hersteller:",
+    "material": "Material:",
+    "filamentId": "Filament-ID:",
+    "cancel": "Abbrechen",
+    "save": "Speichern"
+  },
+  "appInfo": {
+    "title": "App-Information",
+    "version": "AutoEject Version V1.4",
+    "inspiredBy": "Inspiriert von Swaplist.app",
+    "howToUse": {
+      "title": "Wie man diese App verwendet",
+      "supportedPrinters": {
+        "title": "Unterstützte Drucker",
+        "intro": "Diese App unterstützt die folgenden Bambu Lab Druckermodelle:",
+        "a1Mini": "<strong>A1 Mini</strong> - SWAP-Modus mit Swapmod-System",
+        "a1": "<strong>A1</strong> - SWAP-Modus mit JoBox-, 3Print- oder Printflow-Systemen",
+        "x1": "<strong>X1 Serie</strong> - Abschubmodus (direkter Abschub mit Druckkopf)",
+        "p1": "<strong>P1 Serie</strong> - Abschubmodus (direkter Abschub mit Druckkopf)",
+        "autoDetect": "Die App erkennt dein Druckermodell automatisch aus der GCODE-Datei."
+      },
+      "gettingStarted": {
+        "title": "Erste Schritte",
+        "step1": "<strong>Lade deine Dateien:</strong> Ziehe deine gesliceten <code>.gcode.3mf</code>-Dateien aus Bambu Studio oder Orca Slicer per Drag & Drop in die Ablagezone oben.<br><strong>Wichtig:</strong> Nur vollständig geslicete Projektdateien (Format: <code>dateiname.gcode.3mf</code>) werden akzeptiert. Ungeslicete 3D-Modelldateien oder einfache <code>.gcode</code>-Dateien werden nicht unterstützt.",
+        "step2": "<strong>Druckererkennung:</strong> Die App erkennt dein Druckermodell automatisch und zeigt den entsprechenden Modus an (A1 Mini, X1 oder P1).",
+        "step3": "<strong>Einstellungen konfigurieren:</strong> Passe die Optionen im Einstellungsbereich an, der unter deinen geladenen Platten erscheint.",
+        "step4": "<strong>Exportieren:</strong> Klicke auf \"3MF-Datei erstellen\" oder \"GCODE exportieren\", um deine verarbeiteten Dateien zu erstellen."
+      },
+      "automation": {
+        "title": "Automatisierungsmodus",
+        "intro": "Diese App unterstützt sowohl Plattenwechsler-Systeme (Swapmod, JoBox, 3Print, Printflow) als auch direktes Abschieben mit dem Druckkopf.",
+        "modesTitle": "Verfügbare Modi:",
+        "a1Mini": "<strong>A1 Mini (SWAP-Modus):</strong> Erstellt .swap.3mf-Dateien für automatischen Plattenwechsel mit dem Swapmod-System",
+        "a1": "<strong>A1 (SWAP-Modus):</strong> Unterstützt JoBox-, 3Print- und Printflow-Systeme für automatischen Plattenwechsel",
+        "x1p1": "<strong>X1/P1 Serie (Abschubmodus):</strong> Erzeugt modifizierten GCODE mit automatisierten Abschub-Sequenzen unter Verwendung des Druckkopfs",
+        "switchingTitle": "Zwischen Modi wechseln:",
+        "a1MiniSwitch": "<strong>A1 Mini:</strong> Nur Swapmod ist verfügbar - keine Modusauswahl erforderlich",
+        "a1Switch": "<strong>A1:</strong> Klicke auf die Logos (JoBox, 3Print, Printflow) oben, um zwischen verschiedenen Plattenwechsler-Systemen zu wechseln. <strong>WICHTIG:</strong> Du musst den richtigen Modus auswählen, der zu deinem physisch installierten Plattenwechsler-System passt. <span style=\"color: #ff4444; font-weight: bold;\">Die Verwendung des falschen Modus kann schwere Schäden an deinem Drucker verursachen!</span>",
+        "x1p1Switch": "<strong>X1/P1:</strong> Verwendet ausschließlich den Abschubmodus - keine Modusauswahl erforderlich"
+      },
+      "plates": {
+        "title": "Arbeiten mit Platten",
+        "select": "<strong>Platten auswählen:</strong> Klicke auf eine beliebige Platte, um sie auszuwählen und plattenspezifische Einstellungen zu konfigurieren",
+        "repeat": "<strong>Wiederholungszahl:</strong> Ändere die Zahl neben jeder Platte, um sie mehrmals zu drucken",
+        "remove": "<strong>Platten entfernen:</strong> Klicke auf die \"×\"-Schaltfläche in der oberen rechten Ecke einer Platte",
+        "duplicate": "<strong>Platten duplizieren:</strong> Klicke auf die \"+\"-Schaltfläche auf dem Plattenbild, um eine Kopie zu erstellen",
+        "reorder": "<strong>Platten neu anordnen:</strong> Ziehe Platten per Drag & Drop in der Liste, um die Druckreihenfolge zu ändern"
+      },
+      "filament": {
+        "title": "Filament & AMS-Slots",
+        "changeSlot": "<strong>Slot-Zuweisung ändern:</strong> Klicke auf ein farbiges Filament-Farbfeld auf einer Platte, um es einem anderen AMS-Slot (1-4) zuzuweisen",
+        "globalColors": "<strong>Globale Slot-Farben:</strong> Klicke auf Farbfelder in \"Filamentverbrauch Statistiken\", um globale Slot-Farben anzupassen",
+        "tracking": "<strong>Verbrauchsverfolgung:</strong> Zeige den gesamten Filamentverbrauch pro Slot im Statistikbereich an"
+      },
+      "settingsPanel": {
+        "title": "Optionen im Einstellungsbereich",
+        "generalTitle": "Allgemeine Einstellungen:",
+        "generalCustomName": "<strong>Benutzerdefinierter Dateiname:</strong> Lege deinen bevorzugten Ausgabedateinamen fest",
+        "generalLoopRepeats": "<strong>Schleifenwiederholungen:</strong> Anzahl der Wiederholungen der gesamten Druckwarteschlange",
+        "generalTestExport": "<strong>Testdatei-Export:</strong> Erstelle eine Testdatei nur mit Start-/Endsequenzen zum Debuggen. Dies erstellt eine kleine Datei, die alle Plattenwechsel-Sequenzen durchläuft, ohne die tatsächlichen Objekte zu drucken. Perfekt zum Testen deines Setups ohne Zeit- oder Materialverschwendung. Du kannst die Wartezeit zwischen Platten in der Einstellung \"Testdatei Wartezeit\" konfigurieren (Standard: 30 Sekunden).",
+        "plateSpecificTitle": "Plattenspezifische Einstellungen:",
+        "plateSpecificIntro": "<em>Klicke auf eine Platte oben, um auf diese Einstellungen zuzugreifen:</em>",
+        "plateSpecificObjects": "<strong>Objektanzahl & Koordinaten:</strong> Konfiguriere die Anzahl der Objekte auf der Platte und ihre X-Positionen",
+        "plateSpecificNozzle": "<strong>Düsen- & Filamenteinstellungen:</strong> Steuere Spülsequenzen und Düsenverhalten pro Platte",
+        "plateSpecificPushoff": "<strong>Abschub-Einstellungen:</strong> Passe das Auswurfverhalten für jede einzelne Platte an",
+        "advancedTitle": "X1/P1 Erweiterte Optionen:",
+        "advancedBedLeveling": "<strong>\"Bettnivellierung zwischen Platten deaktivieren\"</strong> - Überspringt die Bettnivellierung für alle Platten nach der ersten. Dies kann den Multi-Platten-Druck beschleunigen, indem die Nivellierdaten vom initialen Druck wiederverwendet werden.<em>Theorie:</em> Das Bett wurde bereits bei der Druckinitialisierung nivelliert, daher sollte eine erneute Nivellierung zwischen Platten nicht notwendig sein.<em>Risiko:</em> Es besteht ein kleines Risiko, dass der Abschub-Prozess die Nivellierungskalibrierung des Druckkopfs beeinträchtigt haben könnte. Verwende diese Option, wenn Druckgeschwindigkeit wichtiger ist als maximale Zuverlässigkeit.",
+        "advancedFirstLayer": "<strong>\"Erste-Schicht-Scan deaktivieren\"</strong> - Deaktiviert den Erste-Schicht-Inspektionsscan. Dies beschleunigt den Druckstart, entfernt aber die automatische Qualitätsprüfung. Verwende dies, wenn du den Scan für unnötig hältst oder Geschwindigkeit gegenüber zusätzlicher Qualitätssicherung bevorzugst.",
+        "advancedPurge": "<strong>\"Filament-Spülung deaktivieren\"</strong> - Überspringt die Spülsequenz nach der ersten Platte (schnellere Multi-Platten-Aufträge). Nur aktivieren, wenn es keine Filamentwechsel zwischen Platten gibt.",
+        "advancedLoadLine": "<strong>\"Düsen-Ladelinie im Modell ausblenden\"</strong> - Extrudiert zusätzliches Material beim Druckstart, um die entfernte Ladelinie zu kompensieren. Verhindert Unterextrusion an der unteren Schicht des Objekts, kann aber sichtbar sein, wenn der Druckstart am Rand des Objekts liegt.",
+        "advancedCooling": "<strong>\"Bett zum Kühlen anheben\"</strong> - Bewegt das Bett auf Lüfterhöhe für schnellere Kühlung. Bei hohen Objekten entferne die obere Glasabdeckung des Druckers, um Kollisionen zu verhindern.",
+        "advancedSecurePushoff": "<strong>\"Sichere Abschub-Sequenz\"</strong> - Verwendet kontrollierte Abschübe auf mehreren Höhen, um sicheren Auswurf fertiger Objekte vom Drucker zu garantieren",
+        "advancedOverride": "<strong>\"Projekt- & Filamenteinstellungen überschreiben\"</strong> - Regeneriert Metadaten für neue Slot-Zuweisungen. Diese Option wird notwendig, wenn AMS-Slots neu definiert werden.",
+        "cooldownTitle": "Globale Abkühl- & Geräuscheinstellungen:",
+        "cooldownTarget": "<strong>Ziel-Betttemperatur:</strong> Auf diese Temperatur abkühlen vor Abschub (Standard: 23°C)",
+        "cooldownMax": "<strong>Maximale Abkühlzeit:</strong> Maximale Wartezeit für Kühlung (Standard: 40 Minuten)",
+        "cooldownSounds": "<strong>Druckergeräusche:</strong> Alle Geräusche oder nur Geräusche zwischen Platten deaktivieren (nur A1/A1M)",
+        "cooldownAms": "<strong>AMS-Optimierung:</strong> Redundante Filamentwechsel zwischen Platten entfernen (nur A1/A1M)",
+        "progressTitle": "Fortschrittsanzeigeeinstellungen:",
+        "progressPerPlate": "<strong>Prozentfortschritt - Pro Platte:</strong> Zeigt Fortschrittsprozent und verbleibende Zeit nur für die aktuelle Platte (Standardverhalten)",
+        "progressGlobal": "<strong>Prozentfortschritt - Global:</strong> Zeigt Gesamtfortschrittsprozent und verbleibende Zeit über alle Platten in der gesamten Warteschlange. Nützlich zur Verfolgung der gesamten Auftragserfüllung."
+      }
+    },
+    "dataSecurity": {
+      "title": "Datensicherheit",
+      "content": "Diese App nutzt deinen Browser als Umgebung und läuft lokal auf deinem Computer. Das bedeutet, dass keine deiner Daten an unseren Server oder einen Drittanbieter-Cloud-Dienst gesendet werden. Du kannst diese App sogar als Webseite speichern und vollständig offline nutzen. Diese Seite verwendet auch keine Cookies und speichert keine persönlichen Informationen auf deinem Gerät."
+    }
+  }
+}

@@ -197,6 +197,11 @@ export function displayPlateSettings(plateIndex) {
   const clone = template.content.cloneNode(true);
   plateSpecificSettings.appendChild(clone);
 
+  // Translate the newly inserted template content
+  if (window.i18nInstance) {
+    window.i18nInstance.translatePage();
+  }
+
   // Get the selected plate element
   const plateEl = plates[plateIndex];
 
