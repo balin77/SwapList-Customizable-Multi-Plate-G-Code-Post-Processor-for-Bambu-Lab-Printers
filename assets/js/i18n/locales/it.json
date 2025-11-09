@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "CLEAR.bed",
-    "version": "AutoEject Version V1.6",
+    "version": "AutoEject Version V1.7",
     "inspiredBy": "Ispirato da Swaplist.app"
   },
   "ui": {
@@ -246,7 +246,7 @@
   },
   "appInfo": {
     "title": "Informazioni app",
-    "version": "AutoEject Version V1.6",
+    "version": "AutoEject Version V1.7",
     "inspiredBy": "Ispirato da Swaplist.app",
     "howToUse": {
       "title": "Come usare questa app",
