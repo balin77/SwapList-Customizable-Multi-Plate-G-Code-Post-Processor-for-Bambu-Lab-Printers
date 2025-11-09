@@ -111,6 +111,14 @@ class I18n {
   }
 
   /**
+   * Get list of supported locales
+   * @returns Array of supported locale codes
+   */
+  getSupportedLocales(): SupportedLocale[] {
+    return this.supportedLocales;
+  }
+
+  /**
    * Translate all elements with data-i18n attribute
    */
   translatePage(): void {
@@ -151,7 +159,7 @@ class I18n {
         } else {
           // Has children, so we update only the text nodes
           const textNodes = Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
-          if (textNodes.length > 0) {
+          if (textNodes.length > 0 && textNodes[0]) {
             textNodes[0].textContent = translated;
           }
         }

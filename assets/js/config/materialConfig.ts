@@ -1,7 +1,7 @@
 // /src/config/materialConfig.ts
 import { buildFlushVolumesMatrixFromColors, buildFlushVolumesVector } from "../utils/flush.js";
 import { colorToHex } from "../utils/colors.js";
-import { printerTemplates, type PrinterTemplate } from "./printerTemplates.js";
+import { printerTemplates } from "./printerTemplates.js";
 import { state } from "./state.js";
 
 /**
@@ -36,8 +36,8 @@ function readUsedSlotsAndColors(): UsedSlotsResult {
 
     if (slotIndex < 0 || slotIndex > 31) return; // Skip invalid slots (up to 32 slots)
 
-    const m = parseFloat(div.dataset.used_m || "0") || 0;
-    const g = parseFloat(div.dataset.used_g || "0") || 0;
+    const m = parseFloat(div.dataset['used_m'] || "0") || 0;
+    const g = parseFloat(div.dataset['used_g'] || "0") || 0;
 
     // Only process slots that have actual usage
     if (m > 0 || g > 0) {
@@ -82,8 +82,11 @@ function readUsedSlotsAndColors(): UsedSlotsResult {
 
 /**
  * Replicate template arrays to length n (takes first element as base)
+ * NOTE: Currently unused but kept for potential future use
  */
-function replicateTemplateArrays(template: Record<string, unknown> | null, n: number): Record<string, unknown> {
+// @ts-ignore - Unused function kept for future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _replicateTemplateArrays(template: Record<string, unknown> | null, n: number): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(template || {})) {
     if (Array.isArray(v)) {

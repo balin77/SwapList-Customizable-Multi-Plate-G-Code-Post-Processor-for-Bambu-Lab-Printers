@@ -34,7 +34,6 @@ export const PLATE_RESTRICTIONS: PlateRestriction[] = [
      * @returns Warning object or null if validation passes
      */
     validate: (plateData: PlateData, plateIndex: number): PlateRestrictionWarning | null => {
-      const PLATE_WIDTH = 256;  // mm
       const PLATE_DEPTH = 256;  // mm
       const MIN_CLEARANCE = 30; // mm
       const HEIGHT_THRESHOLD = 15; // mm
@@ -55,7 +54,7 @@ export const PLATE_RESTRICTIONS: PlateRestriction[] = [
         }
 
         // bbox format: [x_min, y_min, z_min, x_max, y_max, z_max]
-        const [x_min, y_min, z_min, x_max, y_max, z_max] = obj.bbox;
+        const [_x_min, y_min, z_min, _x_max, y_max, z_max] = obj.bbox;
         const objectHeight = z_max - z_min;
 
         if (objectHeight > maxHeight) {
@@ -198,8 +197,11 @@ export function checkAllPlatesRestrictions(
   const allWarnings: PlateRestrictionWarning[] = [];
 
   for (let i = 0; i < allPlatesData.length; i++) {
-    const plateWarnings = checkPlateRestrictions(allPlatesData[i], i, printerMode, appMode, submode);
-    allWarnings.push(...plateWarnings);
+    const plateData = allPlatesData[i];
+    if (plateData) {
+      const plateWarnings = checkPlateRestrictions(plateData, i, printerMode, appMode, submode);
+      allWarnings.push(...plateWarnings);
+    }
   }
 
   return allWarnings;

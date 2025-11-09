@@ -9,7 +9,7 @@ import { applySwapRulesToGcode } from "../commands/applySwapRules.js";
 import { applyAmsOverridesToPlate } from "../gcode/gcodeManipulation.js";
 import { optimizeAMSBlocks } from "../gcode/gcodeManipulation.js";
 import { SWAP_RULES } from "../commands/swapRules.js";
-import { showError, showWarning } from "../ui/infobox.js";
+import { showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
 import {
   SWAP_START_A1M,
@@ -21,8 +21,6 @@ import {
   A1_JOBOX_START,
   A1_JOBOX_END,
   HOMING_All_AXES,
-  HOMING_XY_AXES,
-  GCODE_WAIT_30SECONDS,
   generateWaitCommand,
   START_SOUND_A1M,
   END_SOUND_A1M,
@@ -30,7 +28,9 @@ import {
 } from "../commands/swapRules.js";
 import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal } from "../gcode/m73ProgressTransform.js";
 import { getLayerProgressMode, getPercentageProgressMode } from "../ui/settings.js";
-import type { SwapMode, PrinterModel, AMSSlotMapping } from "../types/index.js";
+import type { SwapMode, AMSSlotMapping, RuleContext } from "../types/index.js";
+// @ts-expect-error - Type import for documentation
+import type { PrinterModel } from "../types/index.js";
 
 /**
  * Options for collectAndTransform function
@@ -62,20 +62,6 @@ export interface CollectAndTransformResult {
   readonly originalCombined?: string;
   /** Modified combined GCODE (lazy getter) */
   readonly modifiedCombined?: string;
-}
-
-/**
- * Context for rule application
- */
-interface RuleContext {
-  mode: PrinterModel | null;
-  appMode: string;
-  plateIndex: number;
-  totalPlates: number;
-  isLastPlate: boolean;
-  coords?: number[];
-  sourcePlateText?: string;
-  [key: string]: unknown;
 }
 
 /**
@@ -121,7 +107,7 @@ export function generateFilenameFormat(baseName: string = "output", includeExten
 /**
  * Function to add autoeject processing comment at the beginning of GCODE
  */
-function addAutoEjectComment(gcode: string, plateIndex: number = 0, totalPlates: number = 1): string {
+function addAutoEjectComment(gcode: string, _plateIndex: number = 0, totalPlates: number = 1): string {
   const currentDate = new Date().toISOString();
   const printerModel = state.PRINTER_MODEL || "unknown";
   const appMode = state.APP_MODE || "swap";
@@ -267,7 +253,7 @@ export function chunked_md5(my_content: Blob, callback: (hash: string) => void):
  * Collect and transform all active plates with various processing options
  */
 export async function collectAndTransform(
-  { applyRules = true, applyOptimization = true, loopsValue, amsOverride = true }: CollectAndTransformOptions = {}
+  { applyRules = true, applyOptimization = true, amsOverride = true }: CollectAndTransformOptions = {}
 ): Promise<CollectAndTransformResult> {
   const my_plates = state.playlist_ol?.getElementsByTagName("li");
   if (!my_plates) {
@@ -281,6 +267,7 @@ export async function collectAndTransform(
 
   for (let i = 0; i < my_plates.length; i++) {
     const li = my_plates[i];
+    if (!li) continue;
     const c_f_id_el = li.getElementsByClassName("f_id")[0] as HTMLElement | undefined;
     const c_f_id = c_f_id_el?.title || "";
     const c_file = state.my_files[parseInt(c_f_id)];
@@ -289,7 +276,7 @@ export async function collectAndTransform(
     const p_rep_el = li.getElementsByClassName("p_rep")[0] as HTMLInputElement | undefined;
     const p_rep = (p_rep_el?.value ? parseFloat(p_rep_el.value) : 0) || 0;
 
-    if (p_rep > 0) {
+    if (p_rep > 0 && li) {
       const z = await JSZip.loadAsync(c_file);
       const plateFile = z.file(c_pname);
       if (!plateFile) continue;
@@ -320,12 +307,14 @@ export async function collectAndTransform(
   console.log(`Processing ${lis.length} UI plates for AMS overrides`);
 
   for (let i = 0; i < lis.length; i++) {
-    const repEl = lis[i].getElementsByClassName("p_rep")[0] as HTMLInputElement | undefined;
+    const currentLi = lis[i];
+    if (!currentLi) continue;
+    const repEl = currentLi.getElementsByClassName("p_rep")[0] as HTMLInputElement | undefined;
     const p_rep = parseFloat(repEl?.value || "0") || 0;
     console.log(`Plate ${i}: repetitions=${p_rep}`);
     if (p_rep <= 0) continue; // inaktiv -> ignorieren
 
-    const ov = _computeOverridesForLi(lis[i]);
+    const ov = _computeOverridesForLi(currentLi);
     console.log(`Plate ${i}: computed overrides =`, ov);
     if (Object.keys(ov).length) {
       state.GLOBAL_AMS.overridesPerPlate.set(i, ov);
@@ -351,7 +340,10 @@ export async function collectAndTransform(
       // Plate marker is now added by swap rules
 
       if (amsOverride) {
-        out = applyAmsOverridesToPlate(out, uiIdxOnce[i]);  // Use UI index instead of origin index
+        const uiIdx = uiIdxOnce[i];
+        if (uiIdx !== undefined) {
+          out = applyAmsOverridesToPlate(out, uiIdx);  // Use UI index instead of origin index
+        }
       }
       return out;
     })
@@ -540,8 +532,9 @@ function _computeOverridesForLi(li: HTMLElement): AMSSlotMapping {
   const map: AMSSlotMapping = {};
   li.querySelectorAll(".p_filament .f_slot").forEach(fslot => {
     const slotEl = fslot as HTMLElement;
-    const old1 = parseInt(slotEl?.dataset?.origSlot || "0", 10); // 1..4
-    const now1 = parseInt((slotEl?.textContent || "").trim() || "0", 10); // 1..4
+    const old1 = parseInt(slotEl?.dataset?.['origSlot'] || "0", 10); // 1..4
+    const now1Text = (slotEl?.textContent || "").trim() || "0";
+    const now1 = parseInt(now1Text, 10); // 1..4
     if (Number.isFinite(old1) && Number.isFinite(now1) && old1 >= 1 && now1 >= 1 && old1 !== now1) {
       // A1M: P ist 0 → key "P0S<idx>"
       const fromKey = `P0S${old1 - 1}`;

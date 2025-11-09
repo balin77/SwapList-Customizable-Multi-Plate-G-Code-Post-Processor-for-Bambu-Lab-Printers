@@ -2,7 +2,7 @@
 
 import { state } from "./state.js";
 import { setMode } from "./mode.js";
-import { applyTheme, initializeCSSVariables, type ThemeName } from "./colors.js";
+import { applyTheme, initializeCSSVariables } from "./colors.js";
 import { applyInitialState } from "./uiVisibility.js";
 import { getSecurePushOffEnabled } from "../ui/settings.js";
 import { removePlate, duplicatePlate } from "../ui/plates.js";
@@ -13,7 +13,7 @@ import { dragOutHandler, dragOverHandler, dropHandler } from "../ui/dropzone.js"
 import { handleFile } from "../io/read3mf.js";
 import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
-import { toggle_settings, custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
+import { custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
 import { initInfobox, showWarning } from "../ui/infobox.js";
 import { i18n } from "../i18n/i18n.js";
 
@@ -28,17 +28,6 @@ import {
 } from "../ui/filamentColors.js";
 
 import type { SwapMode } from "../types/index.js";
-
-/**
- * Extended Window interface with custom properties
- */
-declare global {
-  interface Window {
-    updateAppModeDisplay?: (isPushOffMode: boolean) => void;
-    updateFilenamePreview?: () => void;
-    i18nInstance?: typeof i18n;
-  }
-}
 
 /**
  * Main page initialization function
@@ -65,7 +54,8 @@ export async function initialize_page(): Promise<void> {
   if (languageSelect) {
     // Populate language options dynamically
     languageSelect.innerHTML = '';
-    i18n.supportedLocales.forEach(locale => {
+    const supportedLocales = i18n.getSupportedLocales();
+    supportedLocales.forEach(locale => {
       const option = document.createElement('option');
       option.value = locale;
       option.textContent = i18n.t(`languages.${locale}`);
@@ -77,7 +67,7 @@ export async function initialize_page(): Promise<void> {
 
     languageSelect.addEventListener("change", async (e) => {
       const target = e.target as HTMLSelectElement;
-      const newLocale = target.value;
+      const newLocale = target.value as any; // Cast to any to avoid strict locale type checking
       await i18n.setLocale(newLocale);
       i18n.translatePage();
       // Update dynamic content that was generated with JavaScript
@@ -147,7 +137,9 @@ export async function initialize_page(): Promise<void> {
   const waitTimeContainer = document.getElementById("test_wait_time_container");
   if (chkTestFile && waitTimeContainer) {
     function toggleWaitTimeVisibility() {
-      waitTimeContainer.style.display = chkTestFile!.checked ? "block" : "none";
+      if (waitTimeContainer && chkTestFile) {
+        waitTimeContainer.style.display = chkTestFile.checked ? "block" : "none";
+      }
     }
     chkTestFile.addEventListener("change", toggleWaitTimeVisibility);
     toggleWaitTimeVisibility(); // Set initial state
@@ -155,9 +147,6 @@ export async function initialize_page(): Promise<void> {
 
   // App Mode Toggle (Swap Mode / Push Off Mode)
   const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox") as HTMLInputElement | null;
-  const swapLogo = document.getElementById("logo");
-  const pushOffLogo = document.getElementById("logo_pushoff");
-  const swapModeLogos = document.getElementById("swap_mode_logos");
   const logoJobox = document.getElementById("logo_jobox");
   const logo3print = document.getElementById("logo_3print");
   const logoPrintflow = document.getElementById("logo_printflow");
@@ -317,7 +306,7 @@ export async function initialize_page(): Promise<void> {
     const sw = target.closest(".f_color") as HTMLElement | null;
     if (!sw) return;
 
-    const idx = +(sw.dataset.slotIndex || 0); // 0..3
+    const idx = +(sw.dataset['slotIndex'] || 0); // 0..3
     openStatsSlotDialog(idx);
   });
 
@@ -339,7 +328,7 @@ export async function initialize_page(): Promise<void> {
           if (n.nodeType === 1 && (n as Element).matches?.("li.list_item")) {
             wirePlateSwatches(n as HTMLElement);
             deriveGlobalSlotColorsFromPlates(); // Stats-Farben aktualisieren
-            updateAllPlateSwatchColors(n as HTMLElement);             // dann Plate-Swatches aus Statistikfarbe malen
+            updateAllPlateSwatchColors();             // dann Plate-Swatches aus Statistikfarbe malen
             show_settings_when_plates_loaded(); // Settings anzeigen wenn Plates geladen sind
           }
         });
@@ -402,24 +391,26 @@ export async function initialize_page(): Promise<void> {
   }
 
   const tpl = document.getElementById("list_item_prototype") as HTMLTemplateElement | null;
-  state.li_prototype = tpl?.content?.firstElementChild as HTMLElement || null;
+  state.li_prototype = (tpl?.content?.firstElementChild as HTMLElement) || null;
   state.fileInput = document.getElementById("file") as HTMLInputElement | null;
-  state.playlist_ol = document.getElementById("playlist_ol");
-  state.p_scale = document.getElementById("progress_scale");
+  state.playlist_ol = document.getElementById("playlist_ol") as HTMLElement | null;
+  state.p_scale = document.getElementById("progress_scale") as HTMLElement | null;
 
   update_progress(-1);
-
-  const app_body = document.body;
 
   const drop_zone = document.getElementById("drop_zone")!;
 
   ['dragend', 'dragleave', 'drop'].forEach(evt => {
-    drop_zone.addEventListener(evt, dragOutHandler);
+    drop_zone.addEventListener(evt, (e) => dragOutHandler(e as DragEvent));
   });
 
-  drop_zone.addEventListener("dragover", (e) => dragOverHandler(e as DragEvent, e.target as HTMLElement));
-  [...drop_zone.children].forEach(child => {
-    child.addEventListener("dragover", (e) => dragOverHandler(e as DragEvent, (e.target as HTMLElement).parentElement!));
+  drop_zone.addEventListener("dragover", (e) => {
+    dragOverHandler(e as DragEvent, e.target as HTMLElement);
+  });
+  Array.from(drop_zone.children).forEach(child => {
+    child.addEventListener("dragover", (e) => {
+      dragOverHandler(e as DragEvent, (e.target as HTMLElement).parentElement!);
+    });
   });
 
   drop_zone.addEventListener("drop", (e) => dropHandler(e as DragEvent, false));
@@ -438,7 +429,10 @@ export async function initialize_page(): Promise<void> {
       for (let i = 0; i < files.length; i++) {
         if ((i + 1) == files.length) state.last_file = true;
         else state.last_file = false;
-        handleFile(files[i]);
+        const file = files[i];
+        if (file) {
+          handleFile(file);
+        }
       }
     }
     console.log("FILES processing done...");

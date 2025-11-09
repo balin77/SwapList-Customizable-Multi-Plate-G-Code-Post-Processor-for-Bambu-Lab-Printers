@@ -1,20 +1,10 @@
 // /src/io/exportGcode.ts
 
-import JSZip from "jszip";
 import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
 import { download, collectAndTransform, generateFilenameFormat } from "./ioUtils.js";
-import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
-import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
 import { showError, showWarning } from "../ui/infobox.js";
-
-/**
- * Hilfsfunktion: Finde das Filament-Objekt anhand setting_id
- */
-function findFilamentBySettingId(settingId: string): unknown {
-  return PRESET_INDEX.find(f => (f as { settings?: { setting_id?: string } }).settings?.setting_id === settingId);
-}
 
 /**
  * Export GCODE as text file
@@ -37,7 +27,8 @@ export async function export_gcode_txt(): Promise<void> {
     const file_name_field = document.getElementById("file_name") as HTMLInputElement | null;
     const base = (file_name_field?.value || file_name_field?.placeholder || "output_file_name").trim();
     const modeTag = (state.PRINTER_MODEL || "A1M");
-    const purgeTag = (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1')
+    // @ts-expect-error - Intentionally unused, kept for future use
+    const _purgeTag = (state.PRINTER_MODEL === 'X1' || state.PRINTER_MODEL === 'P1')
       ? (state.USE_PURGE_START ? "_purge" : "_standard")
       : "";
 

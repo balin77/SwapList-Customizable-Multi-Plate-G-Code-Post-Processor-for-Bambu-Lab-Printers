@@ -4,21 +4,7 @@
 
 import { state } from '../config/state.js';
 import { autoPopulatePlateCoordinates } from '../utils/plateUtils.js';
-
-// Extend Window interface for global functions
-declare global {
-  interface Window {
-    getSettingForPlate?: (plateIndex: number, settingId: string) => boolean;
-    getDisablePrinterSounds?: () => boolean;
-    getSoundRemovalMode?: () => string;
-    getDisableBedLeveling?: () => boolean;
-    getDisableFirstLayerScan?: () => boolean;
-    i18nInstance?: {
-      t: (key: string, params?: Record<string, unknown>) => string;
-      translatePage: () => void;
-    };
-  }
-}
+import type { SoundRemovalMode } from '../gcode/gcodeUtils.js';
 
 /**
  * Per-plate settings interface
@@ -35,7 +21,8 @@ interface PlateSettings {
 }
 
 const currentPlateSettings = new Map<number, PlateSettings>();
-let selectedPlateIndex = 0;
+// @ts-expect-error - Intentionally unused, kept for tracking selected plate
+let _selectedPlateIndex = 0;
 
 /**
  * Toggle settings panel visibility
@@ -138,7 +125,7 @@ export function getDisablePrinterSounds(): boolean {
 /**
  * Get sound removal mode
  */
-export function getSoundRemovalMode(): string {
+export function getSoundRemovalMode(): SoundRemovalMode {
   const allSounds = document.getElementById("sound_removal_all") as HTMLInputElement | null;
   const betweenPlates = document.getElementById("sound_removal_between_plates") as HTMLInputElement | null;
 
@@ -261,7 +248,7 @@ export function selectPlate(plateIndex: number): void {
   });
 
   // Update settings display
-  selectedPlateIndex = plateIndex;
+  _selectedPlateIndex = plateIndex;
   displayPlateSettings(plateIndex);
 }
 
@@ -298,7 +285,9 @@ export function displayPlateSettings(plateIndex: number): void {
   console.log(`Displaying settings for plate ${plateIndex}, objectCount:`, currentPlateSettings.get(plateIndex)?.objectCount);
 
   // Load settings from plate element and our stored settings
-  loadPlateSettingsToUI(plateIndex, plateEl);
+  if (plateEl) {
+    loadPlateSettingsToUI(plateIndex, plateEl);
+  }
 
   // Hide/show sections based on current app mode
   updateSettingsVisibilityForMode();
@@ -329,7 +318,7 @@ function initializePlateSettings(plateIndex: number): void {
 /**
  * Load plate settings to UI
  */
-function loadPlateSettingsToUI(plateIndex: number, plateEl: HTMLElement): void {
+function loadPlateSettingsToUI(plateIndex: number, _plateEl: HTMLElement): void {
   const settings = currentPlateSettings.get(plateIndex);
   const plateSpecificSettings = document.getElementById("plate_specific_settings");
   if (!settings || !plateSpecificSettings) return;
@@ -418,11 +407,11 @@ function renderPlateCoordinatesInSettings(plateIndex: number): void {
     let objectLabel = `Objekt ${i}`;
     if (settings.objects && settings.objects[i - 1]) {
       const obj = settings.objects[i - 1];
-      if (obj.isWipeTower) {
+      if (obj && obj.isWipeTower) {
         objectLabel = 'Wipe Tower';
       } else {
         // Count non-wipe-tower objects up to current index
-        const objectNumber = settings.objects.slice(0, i).filter(o => !o.isWipeTower).length;
+        const objectNumber = settings.objects.slice(0, i).filter(o => o && !o.isWipeTower).length;
         objectLabel = `Objekt ${objectNumber}`;
       }
     }
@@ -460,9 +449,11 @@ function renderPlateCoordinatesInSettings(plateIndex: number): void {
         const plates = document.querySelectorAll<HTMLElement>("#playlist_ol li.list_item:not(.hidden)");
         if (plateIndex < plates.length) {
           const li = plates[plateIndex];
-          await autoPopulatePlateCoordinates(li);
-          // Refresh the settings UI to show updated coordinates
-          setTimeout(() => renderPlateCoordinatesInSettings(plateIndex), 100);
+          if (li) {
+            await autoPopulatePlateCoordinates(li);
+            // Refresh the settings UI to show updated coordinates
+            setTimeout(() => renderPlateCoordinatesInSettings(plateIndex), 100);
+          }
         }
       } catch (error) {
         console.error("Failed to auto-populate plate coordinates:", error);
@@ -487,7 +478,7 @@ function updatePurgeOffVisibility(plateIndex: number): void {
 /**
  * Add event listeners for plate settings
  */
-function addPlateSettingsEventListeners(plateIndex: number): void {
+function addPlateSettingsEventListeners(_plateIndex: number): void {
   // Event listeners are already added in loadPlateSettingsToUI
   // This function can be used for additional listeners if needed
 }
@@ -783,7 +774,7 @@ export function reorderPlateSettings(fromIndex: number, toIndex: number): void {
 
   // Create a new Map to store the reordered settings
   const newSettings = new Map<number, PlateSettings>();
-  const settingsArray: (PlateSettings | null)[] = [];
+  const settingsArray: (PlateSettings | null | undefined)[] = [];
 
   // Convert current settings to an array, preserving order
   const plates = document.querySelectorAll("#playlist_ol li.list_item:not(.hidden)");
@@ -801,8 +792,9 @@ export function reorderPlateSettings(fromIndex: number, toIndex: number): void {
 
     // Rebuild the settings map with new indices
     for (let i = 0; i < settingsArray.length; i++) {
-      if (settingsArray[i] !== null) {
-        newSettings.set(i, settingsArray[i]!);
+      const setting = settingsArray[i];
+      if (setting !== null && setting !== undefined) {
+        newSettings.set(i, setting);
       }
     }
 

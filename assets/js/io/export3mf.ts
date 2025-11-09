@@ -89,7 +89,7 @@ async function getRecoloredPlateImages(
     const plateIcon = plateElement.querySelector('.p_icon') as HTMLImageElement | null;
 
     // Check if we have a dynamically recolored image in the UI
-    if (!plateIcon || !plateIcon.dataset.litImageUrl || !plateIcon.dataset.unlitImageUrl) {
+    if (!plateIcon || !plateIcon.dataset['litImageUrl'] || !plateIcon.dataset['unlitImageUrl']) {
       console.log(`No recolored image data found for plate at UI index ${uiPlateIndex}`);
       return null;
     }
@@ -104,10 +104,10 @@ async function getRecoloredPlateImages(
 
       if (swatch && slotSpan) {
         // Get original color from dataset
-        const originalColor = swatch.dataset.f_color;
+        const originalColor = swatch.dataset['f_color'];
 
         // Get current slot index
-        const slotIndex = parseInt(swatch.dataset.slotIndex || '0', 10);
+        const slotIndex = parseInt(swatch.dataset['slotIndex'] || '0', 10);
         const currentSlotColor = getSlotColor(slotIndex);
 
         console.log(`[Color Mapping Debug] Row:`, {
@@ -143,8 +143,13 @@ async function getRecoloredPlateImages(
     }
 
     // Create the recolored image using cached shadowmap
+    const unlitUrl = plateIcon.dataset['unlitImageUrl'];
+    if (!unlitUrl) {
+      console.warn('No unlitImageUrl found for plate during export');
+      return null;
+    }
     const recoloredBlobUrl = await createRecoloredPlateImage(
-      plateIcon.dataset.unlitImageUrl,
+      unlitUrl,
       cachedLightingMask,
       colorMapping
     );
@@ -241,8 +246,8 @@ async function generatePlateJsonData(): Promise<PlateJsonData> {
     if (slotIndex < 0 || slotIndex > 31) continue; // Skip invalid slots (up to 32 slots)
 
     // Check if this slot is actually used
-    const usedM = parseFloat(div.dataset.used_m || "0") || 0;
-    const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+    const usedM = parseFloat(div.dataset['used_m'] || "0") || 0;
+    const usedG = parseFloat(div.dataset['used_g'] || "0") || 0;
 
     // Only process slots with actual usage
     if (usedM > 0 || usedG > 0) {
@@ -426,7 +431,7 @@ export async function export_3mf(): Promise<void> {
 
     // Check plate area restrictions
     console.log('[plateRestrictions] Starting plate restriction checks');
-    const allPlatesData = await collectPlateDataForRestrictionCheck();
+    const allPlatesData = await collectPlateDataForRestrictionCheck() as any[];
 
     // Determine current submode for A1 in swap mode
     let submode: SwapMode | null = null;
@@ -438,7 +443,7 @@ export async function export_3mf(): Promise<void> {
 
     const warnings: PlateRestrictionWarning[] = checkAllPlatesRestrictions(
       allPlatesData,
-      state.PRINTER_MODEL,
+      state.PRINTER_MODEL || 'A1M',
       state.APP_MODE,
       submode
     );
@@ -717,8 +722,8 @@ export async function export_3mf(): Promise<void> {
     let totalWeight = 0;
     for (let i = 0; i < slotDivs.length; i++) {
       const div = slotDivs[i] as HTMLElement;
-      const usedM = parseFloat(div.dataset.used_m || "0") || 0;
-      const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+      const usedM = parseFloat(div.dataset['used_m'] || "0") || 0;
+      const usedG = parseFloat(div.dataset['used_g'] || "0") || 0;
       const slotId = parseInt(div.getAttribute("title") || `${i + 1}`, 10) || (i + 1);
       usageMap.set(slotId, { usedM, usedG });
       totalWeight += usedG;
@@ -749,8 +754,8 @@ export async function export_3mf(): Promise<void> {
         if (slotId < 1 || slotId > 32) continue; // Skip invalid slots (up to 32 slots)
 
         // Verbrauch lesen
-        const usedM = parseFloat(div.dataset.used_m || "0") || 0;
-        const usedG = parseFloat(div.dataset.used_g || "0") || 0;
+        const usedM = parseFloat(div.dataset['used_m'] || "0") || 0;
+        const usedG = parseFloat(div.dataset['used_g'] || "0") || 0;
 
         // Only process slots with actual usage
         if (usedM > 0 || usedG > 0) {
@@ -760,10 +765,10 @@ export async function export_3mf(): Promise<void> {
           const hex = colorToHex(colorRaw || "#cccccc");
 
           // Typ aus dataset lesen oder default PLA
-          const type = div.dataset.f_type || "PLA";
+          const type = div.dataset['f_type'] || "PLA";
 
           // tray_info_idx aus dataset lesen (optional)
-          const trayInfoIdx = div.dataset.trayInfoIdx || "";
+          const trayInfoIdx = div.dataset['trayInfoIdx'] || "";
 
           usedSlots.push({
             originalSlotId: slotId,

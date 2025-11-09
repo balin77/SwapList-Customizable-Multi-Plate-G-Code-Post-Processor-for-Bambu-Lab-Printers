@@ -51,7 +51,7 @@ function _lineEnd(src: string, idx: number): number {
 export function splitIntoSections(gcode: string): GCodeSections {
   const mExec = RE_EXEC_START.exec(gcode);
   const execIdx = mExec ? mExec.index : -1;
-  const execLineEnd = mExec ? _lineEnd(gcode, execIdx) : -1;
+  // const execLineEnd = mExec ? _lineEnd(gcode, execIdx) : -1; // Unused variable
 
   const mStartEnd = RE_START_END.exec(gcode);
   const startEndIdx = mStartEnd ? mStartEnd.index : -1;
@@ -110,7 +110,7 @@ export function splitIntoSections(gcode: string): GCodeSections {
  */
 export function parsePrinterModelFromGcode(gtext: string): PrinterModel | "UNSUPPORTED" | null {
   const m = gtext.match(/^[ \t]*;[ \t]*printer_model\s*=\s*(.+)$/mi);
-  if (!m) return null;
+  if (!m || !m[1]) return null;
   const raw = m[1].trim();
 
   if (/^Bambu Lab X1(?: Carbon|E)?$/i.test(raw)) return "X1";
@@ -128,7 +128,7 @@ export function parsePrinterModelFromGcode(gtext: string): PrinterModel | "UNSUP
  */
 export function parseMaxZHeight(gcodeStr: string): number | null {
   const m = gcodeStr.match(/^[ \t]*;[ \t]*max_z_height:\s*([0-9]+(?:\.[0-9]+)?)/m);
-  return m ? parseFloat(m[1]) : null; // mm
+  return (m && m[1]) ? parseFloat(m[1]) : null; // mm
 }
 
 /**
@@ -163,10 +163,13 @@ export async function collectPlateGcodesOnce(): Promise<string[]> {
   const list: string[] = [];
 
   for (let i = 0; i < my_plates.length; i++) {
-    const c_f_id = my_plates[i].getElementsByClassName("f_id")[0].getAttribute("title") || "0";
+    const f_id_el = my_plates[i]?.getElementsByClassName("f_id")[0];
+    const c_f_id = f_id_el?.getAttribute("title") || "0";
     const c_file = state.my_files[parseInt(c_f_id)];
-    const c_p_name = my_plates[i].getElementsByClassName("p_name")[0].getAttribute("title") || "";
-    const p_rep = parseInt((my_plates[i].getElementsByClassName("p_rep")[0] as HTMLInputElement).value) || 0;
+    const p_name_el = my_plates[i]?.getElementsByClassName("p_name")[0];
+    const c_p_name = p_name_el?.getAttribute("title") || "";
+    const p_rep_el = my_plates[i]?.getElementsByClassName("p_rep")[0] as HTMLInputElement | undefined;
+    const p_rep = parseInt(p_rep_el?.value || "0") || 0;
 
     if (p_rep > 0) {
       const z = await JSZip.loadAsync(c_file);
@@ -188,6 +191,9 @@ export async function collectPlateGcodesOnce(): Promise<string[]> {
  * @param loops - Number of times to repeat (1..N)
  * @returns New array with all elements repeated
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-ignore - Unused function kept for potential future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function applyLoops<T>(arr: T[], loops: number): T[] {
   let out: T[] = [];
   for (let i = 0; i < loops; i++) out = out.concat(arr);

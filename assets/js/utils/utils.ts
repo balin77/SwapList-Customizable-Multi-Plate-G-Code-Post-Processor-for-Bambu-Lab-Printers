@@ -1,8 +1,11 @@
 // src/utils/utils.ts
 
 // Import JSON data as JavaScript modules to avoid CORS issues
+// @ts-expect-error - Test data imports
 import { project_settings_original } from "../testfiles/project_settings_original_data.js";
+// @ts-expect-error - Test data imports
 import { project_settings_template } from "../testfiles/project_settings_template_data.js";
+// @ts-expect-error - Test data imports
 import { project_settings_modified } from "../testfiles/project_settings_modified_data.js";
 
 /**

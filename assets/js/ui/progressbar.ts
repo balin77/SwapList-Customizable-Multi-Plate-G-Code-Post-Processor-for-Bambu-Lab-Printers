@@ -13,8 +13,10 @@ export function update_progress(i: number): void {
   let el = state.p_scale || document.getElementById("progress_scale");
   if (!el) return; // UI not ready yet
 
-  // Cache in state for faster subsequent calls
-  state.p_scale = el;
+  // Cache in state for faster subsequent calls (ensure it's an HTMLElement)
+  if (el instanceof HTMLElement) {
+    state.p_scale = el;
+  }
 
   const bar = el as HTMLElement;
   const container = bar.parentElement;

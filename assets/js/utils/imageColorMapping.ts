@@ -49,8 +49,8 @@ function extractLightingMask(litImageData: ImageData, unlitImageData: ImageData)
 
   for (let i = 0; i < lit.length; i += 4) {
     // Calculate average brightness for lit and unlit pixels
-    const litBrightness = (lit[i] + lit[i + 1] + lit[i + 2]) / 3;
-    const unlitBrightness = (unlit[i] + unlit[i + 1] + unlit[i + 2]) / 3;
+    const litBrightness = ((lit[i] ?? 0) + (lit[i + 1] ?? 0) + (lit[i + 2] ?? 0)) / 3;
+    const unlitBrightness = ((unlit[i] ?? 0) + (unlit[i + 1] ?? 0) + (unlit[i + 2] ?? 0)) / 3;
 
     // For dark colors (black/near-black), lighting is ADDITIVE (lit = unlit + light)
     // For bright colors, lighting is MULTIPLICATIVE (lit = unlit * factor)
@@ -160,7 +160,7 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
 
     // If no exact match, try fuzzy matching with adaptive tolerance
     if (!newColor) {
-      for (const [mappedKey, color] of Object.entries(rgbMapping)) {
+      for (const [_mappedKey, color] of Object.entries(rgbMapping)) {
         const orig = color.original;
 
         // Adaptive tolerance based on brightness of original color
@@ -171,7 +171,8 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
         const origBrightness = (orig.r + orig.g + orig.b) / 3;
         const tolerance = origBrightness < 50 ? 80 : 10; // Very high tolerance for dark colors, low for bright
 
-        if (Math.abs(r - orig.r) <= tolerance &&
+        if (r !== undefined && g !== undefined && b !== undefined &&
+            Math.abs(r - orig.r) <= tolerance &&
             Math.abs(g - orig.g) <= tolerance &&
             Math.abs(b - orig.b) <= tolerance) {
           newColor = color;
@@ -194,12 +195,12 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
       target[i + 1] = newColor.g;
       target[i + 2] = newColor.b;
     } else {
-      target[i] = r;
-      target[i + 1] = g;
-      target[i + 2] = b;
-      if (a > 0) noMatches++; // Only count non-transparent pixels
+      target[i] = r ?? 0;
+      target[i + 1] = g ?? 0;
+      target[i + 2] = b ?? 0;
+      if ((a ?? 0) > 0) noMatches++; // Only count non-transparent pixels
     }
-    target[i + 3] = a;
+    target[i + 3] = a ?? 255;
   }
 
   console.log(
@@ -237,12 +238,12 @@ function applyLightingMask(recoloredImageData: ImageData, lightingMask: ImageDat
 
   for (let i = 0; i < recolored.length; i += 4) {
     const modeFlag = mask[i + 2]; // B channel: 255=additive, 0=multiplicative
-    const recoloredBrightness = (recolored[i] + recolored[i + 1] + recolored[i + 2]) / 3;
+    const recoloredBrightness = ((recolored[i] ?? 0) + (recolored[i + 1] ?? 0) + (recolored[i + 2] ?? 0)) / 3;
 
-    if (modeFlag > 127) {
+    if (modeFlag !== undefined && modeFlag > 127) {
       // ADDITIVE mode (for dark/black colors in ORIGINAL image)
       // R channel contains absolute lit brightness from original
-      const absoluteLitBrightness = mask[i];
+      const absoluteLitBrightness = mask[i] ?? 0;
       additiveCount++;
 
       // If recolored pixel is bright, apply lighting multiplicatively
@@ -251,9 +252,9 @@ function applyLightingMask(recoloredImageData: ImageData, lightingMask: ImageDat
         // Normalize brightness to a factor (dim areas ~0.7, bright areas ~1.3)
         const factor = 0.5 + (absoluteLitBrightness / 128); // Maps 0-255 to 0.5-2.5 range
 
-        final[i] = Math.min(255, Math.max(0, Math.round(recolored[i] * factor)));
-        final[i + 1] = Math.min(255, Math.max(0, Math.round(recolored[i + 1] * factor)));
-        final[i + 2] = Math.min(255, Math.max(0, Math.round(recolored[i + 2] * factor)));
+        final[i] = Math.min(255, Math.max(0, Math.round((recolored[i] ?? 0) * factor)));
+        final[i + 1] = Math.min(255, Math.max(0, Math.round((recolored[i + 1] ?? 0) * factor)));
+        final[i + 2] = Math.min(255, Math.max(0, Math.round((recolored[i + 2] ?? 0) * factor)));
       } else {
         // For dark recolored pixels (especially black), apply lighting as absolute grayscale
         // This makes shadows/lighting visible on black surfaces
@@ -269,15 +270,15 @@ function applyLightingMask(recoloredImageData: ImageData, lightingMask: ImageDat
     } else {
       // MULTIPLICATIVE mode (for normal/bright colors)
       // final = recolored * factor
-      const brightnessFactor = mask[i] / 128; // R channel holds multiplicative factor
+      const brightnessFactor = (mask[i] ?? 0) / 128; // R channel holds multiplicative factor
       multiplicativeCount++;
 
-      final[i] = Math.min(255, Math.max(0, recolored[i] * brightnessFactor));
-      final[i + 1] = Math.min(255, Math.max(0, recolored[i + 1] * brightnessFactor));
-      final[i + 2] = Math.min(255, Math.max(0, recolored[i + 2] * brightnessFactor));
+      final[i] = Math.min(255, Math.max(0, (recolored[i] ?? 0) * brightnessFactor));
+      final[i + 1] = Math.min(255, Math.max(0, (recolored[i + 1] ?? 0) * brightnessFactor));
+      final[i + 2] = Math.min(255, Math.max(0, (recolored[i + 2] ?? 0) * brightnessFactor));
     }
 
-    final[i + 3] = recolored[i + 3]; // Alpha unchanged
+    final[i + 3] = recolored[i + 3] ?? 255; // Alpha unchanged
   }
 
   return finalImageData;
@@ -297,11 +298,12 @@ function applyLightingMask(recoloredImageData: ImageData, lightingMask: ImageDat
  */
 function hexToRgb(hex: string): RGBColor | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
+  if (!result || !result[1] || !result[2] || !result[3]) return null;
+  return {
     r: parseInt(result[1], 16),
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
-  } : null;
+  };
 }
 
 /**
@@ -512,7 +514,7 @@ export function extractOriginalFilamentColors(plateElement: Element): string[] {
  */
 function rgbToHex(rgb: string): string | null {
   const result = rgb.match(/\d+/g);
-  if (result && result.length >= 3) {
+  if (result && result.length >= 3 && result[0] && result[1] && result[2]) {
     const r = parseInt(result[0]);
     const g = parseInt(result[1]);
     const b = parseInt(result[2]);

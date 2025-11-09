@@ -5,13 +5,6 @@
 import { state } from "../config/state.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
 
-// Extend Window interface for global function
-declare global {
-  interface Window {
-    repaintAllPlateSwatchesFromStats?: () => void;
-  }
-}
-
 /**
  * Update all statistics (filament usage, time, weight, and cost)
  */
@@ -40,18 +33,20 @@ export function update_total_time(): void {
   const my_plates = list.getElementsByTagName("li");
 
   for (let i = 0; i < my_plates.length; i++) {
-    const repEl = my_plates[i].getElementsByClassName("p_rep")[0] as HTMLInputElement | undefined;
-    const timeEl = my_plates[i].getElementsByClassName("p_time")[0] as HTMLElement | undefined;
+    const plate = my_plates[i];
+    if (!plate) continue;
+    const repEl = plate.getElementsByClassName("p_rep")[0] as HTMLInputElement | undefined;
+    const timeEl = plate.getElementsByClassName("p_time")[0] as HTMLElement | undefined;
 
     const p_rep = parseFloat(repEl?.value || "0") || 0;
     const p_time = parseInt(timeEl?.title || "0", 10) || 0; // Seconds
 
     if (p_rep > 0) {
       seconds_total += p_rep * p_time;
-      my_plates[i].classList.remove("inactive");
+      plate.classList.remove("inactive");
       used_plates += p_rep;
     } else {
-      my_plates[i].classList.add("inactive");
+      plate.classList.add("inactive");
     }
   }
 
@@ -119,15 +114,15 @@ export function update_filament_usage(): void {
     if (!mElement || !gElement) continue;
 
     // Store original values on first run or if not stored
-    if (!mElement.dataset.originalValue) {
-      mElement.dataset.originalValue = mElement.innerText;
+    if (!mElement.dataset['originalValue']) {
+      mElement.dataset['originalValue'] = mElement.innerText;
     }
-    if (!gElement.dataset.originalValue) {
-      gElement.dataset.originalValue = gElement.innerText;
+    if (!gElement.dataset['originalValue']) {
+      gElement.dataset['originalValue'] = gElement.innerText;
     }
 
-    const mOriginal = parseFloat(mElement.dataset.originalValue) || 0;
-    const gOriginal = parseFloat(gElement.dataset.originalValue) || 0;
+    const mOriginal = parseFloat(mElement.dataset['originalValue']) || 0;
+    const gOriginal = parseFloat(gElement.dataset['originalValue']) || 0;
 
     // Update displayed values to show multiplied consumption
     const mDisplayed = mOriginal * r;
@@ -140,13 +135,13 @@ export function update_filament_usage(): void {
     used_g[slot] += gDisplayed;
 
     const tEl = row.getElementsByClassName("f_type")[0] as HTMLElement | undefined;
-    const tOrig = tEl?.dataset?.origType || "";
+    const tOrig = tEl?.dataset?.['origType'] || "";
     const tShow = tEl?.innerText || "";
     const t = tOrig || tShow || "";
     if (t) slot_type_candidates[slot].push(t);
 
     // Collect tray_info_idx for each slot
-    const trayIdx = slotEl?.dataset?.trayInfoIdx || "";
+    const trayIdx = slotEl?.dataset?.['trayInfoIdx'] || "";
     if (trayIdx && r > 0) slot_tray_info_idx[slot].push(trayIdx);
 
     if (slot > ams_max && r > 0) {
@@ -199,7 +194,7 @@ export function update_filament_usage(): void {
     const gRounded = Math.round(g * 100) / 100;
 
     // Get material type for this slot
-    const typeFirst = (slot_type_candidates[s] || []).find(Boolean) || div.dataset.f_type || "";
+    const typeFirst = (slot_type_candidates[s] || []).find(Boolean) || div.dataset['f_type'] || "";
     // Show "N/A" if slot is empty (no usage)
     const materialDisplay = (m === 0 && g === 0) ? "N/A" : (typeFirst || "N/A");
 
@@ -227,13 +222,13 @@ export function update_filament_usage(): void {
     }
 
     // Dataset for export/picker
-    div.dataset.used_m = String(mRounded);
-    div.dataset.used_g = String(gRounded);
-    div.dataset.f_type = typeFirst;
+    div.dataset['used_m'] = String(mRounded);
+    div.dataset['used_g'] = String(gRounded);
+    div.dataset['f_type'] = typeFirst;
 
     // Store first tray_info_idx for this slot (if available)
     const trayIdxFirst = (slot_tray_info_idx[s] || []).find(Boolean) || "";
-    div.dataset.trayInfoIdx = trayIdxFirst;
+    div.dataset['trayInfoIdx'] = trayIdxFirst;
 
     // Optional: Dim slots without usage instead of hiding them
     div.style.opacity = (m === 0 && g === 0) ? "0.7" : "1";
@@ -377,7 +372,7 @@ export function update_total_weight_and_cost(): void {
     const slotNum = parseInt(div.getAttribute('title') || "0", 10);
     if (!slotNum) return;
 
-    const usedG = parseFloat(div.dataset.used_g || '0');
+    const usedG = parseFloat(div.dataset['used_g'] || '0');
     if (usedG <= 0) return;
 
     totalWeightGrams += usedG;
@@ -396,12 +391,12 @@ export function update_total_weight_and_cost(): void {
   totalCostEl.innerText = '$' + totalCostValue.toFixed(2);
 
   // Set default cost per kg from the first found filament cost, or keep current value
-  if (!costPerKgInput.dataset.userModified && totalWeightGrams > 0) {
+  if (!costPerKgInput.dataset['userModified'] && totalWeightGrams > 0) {
     const firstEntry = (PRESET_INDEX || []).find(e => {
       const filamentId = e.settings?.filament_id;
       if (!filamentId) return false;
       // Check if this filament is used in any slot
-      return Array.from(slotDivs).some(div => div.dataset.trayInfoIdx === filamentId);
+      return Array.from(slotDivs).some(div => div.dataset['trayInfoIdx'] === filamentId);
     });
 
     if (firstEntry && firstEntry.settings?.filament_cost) {
@@ -418,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const costPerKgInput = document.getElementById("cost_per_kg") as HTMLInputElement | null;
   if (costPerKgInput) {
     costPerKgInput.addEventListener('input', () => {
-      costPerKgInput.dataset.userModified = 'true';
+      costPerKgInput.dataset['userModified'] = 'true';
       update_total_weight_and_cost();
     });
   }

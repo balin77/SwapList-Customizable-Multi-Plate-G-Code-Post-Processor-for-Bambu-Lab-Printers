@@ -1,7 +1,9 @@
 // src/utils/gcodeDiff.ts
 // Compares two GCODE texts line by line and logs the differences to the console.
 
+// @ts-expect-error - Test data imports
 import gcodeLeft from "../testfiles/gcode1.gcode";
+// @ts-expect-error - Test data imports
 import gcodeRight from "../testfiles/gcode2.gcode";
 
 /**

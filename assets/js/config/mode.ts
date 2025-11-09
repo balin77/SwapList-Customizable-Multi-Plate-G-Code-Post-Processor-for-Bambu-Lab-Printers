@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { renderCoordInputs } from "../ui/plates.js";
 import { showError, showWarning } from "../ui/infobox.js";
 import { updateSettingsVisibilityForMode } from "../ui/settings.js";
-import { applyVisibilityRules, showUIAfterFileLoad } from "./uiVisibility.js";
+import { showUIAfterFileLoad } from "./uiVisibility.js";
 import type { PrinterModel } from "../types/index.js";
 
 /**

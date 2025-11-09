@@ -2,7 +2,10 @@
 
 import JSZip from "jszip";
 import { state } from "../config/state.js";
-import { getPlateSettings, getAllPlateSettings } from "../ui/settings.js";
+import { getAllPlateSettings } from "../ui/settings.js";
+// @ts-expect-error - Import for future use
+import { getPlateSettings } from "../ui/settings.js";
+// @ts-expect-error - Type import for documentation
 import type { AppState } from "../types/index.js";
 
 /**
@@ -42,27 +45,6 @@ interface PlateJsonData {
   }>;
 }
 
-/**
- * Plate settings stored in the settings map
- */
-interface PlateSettings {
-  /** Number of objects on the plate */
-  objectCount: number;
-  /** X coordinates of objects */
-  objectCoords: number[];
-  /** Full object information */
-  objects: PlateObject[];
-  /** Hide purge/load sequences */
-  hidePurgeLoad: boolean;
-  /** Turn off purge */
-  turnOffPurge: boolean;
-  /** Bed raise offset in mm */
-  bedRaiseOffset: number;
-  /** Use secure pushoff */
-  securePushoff: boolean;
-  /** Extra pushoff levels */
-  extraPushoffLevels: number;
-}
 
 /**
  * Calculates object count and X coordinates from bbox_objects in plate JSON data.
@@ -99,7 +81,11 @@ export async function calculateObjectCoordinatesFromBbox(
     }
 
     // Load the ZIP file
-    const zip = await JSZip.loadAsync(state.my_files[fileId] as ArrayBuffer | Blob);
+    const fileData = state.my_files[fileId];
+    if (!fileData) {
+      throw new Error(`File data not found for file ID: ${fileId}`);
+    }
+    const zip = await JSZip.loadAsync(fileData as unknown as ArrayBuffer | Blob);
 
     // Generate JSON filename from plate name
     const plateJsonName = plateName.replace('.gcode', '.json');
@@ -131,7 +117,11 @@ export async function calculateObjectCoordinatesFromBbox(
         return;
       }
 
-      const [minX, minY, maxX, maxY] = obj.bbox;
+      const [minX, _minY, maxX, _maxY] = obj.bbox;
+      if (minX === undefined || maxX === undefined) {
+        console.warn(`Missing X coordinates for object ${obj.name || 'unknown'}`);
+        return;
+      }
       const centerX = Math.round((minX + maxX) / 2);
       const isWipeTower = obj.name ? obj.name.toLowerCase().includes('wipe_tower') : false;
 
@@ -229,12 +219,19 @@ export async function autoPopulatePlateCoordinates(li: HTMLElement): Promise<voi
     // Always update the internal settings data structure first
     const allSettings = getAllPlateSettings();
     if (allSettings) {
+      // Convert PlateObject[] to the settings format
+      const settingsObjects = objects.map(obj => ({
+        name: obj.name,
+        centerX: obj.centerX,
+        isWipeTower: obj.isWipeTower
+      }));
+
       // Make sure settings exist for this plate
       if (!allSettings.has(plateIndex)) {
         allSettings.set(plateIndex, {
           objectCount: objectCount, // Use the calculated count, not default 1
           objectCoords: objects.map(obj => obj.centerX), // Use calculated coords
-          objects: objects, // Store full object info including isWipeTower
+          objects: settingsObjects, // Store full object info including isWipeTower
           hidePurgeLoad: true,
           turnOffPurge: false,
           bedRaiseOffset: 30,
@@ -243,10 +240,12 @@ export async function autoPopulatePlateCoordinates(li: HTMLElement): Promise<voi
         });
       } else {
         // Update existing settings
-        const settings = allSettings.get(plateIndex) as PlateSettings;
-        settings.objectCount = objectCount;
-        settings.objectCoords = objects.map(obj => obj.centerX);
-        settings.objects = objects; // Store full object info including isWipeTower
+        const settings = allSettings.get(plateIndex);
+        if (settings) {
+          settings.objectCount = objectCount;
+          settings.objectCoords = objects.map(obj => obj.centerX);
+          settings.objects = settingsObjects;
+        }
       }
 
       const plateNameEl = li.getElementsByClassName("p_name")[0] as HTMLElement | undefined;

@@ -35,7 +35,7 @@ export function readPlateXCoordsSorted(li: HTMLElement): number[] {
   const inputs = li.querySelectorAll<HTMLInputElement>(
     '.plate-x1p1-settings .obj-coords .obj-coord-row input.obj-x'
   );
-  return [...inputs]
+  return Array.from(inputs)
     .map(inp => parseFloat(inp.value))
     .filter(v => Number.isFinite(v))
     .sort((a, b) => b - a);
@@ -97,13 +97,14 @@ export async function validatePlateXCoords(): Promise<boolean> {
         setTimeout(() => {
           const plateSettings = document.getElementById("plate_specific_settings");
           if (plateSettings) {
-            const inputs = plateSettings.querySelectorAll<HTMLInputElement>('.obj-coords-grid .obj-x');
-            if (inputs[firstErrorCoordIndex]) {
-              inputs[firstErrorCoordIndex].classList.add('coord-error');
-              setTimeout(() => inputs[firstErrorCoordIndex].classList.remove('coord-error'), 5000);
+            const inputs = Array.from(plateSettings.querySelectorAll<HTMLInputElement>('.obj-coords-grid .obj-x'));
+            const errorInput = inputs[firstErrorCoordIndex];
+            if (errorInput) {
+              errorInput.classList.add('coord-error');
+              setTimeout(() => errorInput.classList.remove('coord-error'), 5000);
 
               // Scroll to the problematic input field
-              inputs[firstErrorCoordIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+              errorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
           }
         }, 200);
@@ -178,18 +179,20 @@ export function makeListSortable(target: HTMLElement): void {
   const items = target.getElementsByTagName("li");
   let current: HTMLElement | null = null;
 
-  for (const i of items) {
+  for (const i of Array.from(items)) {
     i.draggable = true;
 
-    i.ondragstart = (ev: DragEvent) => {
+    i.ondragstart = (_ev: DragEvent) => {
       current = i;
-      current.classList.add("targeted");
-      for (const it of items) {
+      if (current) {
+        current.classList.add("targeted");
+      }
+      for (const it of Array.from(items)) {
         if (it !== current) { it.classList.add("hint"); }
       }
     };
 
-    i.ondragenter = (ev: DragEvent) => {
+    i.ondragenter = (_ev: DragEvent) => {
       if (i !== current) { i.classList.add("active"); }
     };
 
@@ -198,7 +201,7 @@ export function makeListSortable(target: HTMLElement): void {
     };
 
     i.ondragend = () => {
-      for (const it of items) {
+      for (const it of Array.from(items)) {
         it.classList.remove("hint");
         it.classList.remove("active");
         it.classList.remove("targeted");

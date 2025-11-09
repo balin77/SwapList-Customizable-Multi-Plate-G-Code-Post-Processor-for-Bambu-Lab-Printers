@@ -37,7 +37,7 @@ export interface AMSDevice {
 }
 
 export interface AMSSlotMapping {
-  [key: string]: number; // mapping key -> slot number
+  [key: string]: string | number; // mapping key -> slot number or slot key
 }
 
 export interface GlobalAMS {
@@ -94,7 +94,7 @@ export interface AppState {
   li_prototype: HTMLElement | null;
   playlist_ol: HTMLElement | null;
   err: Error | null;
-  p_scale: number | null;
+  p_scale: HTMLElement | null;
   last_file: boolean;
   ams_max_file_id: number;
 
@@ -111,6 +111,13 @@ export interface AppState {
 
   // AMS global state
   GLOBAL_AMS: GlobalAMS;
+
+  // UI state for filament slot management
+  forcedSlotCount?: number;
+
+  // Additional properties used in the codebase
+  P0?: unknown;
+  instant_processing?: boolean;
 }
 
 // ============================================================================
@@ -179,7 +186,7 @@ export interface RuleOnlyIf {
  */
 export interface RuleContext {
   plateIndex?: number;
-  mode: PrinterModel;
+  mode: PrinterModel | null;
   appMode: AppMode;
   submode?: string;
   isLastPlate?: boolean;
@@ -291,6 +298,36 @@ export interface TranslationDictionary {
  */
 export interface TranslationVariables {
   [key: string]: string | number;
+}
+
+/**
+ * I18n instance interface for global access
+ */
+export interface I18nInstance {
+  t: (key: string, variables?: TranslationVariables) => string;
+  translatePage: () => void;
+  loadLocale: (locale: SupportedLocale) => Promise<void>;
+  getCurrentLocale: () => SupportedLocale;
+  detectPreferredLocale: () => SupportedLocale;
+  setLocale: (locale: SupportedLocale) => Promise<void>;
+}
+
+// ============================================================================
+// Global Window Extensions
+// ============================================================================
+
+declare global {
+  interface Window {
+    i18nInstance?: I18nInstance;
+    updateAppModeDisplay?: (isPushOffMode: boolean) => void;
+    updateFilenamePreview?: () => void;
+    getSettingForPlate?: (plateIndex: number, settingId: string) => boolean;
+    getDisablePrinterSounds?: () => boolean;
+    getSoundRemovalMode?: () => string;
+    getDisableBedLeveling?: () => boolean;
+    getDisableFirstLayerScan?: () => boolean;
+    repaintAllPlateSwatchesFromStats?: () => void;
+  }
 }
 
 // ============================================================================

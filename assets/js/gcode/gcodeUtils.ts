@@ -1,7 +1,12 @@
 // /src/gcode/gcodeUtils.ts
 
 import { _escRe } from "../utils/regex.js";
-import type { PrinterModel, AppMode } from "../types/index.js";
+import type { SwapRule, RuleContext } from "../types/index.js";
+
+/**
+ * Sound removal mode settings
+ */
+export type SoundRemovalMode = "all" | "between_plates" | "none";
 
 /**
  * Result of a range find operation
@@ -15,80 +20,8 @@ export interface RangeResult {
   eIdx?: number;
 }
 
-/**
- * Context for GCODE rule processing
- */
-export interface GCodeContext {
-  /** Current plate index (0-based) */
-  plateIndex: number;
-  /** Total number of plates */
-  totalPlates: number;
-  /** Printer model */
-  mode: PrinterModel;
-  /** Application mode (swap/pushoff) */
-  appMode: AppMode;
-  /** Whether this is the last plate */
-  isLastPlate?: boolean;
-}
-
-/**
- * Condition for when a rule should be applied
- */
-export interface RuleCondition {
-  /** Printer models this rule applies to */
-  modes?: PrinterModel[];
-  /** App modes this rule applies to */
-  appModes?: AppMode[];
-  /** Settings that must be enabled (checked) */
-  requireTrue?: string[];
-  /** Settings that must be disabled (unchecked) */
-  requireFalse?: string[];
-}
-
-/**
- * Sound removal mode settings
- */
-export type SoundRemovalMode = "all" | "tts" | "none";
-
-/**
- * Additional conditions for rule application
- */
-export interface OnlyIfCondition {
-  /** Rule only applies if plateIndex > this value */
-  plateIndexGreaterThan?: number;
-  /** Rule only applies if plateIndex equals this value */
-  plateIndexEquals?: number;
-  /** Rule only applies if plateIndex < this value or "lastPlate" */
-  plateIndexLessThan?: number | "lastPlate";
-  /** Rule only applies if isLastPlate matches this */
-  isLastPlate?: boolean;
-  /** Rule only applies for specific sound removal mode */
-  soundRemovalMode?: SoundRemovalMode;
-}
-
-/**
- * A swap rule definition
- */
-export interface SwapRule {
-  /** Unique identifier for the rule */
-  id?: string;
-  /** Action type */
-  action: string;
-  /** When this rule should be applied */
-  when?: RuleCondition;
-  /** Only if these conditions are met */
-  onlyIf?: OnlyIfCondition;
-  /** Pattern to search for */
-  pattern?: string | RegExp;
-  /** Replacement text */
-  replacement?: string | string[];
-  /** Start pattern for range operations */
-  startPattern?: string | RegExp;
-  /** End pattern for range operations */
-  endPattern?: string | RegExp;
-  /** Whether to use regex for pattern matching */
-  useRegex?: boolean;
-}
+// Type alias for GCodeContext (using RuleContext from types/index.ts)
+export type GCodeContext = RuleContext;
 
 /**
  * Counts occurrences of a pattern in the source string
@@ -197,7 +130,7 @@ export function _findRange(
 export function _ruleActiveWhy(rule: SwapRule, ctx: GCodeContext): string {
   // Only for logging: why is it inactive?
   const w = rule.when || {};
-  if (w.modes && w.modes.length && !w.modes.includes(ctx.mode)) return "mode_mismatch";
+  if (w.modes && w.modes.length && ctx.mode && !w.modes.includes(ctx.mode)) return "mode_mismatch";
   if (w.appModes && w.appModes.length && !w.appModes.includes(ctx.appMode)) return "appMode_mismatch";
 
   // Check per-plate settings if available, otherwise fallback to DOM elements
@@ -232,12 +165,12 @@ export function _ruleActiveWhy(rule: SwapRule, ctx: GCodeContext): string {
   }
 
   const onlyIf = rule.onlyIf || {};
-  if (Number.isFinite(onlyIf.plateIndexGreaterThan) && !(ctx.plateIndex > onlyIf.plateIndexGreaterThan!)) return "plateIndexGreaterThan_false";
-  if (Number.isFinite(onlyIf.plateIndexEquals) && !(ctx.plateIndex === onlyIf.plateIndexEquals)) return "plateIndexEquals_false";
+  if (Number.isFinite(onlyIf.plateIndexGreaterThan) && ctx.plateIndex !== undefined && !(ctx.plateIndex > onlyIf.plateIndexGreaterThan!)) return "plateIndexGreaterThan_false";
+  if (Number.isFinite(onlyIf.plateIndexEquals) && ctx.plateIndex !== undefined && !(ctx.plateIndex === onlyIf.plateIndexEquals)) return "plateIndexEquals_false";
   if (typeof onlyIf.isLastPlate === "boolean" && !(!!ctx.isLastPlate === onlyIf.isLastPlate)) return "isLastPlate_mismatch";
 
   // Handle plateIndexLessThan with special case for "lastPlate"
-  if (onlyIf.plateIndexLessThan !== undefined) {
+  if (onlyIf.plateIndexLessThan !== undefined && ctx.plateIndex !== undefined) {
     let maxIndex: number;
     if (onlyIf.plateIndexLessThan === "lastPlate") {
       maxIndex = (ctx.totalPlates || 1) - 1;

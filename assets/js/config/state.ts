@@ -24,6 +24,10 @@ export const state: AppState = {
   last_file: false,
   ams_max_file_id: -1,
 
+  // Nozzle configuration
+  NOZZLE_DIAMETER_MM: null,
+  NOZZLE_IS_02: false,
+
   // Features / Options
   enable_md5: true,
   open_in_bbs: false,

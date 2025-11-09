@@ -25,7 +25,7 @@ export interface FlushOptions {
  */
 export function hexToRgb(hex: string): [number, number, number] {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex);
-  if (!m) return [204, 204, 204]; // Fallback #cccccc
+  if (!m || !m[1]) return [204, 204, 204]; // Fallback #cccccc
   const int = parseInt(m[1], 16);
   return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
 }
@@ -86,7 +86,13 @@ export function buildFlushVolumesMatrixFromColors(
   const out: number[] = [];
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
-      out.push(i === j ? 0 : toFlush(colorDistance(colors[i], colors[j])));
+      const colorI = colors[i];
+      const colorJ = colors[j];
+      if (colorI && colorJ) {
+        out.push(i === j ? 0 : toFlush(colorDistance(colorI, colorJ)));
+      } else {
+        out.push(0);
+      }
     }
   }
   return out;

@@ -50,26 +50,16 @@ import {
 
 import { showWarning } from "../ui/infobox.js";
 
-import type { SwapRule, RuleContext, PrinterModel } from '../types/index.js';
+import type { SwapRule, RuleContext } from '../types/index.js';
 
 // ============================================================================
 // Types for internal use
 // ============================================================================
 
 /**
- * GCODE sections parsed from readGcode
- */
-interface GCodeSections {
-  header: string;
-  startseq: string;
-  body: string;
-  endseq: string;
-}
-
-/**
  * Extra information collected during rule application
  */
-interface RuleApplicationExtra {
+interface RuleApplicationExtra extends Record<string, unknown> {
   scopeDetails?: Record<string, unknown>;
   matches?: number;
   alreadyInserted?: boolean;

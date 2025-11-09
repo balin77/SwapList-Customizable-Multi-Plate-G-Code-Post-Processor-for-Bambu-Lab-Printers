@@ -36,6 +36,7 @@ export function transformM73LayerProgressGlobal(gcodeArray: string[]): string[] 
   const plateMinLayers: number[] = [];
   for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
     const gcode = gcodeArray[plateIdx];
+    if (!gcode) continue;
     let minLayer = Infinity;
     let maxLayer = 0;
 
@@ -43,7 +44,9 @@ export function transformM73LayerProgressGlobal(gcodeArray: string[]): string[] 
     const m73LayerPattern = /M73\s+L(\d+)/gi;
     let match: RegExpExecArray | null;
     while ((match = m73LayerPattern.exec(gcode)) !== null) {
-      const layerNum = parseInt(match[1], 10);
+      const layerCapture = match[1];
+      if (typeof layerCapture !== 'string') continue;
+      const layerNum = parseInt(layerCapture, 10);
       if (!isNaN(layerNum)) {
         if (layerNum < minLayer) minLayer = layerNum;
         if (layerNum > maxLayer) maxLayer = layerNum;
@@ -63,7 +66,11 @@ export function transformM73LayerProgressGlobal(gcodeArray: string[]): string[] 
   // Calculate cumulative layer offsets for each plate
   const layerOffsets: number[] = [0]; // First plate starts at 0
   for (let i = 1; i < plateLayerCounts.length; i++) {
-    layerOffsets[i] = layerOffsets[i - 1] + plateLayerCounts[i - 1];
+    const prevOffset = layerOffsets[i - 1];
+    const prevCount = plateLayerCounts[i - 1];
+    if (prevOffset !== undefined && prevCount !== undefined) {
+      layerOffsets[i] = prevOffset + prevCount;
+    }
   }
 
   console.log('[M73 Layer Transform] Plate layer counts:', plateLayerCounts);
@@ -76,10 +83,15 @@ export function transformM73LayerProgressGlobal(gcodeArray: string[]): string[] 
     const offset = layerOffsets[plateIdx];
     const minLayer = plateMinLayers[plateIdx];
 
+    if (gcode === undefined || offset === undefined || minLayer === undefined) {
+      transformedGcodeArray.push(gcode || '');
+      continue;
+    }
+
     // Replace M73 L* commands with global layer numbers
     // Formula: globalLayer = (originalLayer - minLayer) + offset
     // This normalizes layers to start at 0, then applies the global offset
-    const transformed = gcode.replace(/M73\s+L(\d+)/gi, (match, layerStr) => {
+    const transformed = gcode.replace(/M73\s+L(\d+)/gi, (match, layerStr: string) => {
       const originalLayer = parseInt(layerStr, 10);
       if (isNaN(originalLayer)) {
         return match; // Keep original if parsing fails
@@ -113,14 +125,18 @@ export function transformM73PercentageProgressGlobal(gcodeArray: string[]): stri
 
   for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
     const gcode = gcodeArray[plateIdx];
+    if (!gcode) continue;
     const progressEntries: ProgressEntry[] = [];
 
     // Find all M73 P* R* commands
     const m73ProgressPattern = /M73\s+P(\d+)\s+R(\d+)/gi;
     let match: RegExpExecArray | null;
     while ((match = m73ProgressPattern.exec(gcode)) !== null) {
-      const percent = parseInt(match[1], 10);
-      const remaining = parseInt(match[2], 10);
+      const percentCapture = match[1];
+      const remainingCapture = match[2];
+      if (typeof percentCapture !== 'string' || typeof remainingCapture !== 'string') continue;
+      const percent = parseInt(percentCapture, 10);
+      const remaining = parseInt(remainingCapture, 10);
 
       if (!isNaN(percent) && !isNaN(remaining)) {
         progressEntries.push({ percent, remaining });
@@ -151,7 +167,11 @@ export function transformM73PercentageProgressGlobal(gcodeArray: string[]): stri
   // Calculate time offsets: cumulative sum of previous plates' estimated times
   const timeOffsets: number[] = [0];
   for (let i = 1; i < plateProgressData.length; i++) {
-    timeOffsets[i] = timeOffsets[i - 1] + plateProgressData[i - 1].estimatedMinutes;
+    const prevOffset = timeOffsets[i - 1];
+    const prevData = plateProgressData[i - 1];
+    if (prevOffset !== undefined && prevData !== undefined) {
+      timeOffsets[i] = prevOffset + prevData.estimatedMinutes;
+    }
   }
 
   console.log('[M73 Percentage Transform] Time offsets:', timeOffsets);
@@ -162,10 +182,16 @@ export function transformM73PercentageProgressGlobal(gcodeArray: string[]): stri
     const gcode = gcodeArray[plateIdx];
     const plateData = plateProgressData[plateIdx];
     const timeOffset = timeOffsets[plateIdx];
+
+    if (gcode === undefined || plateData === undefined || timeOffset === undefined) {
+      transformedGcodeArray.push(gcode || '');
+      continue;
+    }
+
     const plateEstimatedTime = plateData.estimatedMinutes;
 
     // Replace M73 P* R* commands
-    const transformed = gcode.replace(/M73\s+P(\d+)\s+R(\d+)/gi, (match, percentStr, remainingStr) => {
+    const transformed = gcode.replace(/M73\s+P(\d+)\s+R(\d+)/gi, (match, percentStr: string, remainingStr: string) => {
       const platePercent = parseInt(percentStr, 10);
       const plateRemaining = parseInt(remainingStr, 10);
 
@@ -217,12 +243,15 @@ export function calculateTotalGlobalLayers(gcodeArray: string[]): number {
 
   for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
     const gcode = gcodeArray[plateIdx];
+    if (!gcode) continue;
 
     // Find all M73 L* commands
     const m73LayerPattern = /M73\s+L(\d+)/gi;
     let match: RegExpExecArray | null;
     while ((match = m73LayerPattern.exec(gcode)) !== null) {
-      const layerNum = parseInt(match[1], 10);
+      const layerCapture = match[1];
+      if (typeof layerCapture !== 'string') continue;
+      const layerNum = parseInt(layerCapture, 10);
       if (!isNaN(layerNum) && layerNum > globalMaxLayer) {
         globalMaxLayer = layerNum;
       }

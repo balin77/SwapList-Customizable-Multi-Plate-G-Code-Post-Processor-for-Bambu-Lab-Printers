@@ -1,14 +1,5 @@
 // /src/constants/errorMessages.ts
 
-// Extend Window interface to include i18nInstance
-declare global {
-  interface Window {
-    i18nInstance?: {
-      t: (key: string, variables?: Record<string, unknown>) => string;
-    };
-  }
-}
-
 type ErrorKey = 'defaultError' | 'fileNotReadable' | 'noSlicedData';
 
 const ERROR_FALLBACKS: Record<ErrorKey, string> = {
@@ -18,7 +9,7 @@ const ERROR_FALLBACKS: Record<ErrorKey, string> = {
 } as const;
 
 // Get i18n instance for translations
-function getErrorMessage(key: ErrorKey, variables: Record<string, unknown> = {}): string {
+function getErrorMessage(key: ErrorKey, variables: Record<string, string | number> = {}): string {
   const i18n = window.i18nInstance;
   if (i18n) {
     return i18n.t(`errors.${key}`, variables);

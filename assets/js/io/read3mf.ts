@@ -13,9 +13,9 @@ import {
 } from "../ui/filamentColors.js";
 import { calculateLightingMask } from "../utils/imageColorMapping.js";
 import { update_statistics } from "../ui/statistics.js";
-import { export_3mf } from "./export3mf.js";
+// import { export_3mf } from "./export3mf.js"; // Unused for now
 import { err00, err01 } from "../constants/errorMessages.js";
-import { showError, showWarning } from "../ui/infobox.js";
+import { showError } from "../ui/infobox.js";
 
 /**
  * Zeigt eine Fehlermeldung an, rollt den zuletzt gepushten File zurück
@@ -115,12 +115,12 @@ export function handleFile(f: File): void {
   if (!file_name_field) return;
 
   if (current_file_id == 0) {
-    file_name_field.placeholder = f.name.split(".gcode.").join(".").split(".3mf")[0];
+    file_name_field.placeholder = f.name.split(".gcode.").join(".").split(".3mf")[0] || "";
   } else {
     file_name_field.placeholder = "mix";
   }
   adj_field_length(file_name_field, 5, 26);
-  state.my_files.push(f);
+  state.my_files.push(f as any);
 
   JSZip.loadAsync(f)
     .then(async function (zip) {
@@ -144,9 +144,9 @@ export function handleFile(f: File): void {
 
       // gcode_file aus erster Plate holen – mit Varianten/Fallbacks
       const gTag =
-        model_plates[0].querySelector("[key='gcode_file']") ||
+        model_plates[0]?.querySelector("[key='gcode_file']") ||
         model_config_xml.querySelector("[key='gcode_file']") ||
-        model_plates[0].querySelector("[key^='gcode_file']"); // manche Exporte nutzen gcode_file_0 etc.
+        model_plates[0]?.querySelector("[key^='gcode_file']"); // manche Exporte nutzen gcode_file_0 etc.
 
       let firstPlatePath = gTag?.getAttribute("value") || "";
 
@@ -155,7 +155,7 @@ export function handleFile(f: File): void {
         const gFiles = zip.file(/\.gcode$/i) || [];
         if (gFiles.length) {
           const metaFirst = gFiles.find(f => /(^|\/)Metadata\//i.test(f.name));
-          firstPlatePath = (metaFirst || gFiles[0]).name;
+          firstPlatePath = (metaFirst || gFiles[0])?.name || "";
           console.warn("[read3mf] Kein gcode_file im model_settings gefunden. Fallback auf:", firstPlatePath);
         }
       }
@@ -192,7 +192,7 @@ export function handleFile(f: File): void {
 
       // Nozzle-Durchmesser aus dem Header lesen, z.B. "; nozzle_diameter = 0.4"
       const nozMatch = firstPlateText.match(/^\s*;\s*nozzle_diameter\s*=\s*([\d.]+)/mi);
-      const currentNozzleDiameter = nozMatch ? parseFloat(nozMatch[1]) : null;
+      const currentNozzleDiameter = nozMatch?.[1] ? parseFloat(nozMatch[1]) : null;
 
       // Bei der ersten Datei: Nozzle-Durchmesser setzen
       if (current_file_id === 0) {
@@ -219,7 +219,7 @@ export function handleFile(f: File): void {
         return;
       }
 
-      if (model_plates[0].querySelectorAll("[key='gcode_file']").length == 0) {
+      if (model_plates[0]?.querySelectorAll("[key='gcode_file']").length == 0) {
         console.log("model_plates[0].querySelectorAll([key='gcode_file']).length == 0");
         reject_file(err01);
         return;
@@ -253,8 +253,8 @@ export function handleFile(f: File): void {
 
       for (let i = 0; i < model_plates.length; i++) {
         (function () {
-          const gcode_tag = model_plates[i].querySelectorAll("[key='gcode_file']");
-          const plate_name = gcode_tag[0]?.getAttribute("value") || "";
+          const gcode_tag = model_plates[i]?.querySelectorAll("[key='gcode_file']");
+          const plate_name = gcode_tag?.[0]?.getAttribute("value") || "";
           if (plate_name == "") return;
 
           console.log("plate_name found", plate_name);
@@ -291,13 +291,13 @@ export function handleFile(f: File): void {
           f_id.title = String(current_file_id);
           f_id.innerText = "[" + current_file_id + "]";
 
-          const icon_name_el = model_plates[i].querySelectorAll("[key='thumbnail_file']")[0];
+          const icon_name_el = model_plates[i]?.querySelectorAll("[key='thumbnail_file']")[0];
           const icon_name = icon_name_el?.getAttribute("value") || "";
           console.log("icon_name", icon_name);
 
           // Also get the no-light version
           let no_light_icon_name: string | null = null;
-          const no_light_element = model_plates[i].querySelectorAll("[key='thumbnail_no_light_file']")[0];
+          const no_light_element = model_plates[i]?.querySelectorAll("[key='thumbnail_no_light_file']")[0];
           if (no_light_element) {
             no_light_icon_name = no_light_element.getAttribute("value");
             console.log("no_light_icon_name", no_light_icon_name);
@@ -312,7 +312,7 @@ export function handleFile(f: File): void {
               p_icon.src = litImageUrl;
 
               // Store URLs for later color mapping
-              p_icon.dataset.litImageUrl = litImageUrl;
+              p_icon.dataset['litImageUrl'] = litImageUrl;
 
               // Load no-light image if available
               if (no_light_icon_name) {
@@ -320,7 +320,7 @@ export function handleFile(f: File): void {
                 if (no_light_img_file) {
                   no_light_img_file.async("blob").then(async function (no_light_u8: Blob) {
                     const unlitImageUrl = URL.createObjectURL(no_light_u8);
-                    p_icon.dataset.unlitImageUrl = unlitImageUrl;
+                    p_icon.dataset['unlitImageUrl'] = unlitImageUrl;
                     console.log("Stored unlit image URL for plate", i);
 
                     // Calculate and cache the lighting mask (shadowmap) once during loading
@@ -350,7 +350,7 @@ export function handleFile(f: File): void {
           const buf = slicer_config_xml.querySelectorAll(queryBuf);
 
           let config_filaments: HTMLCollectionOf<Element>;
-          if (buf.length > 0)
+          if (buf.length > 0 && buf[0])
             config_filaments = buf[0].parentElement?.getElementsByTagName("filament") || document.getElementsByTagName("filament");
           else
             config_filaments = slicer_config_xml.getElementsByTagName("plate")[0]?.getElementsByTagName("filament") || document.getElementsByTagName("filament");
@@ -361,6 +361,7 @@ export function handleFile(f: File): void {
           // Neue Filamentzeilen erstellen
           for (let filament_id = 0; filament_id < config_filaments.length; filament_id++) {
             const cfg = config_filaments[filament_id];
+            if (!cfg) continue;
 
             const color = cfg.getAttribute("color") || "#cccccc";
             const type = cfg.getAttribute("type") || "PLA";
@@ -381,7 +382,7 @@ export function handleFile(f: File): void {
             const sw = my_fl.getElementsByClassName("f_color")[0] as HTMLElement | undefined;
             if (sw) {
               sw.style.backgroundColor = color;
-              sw.dataset.f_color = color;
+              sw.dataset['f_color'] = color;
             }
 
             // Slot-Text setzen (sichtbar) …
@@ -389,9 +390,9 @@ export function handleFile(f: File): void {
             if (slotEl) {
               slotEl.innerText = String(slotNum);
               // … und Original-Slot/Typ/TrayInfoIdx für spätere Exporte merken
-              slotEl.dataset.origSlot = String(slotNum);
-              slotEl.dataset.origType = type;
-              slotEl.dataset.trayInfoIdx = trayInfoIdx;
+              slotEl.dataset['origSlot'] = String(slotNum);
+              slotEl.dataset['origType'] = type;
+              slotEl.dataset['trayInfoIdx'] = trayInfoIdx;
             }
 
             // Determine what to display based on number of colors on this plate
@@ -495,7 +496,7 @@ export function handleFile(f: File): void {
       console.log("filaments:", filaments);
 
       for (let i = 0; i < filaments.length; i++) {
-        const idAttr = filaments[i].id || filaments[i].getAttribute("id");
+        const idAttr = filaments[i]?.id || filaments[i]?.getAttribute("id");
         const idNum = parseInt(idAttr || "0", 10);
         if (idNum > max_id) max_id = idNum;
         console.log("filaments[i].id:", idAttr);

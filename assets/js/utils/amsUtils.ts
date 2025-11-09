@@ -37,11 +37,11 @@ export function _parseAmsParams(paramBlob: string = ""): AMSParams {
 
   // P optional (A1M typically has no P parameter)
   const mP = /(?:^|\s)P(\d{1,3})\b/i.exec(src);
-  const p = mP ? +mP[1] : 0;
+  const p = (mP && mP[1]) ? +mP[1] : 0;
 
   // S followed by digits — can be followed by "A" directly (S3A) or whitespace/EOL
   const mS = /(?:^|\s)S(\d{1,3})(?=\D|$)/i.exec(src);
-  const s = mS ? +mS[1] : 255;   // 255 = unspecified/auto
+  const s = (mS && mS[1]) ? +mS[1] : 255;   // 255 = unspecified/auto
 
   // A-Flag: either as its own token (" A") or compact attached to S ("S3A")
   const hasACompact = /S\d+A\b/i.test(src);

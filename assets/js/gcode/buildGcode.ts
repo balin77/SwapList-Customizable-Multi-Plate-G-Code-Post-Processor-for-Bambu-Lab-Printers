@@ -448,8 +448,9 @@ export function buildA1MPushoffExtrusionSequence(gcode: string, ctx: BuildContex
 
   // Get the temperature for the first extruder (full print temperature)
   let printTemp = 220; // fallback temperature
-  if (temperatures.length > firstExtruder) {
-    printTemp = temperatures[firstExtruder];
+  const temp = temperatures[firstExtruder];
+  if (temp !== undefined) {
+    printTemp = temp;
   }
 
   console.log(`[A1M Pushoff Extrusion] First extruder: ${firstExtruder}, print temp: ${printTemp}`);
@@ -574,12 +575,12 @@ export function bumpFirstThreeExtrusionsA1PushOff(gcode: string, _plateIndex: nu
   // Find the first three extrude commands
   for (let i = 0; i < lines.length && foundCount < 3; i++) {
     const raw = lines[i];
-    if (/^\s*;/.test(raw)) continue; // Skip comments
+    if (!raw || /^\s*;/.test(raw)) continue; // Skip comments
     const code = raw.split(';', 1)[0]; // Remove inline comments
-    if (!reG1.test(code)) continue; // Must be G1 command
+    if (!code || !reG1.test(code)) continue; // Must be G1 command
     if (!reX.test(code) || !reY.test(code)) continue; // Must have X and Y coordinates
     const mE = code.match(reE);
-    if (!mE) continue; // Must have E parameter
+    if (!mE || !mE[1]) continue; // Must have E parameter
     const eVal = parseFloat(mE[1]);
     if (!Number.isFinite(eVal) || eVal <= 0) continue; // E value must be positive
 

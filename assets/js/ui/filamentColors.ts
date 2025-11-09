@@ -5,18 +5,8 @@
 import { state } from "../config/state.js";
 import { update_statistics } from "../ui/statistics.js";
 import { PRESET_INDEX } from "../config/filamentConfig/registry-generated.js";
-import { createRecoloredPlateImage, extractOriginalFilamentColors } from "../utils/imageColorMapping.js";
+import { createRecoloredPlateImage } from "../utils/imageColorMapping.js";
 import { showWarning } from "./infobox.js";
-
-// Extend Window interface for i18n
-declare global {
-  interface Window {
-    i18nInstance?: {
-      t: (key: string, params?: Record<string, unknown>) => string;
-      translatePage: () => void;
-    };
-  }
-}
 
 // Internal slot structure
 interface SlotData {
@@ -60,9 +50,9 @@ function getContrastingBackground(hexColor: string): string {
  * Ensure P0 device structure exists in state
  */
 function ensureP0(): P0Device {
-  if (!state.P0) state.P0 = {} as P0Device;
-  if (!state.P0.slots) state.P0.slots = Array(32).fill(null).map(() => ({}));
-  return state.P0 as P0Device;
+  if (!state.P0) (state as any).P0 = {} as P0Device;
+  if (!(state as any).P0.slots) (state as any).P0.slots = Array(32).fill(null).map(() => ({}));
+  return (state as any).P0 as P0Device;
 }
 
 /**
@@ -99,7 +89,7 @@ function lookupVendorByFilamentId(filamentId: string): string {
 function getSwatchHex(swatch: HTMLElement | null): string | null {
   if (!swatch) return null;
   // First try to get original color from dataset
-  if (swatch.dataset.f_color) return swatch.dataset.f_color;
+  if (swatch.dataset['f_color']) return swatch.dataset['f_color'];
   // Otherwise try to get from style
   return toHexAny(swatch.style.backgroundColor);
 }
@@ -114,7 +104,7 @@ export function updateAllPlateSwatchColors(): void {
   const list = document.getElementById("playlist_ol");
   if (!list) return;
 
-  list.querySelectorAll<HTMLElement>("li.list_item .p_filaments .p_filament").forEach(row => {
+  Array.from(list.querySelectorAll<HTMLElement>("li.list_item .p_filaments .p_filament")).forEach(row => {
     const sw = row.querySelector<HTMLElement>(".f_color");
     const slotSpan = row.querySelector<HTMLElement>(".f_slot");
     if (!sw || !slotSpan) return;
@@ -123,12 +113,12 @@ export function updateAllPlateSwatchColors(): void {
     const idx = Math.max(0, Math.min(31, slot1 - 1));
 
     // Store original color in dataset if not already present
-    if (!sw.dataset.f_color && sw.style.backgroundColor) {
-      sw.dataset.f_color = toHexAny(sw.style.backgroundColor);
+    if (!sw.dataset['f_color'] && sw.style.backgroundColor) {
+      sw.dataset['f_color'] = toHexAny(sw.style.backgroundColor);
     }
 
     // Set slot index and current color
-    sw.dataset.slotIndex = String(idx);
+    sw.dataset['slotIndex'] = String(idx);
     const currentColor = getSlotColor(idx);
     sw.style.backgroundColor = currentColor;
     sw.style.background = currentColor;
@@ -181,7 +171,7 @@ export function deriveGlobalSlotColorsFromPlates(): void {
 
   const list = document.getElementById("playlist_ol");
   if (list) {
-    list.querySelectorAll<HTMLElement>("li.list_item .p_filament").forEach(row => {
+    Array.from(list.querySelectorAll<HTMLElement>("li.list_item .p_filament")).forEach(row => {
       const slotSpan = row.querySelector<HTMLElement>(".f_slot");
       const sw = row.querySelector<HTMLElement>(".f_color");
       if (!slotSpan || !sw) return;
@@ -208,16 +198,18 @@ export function deriveGlobalSlotColorsFromPlates(): void {
 
   for (let i = 0; i < 32; i++) {
     const sl = dev.slots[i];
-    if (sl.manual) continue; // don't overwrite manual overrides
-    sl.color = derived[i] || DEFAULT_SLOT_COLORS[i];
-    sl.conflict = false;
+    if (sl?.manual) continue; // don't overwrite manual overrides
+    if (sl) {
+      sl.color = derived[i] || DEFAULT_SLOT_COLORS[i];
+      sl.conflict = false;
+    }
   }
 
   renderTotalsColors();
 }
 
 // Debounce mechanism to prevent multiple warnings
-let _conflictWarningTimeout: NodeJS.Timeout | null = null;
+let _conflictWarningTimeout: ReturnType<typeof setTimeout> | null = null;
 let _lastConflictHash: string | null = null;
 
 /**
@@ -327,7 +319,7 @@ export function checkAutoToggleOverrideMetadata(): void {
  * Check if any plate has modified slots
  */
 function hasModifiedSlotsInAnyPlate(): boolean {
-  const plates = document.querySelectorAll<HTMLElement>("#playlist_ol li.list_item");
+  const plates = Array.from(document.querySelectorAll<HTMLElement>("#playlist_ol li.list_item"));
   console.log('Checking', plates.length, 'plates for modified slots');
 
   for (const plate of plates) {
@@ -337,9 +329,9 @@ function hasModifiedSlotsInAnyPlate(): boolean {
     if (reps <= 0) continue;
 
     // Check slots in this plate
-    const slots = plate.querySelectorAll<HTMLElement>(".p_filament .f_slot");
+    const slots = Array.from(plate.querySelectorAll<HTMLElement>(".p_filament .f_slot"));
     for (const slot of slots) {
-      const originalSlot = parseInt(slot.dataset.origSlot || "0", 10);
+      const originalSlot = parseInt(slot.dataset['origSlot'] || "0", 10);
       const currentSlot = parseInt((slot.textContent || "").trim() || "0", 10);
 
       // If original slot exists and differs from current
@@ -357,7 +349,7 @@ function hasModifiedSlotsInAnyPlate(): boolean {
  */
 function getSlotsUsedInPlate(plateElement: HTMLElement): Set<number> {
   const slots = new Set<number>();
-  const slotElements = plateElement.querySelectorAll<HTMLElement>(".p_filament .f_slot");
+  const slotElements = Array.from(plateElement.querySelectorAll<HTMLElement>(".p_filament .f_slot"));
 
   for (const slotEl of slotElements) {
     const slotNum = parseInt((slotEl.textContent || "").trim() || "0", 10);
@@ -381,7 +373,7 @@ export function hasOrphanedSlotsAfterRemoval(plateToRemove: HTMLElement): boolea
   }
 
   // Get all remaining plates (excluding the one to be removed)
-  const allPlates = document.querySelectorAll<HTMLElement>("#playlist_ol li.list_item:not(.hidden)");
+  const allPlates = Array.from(document.querySelectorAll<HTMLElement>("#playlist_ol li.list_item:not(.hidden)"));
   const remainingSlots = new Set<number>();
 
   for (const plate of allPlates) {
@@ -414,7 +406,7 @@ export function applySlotSelectionToPlate(anchorEl: HTMLElement, newIndex: numbe
   if (slotSpan) slotSpan.textContent = String(newIndex + 1);
 
   // Display swatch color from global slot colors
-  anchorEl.dataset.slotIndex = String(newIndex);
+  anchorEl.dataset['slotIndex'] = String(newIndex);
   const hex = getSlotColor(newIndex);
   anchorEl.style.background = hex;
 
@@ -461,7 +453,7 @@ export function openSlotDropdown(anchorEl: HTMLElement): void {
   if (_openMenu && _openAnchor === anchorEl) { closeMenu(); return; }
   closeMenu(); _openAnchor = anchorEl;
 
-  const cur = +(anchorEl.dataset.slotIndex || 0);
+  const cur = +(anchorEl.dataset['slotIndex'] || 0);
   const menu = document.createElement("div");
   menu.className = "slot-dropdown";
   menu.setAttribute("data-role", "slot-dropdown");
@@ -473,7 +465,7 @@ export function openSlotDropdown(anchorEl: HTMLElement): void {
   for (const slotIndex of usedSlots) {
     const item = document.createElement("div");
     item.className = "slot-dropdown-item";
-    item.dataset.slotIndex = String(slotIndex);
+    item.dataset['slotIndex'] = String(slotIndex);
 
     const dot = document.createElement("span");
     dot.className = "dot";
@@ -532,11 +524,12 @@ export function openSlotDropdown(anchorEl: HTMLElement): void {
 /**
  * Get max used slot across all plates
  */
+// @ts-expect-error - function reserved for future use
 function getMaxUsedSlot(): number {
   let max = 4;
   const list = document.getElementById("playlist_ol");
   if (list) {
-    list.querySelectorAll<HTMLElement>("li.list_item .p_filament .f_slot").forEach(slotSpan => {
+    Array.from(list.querySelectorAll<HTMLElement>("li.list_item .p_filament .f_slot")).forEach(slotSpan => {
       const slot1 = parseInt(slotSpan.textContent?.trim() || "0", 10);
       if (slot1 > max) max = slot1;
     });
@@ -554,7 +547,7 @@ function getUsedSlotsFromStatistics(): number[] {
   if (!filamentTotal) return [0, 1, 2, 3]; // Fallback to 4 slots
 
   // Get all slot divs that are currently displayed in statistics
-  const slotDivs = filamentTotal.querySelectorAll<HTMLDivElement>(":scope > div[title]");
+  const slotDivs = Array.from(filamentTotal.querySelectorAll<HTMLDivElement>(":scope > div[title]"));
 
   slotDivs.forEach(div => {
     const slotTitle = div.getAttribute("title");
@@ -578,10 +571,11 @@ function areAllSlotsUsed(slotCount: number): boolean {
   if (!filamentTotal) return false;
 
   // Check each slot div for usage
-  const slotDivs = filamentTotal.querySelectorAll<HTMLDivElement>(':scope > div[title]');
+  const slotDivs = Array.from(filamentTotal.querySelectorAll<HTMLDivElement>(':scope > div[title]'));
   for (let i = 0; i < Math.min(slotCount, slotDivs.length); i++) {
     const div = slotDivs[i];
-    const usedG = parseFloat(div.dataset.used_g || '0');
+    if (!div) continue;
+    const usedG = parseFloat(div.dataset['used_g'] || '0');
     if (usedG <= 0) {
       return false; // Found an unused slot
     }
@@ -616,7 +610,7 @@ export function renderTotalsColors(): void {
   const host = document.getElementById("filament_total");
   if (!host) return;
 
-  host.querySelectorAll<HTMLDivElement>(":scope > div[title]").forEach(div => {
+  Array.from(host.querySelectorAll<HTMLDivElement>(":scope > div[title]")).forEach(div => {
     const slot1 = +(div.getAttribute("title") || "0");
     if (!slot1) return;
     let sw = div.querySelector<HTMLDivElement>(":scope > .f_color");
@@ -628,8 +622,8 @@ export function renderTotalsColors(): void {
     }
     const idx = slot1 - 1;
     const hex = getSlotColor(idx);
-    sw.dataset.slotIndex = String(idx);
-    sw.dataset.f_color = hex;
+    sw.dataset['slotIndex'] = String(idx);
+    sw.dataset['f_color'] = hex;
     sw.style.background = hex;
   });
 }
@@ -664,6 +658,7 @@ export function installFilamentTotalsAutoFix(): void {
 /**
  * Set global slot metadata (type, vendor, color)
  */
+// @ts-expect-error - function reserved for future use
 function setGlobalSlotMeta(sIndex: number, meta: { color?: string; type?: string; vendor?: string }): void {
   const dev = ensureP0();
   const sl = dev.slots[sIndex];
@@ -690,13 +685,13 @@ function setGlobalSlotMeta(sIndex: number, meta: { color?: string; type?: string
  * Wire plate swatches (set up dataset without changing colors)
  */
 export function wirePlateSwatches(li: HTMLElement): void {
-  li.querySelectorAll<HTMLElement>(".p_filaments .p_filament").forEach(row => {
+  Array.from(li.querySelectorAll<HTMLElement>(".p_filaments .p_filament")).forEach(row => {
     const sw = row.querySelector<HTMLElement>(".f_color");
     const slotSpan = row.querySelector<HTMLElement>(".f_slot");
     if (!sw || !slotSpan) return;
     const slot1 = parseInt(slotSpan.textContent?.trim() || "1", 10) || 1;
     const idx = Math.max(0, Math.min(31, slot1 - 1));
-    sw.dataset.slotIndex = String(idx);
+    sw.dataset['slotIndex'] = String(idx);
     // Color intentionally NOT changed – we read it during derivation!
   });
 }
@@ -708,7 +703,7 @@ export async function updatePlateImageColors(plateElement: HTMLElement | null): 
   if (!plateElement) return;
 
   const plateIcon = plateElement.querySelector<HTMLImageElement>('.p_icon');
-  if (!plateIcon || !plateIcon.dataset.litImageUrl || !plateIcon.dataset.unlitImageUrl) {
+  if (!plateIcon || !plateIcon.dataset['litImageUrl'] || !plateIcon.dataset['unlitImageUrl']) {
     console.log('Plate image update skipped: missing image URLs');
     return;
   }
@@ -718,17 +713,17 @@ export async function updatePlateImageColors(plateElement: HTMLElement | null): 
     const colorMapping: Record<string, string> = {};
 
     // Get current filament rows
-    const filamentRows = plateElement.querySelectorAll<HTMLElement>('.p_filaments .p_filament');
+    const filamentRows = Array.from(plateElement.querySelectorAll<HTMLElement>('.p_filaments .p_filament'));
     filamentRows.forEach(row => {
       const swatch = row.querySelector<HTMLElement>('.f_color');
       const slotSpan = row.querySelector<HTMLElement>('.f_slot');
 
       if (swatch && slotSpan) {
         // Get original color from dataset (stored during import)
-        const originalColor = swatch.dataset.f_color;
+        const originalColor = swatch.dataset['f_color'];
 
         // Get current slot index
-        const slotIndex = parseInt(swatch.dataset.slotIndex || '0', 10);
+        const slotIndex = parseInt(swatch.dataset['slotIndex'] || '0', 10);
         const currentSlotColor = getSlotColor(slotIndex);
 
         if (originalColor && currentSlotColor) {
@@ -754,7 +749,7 @@ export async function updatePlateImageColors(plateElement: HTMLElement | null): 
 
     // Create recolored image using cached shadowmap
     const newImageUrl = await createRecoloredPlateImage(
-      plateIcon.dataset.unlitImageUrl,
+      plateIcon.dataset['unlitImageUrl'],
       cachedLightingMask,
       colorMapping
     );
@@ -762,12 +757,12 @@ export async function updatePlateImageColors(plateElement: HTMLElement | null): 
     // Update the displayed image
     if (newImageUrl !== plateIcon.src) {
       // Clean up old URL if it was dynamically generated
-      if (plateIcon.dataset.dynamicImageUrl) {
-        URL.revokeObjectURL(plateIcon.dataset.dynamicImageUrl);
+      if (plateIcon.dataset['dynamicImageUrl']) {
+        URL.revokeObjectURL(plateIcon.dataset['dynamicImageUrl']);
       }
 
       plateIcon.src = newImageUrl;
-      plateIcon.dataset.dynamicImageUrl = newImageUrl;
+      plateIcon.dataset['dynamicImageUrl'] = newImageUrl;
     }
 
   } catch (error) {
@@ -779,10 +774,10 @@ export async function updatePlateImageColors(plateElement: HTMLElement | null): 
  * Updates all plate images with current color mappings
  */
 async function updateAllPlateImages(): Promise<void> {
-  const plateElements = document.querySelectorAll<HTMLElement>('#playlist_ol li.list_item:not(.hidden)');
+  const plateElements = Array.from(document.querySelectorAll<HTMLElement>('#playlist_ol li.list_item:not(.hidden)'));
 
   // Process plates in parallel for better performance
-  const updatePromises = Array.from(plateElements).map(plateElement =>
+  const updatePromises = plateElements.map(plateElement =>
     updatePlateImageColors(plateElement)
   );
 
@@ -797,18 +792,25 @@ async function updateAllPlateImages(): Promise<void> {
 /**
  * Get vendor-material mapping from preset index
  */
+// @ts-expect-error - function reserved for future use
 function getVendorMaterialMap(presetIndex: typeof PRESET_INDEX): Record<string, string[]> {
   const map: Record<string, Set<string>> = {};
   presetIndex.forEach(item => {
     if (!map[item.vendor]) {
       map[item.vendor] = new Set();
     }
-    map[item.vendor].add(item.material);
+    const vendorSet = map[item.vendor];
+    if (vendorSet) {
+      vendorSet.add(item.material);
+    }
   });
   // Convert Sets to Arrays
   const result: Record<string, string[]> = {};
   Object.keys(map).forEach(vendor => {
-    result[vendor] = Array.from(map[vendor]);
+    const vendorSet = map[vendor];
+    if (vendorSet) {
+      result[vendor] = Array.from(vendorSet);
+    }
   });
   return result;
 }
@@ -851,12 +853,18 @@ export function catalogForCurrentPrinterAndNozzle(): {
     const v = e.vendor || "Unknown";
     const m = e.material || "Unknown";
     if (!vendorsByMaterial[v]) vendorsByMaterial[v] = new Set();
-    vendorsByMaterial[v].add(m);
+    const vendorSet = vendorsByMaterial[v];
+    if (vendorSet) {
+      vendorSet.add(m);
+    }
   }
   // Convert Sets to Arrays
   const vendorsByMaterialArray: Record<string, string[]> = {};
   for (const v of Object.keys(vendorsByMaterial)) {
-    vendorsByMaterialArray[v] = Array.from(vendorsByMaterial[v]).sort();
+    const vendorSet = vendorsByMaterial[v];
+    if (vendorSet) {
+      vendorsByMaterialArray[v] = Array.from(vendorSet).sort();
+    }
   }
 
   return { candidates, vendorsByMaterial: vendorsByMaterialArray };
@@ -870,8 +878,8 @@ export function openStatsSlotDialog(slotIndex: number): void {
 
   // Read data from statistics box dataset (derived from plates)
   const box = document.querySelector<HTMLDivElement>(`#filament_total > div[title="${slotIndex + 1}"]`);
-  const trayInfoIdx = box?.dataset?.trayInfoIdx || "";
-  const curType = box?.dataset?.f_type || "Unknown";
+  const trayInfoIdx = box?.dataset?.['trayInfoIdx'] || "";
+  const curType = box?.dataset?.['f_type'] || "Unknown";
 
   // Lookup vendor by tray_info_idx
   const curVendor = lookupVendorByFilamentId(trayInfoIdx);
@@ -925,7 +933,7 @@ export function openStatsSlotDialog(slotIndex: number): void {
 
     // Update statistics row
     if (box) {
-      box.dataset.f_color = toHexAny(newColor);
+      box.dataset['f_color'] = toHexAny(newColor);
     }
 
     // Refresh display

@@ -43,6 +43,8 @@ export interface InnerMarkerOptions {
   useRegex?: boolean;
   /** Whether to use regex for inner markers */
   innerUseRegex?: boolean;
+  /** Whether to process all pairs or just the first */
+  allPairs?: boolean;
 }
 
 /**
@@ -151,7 +153,7 @@ export function insertBeforeAnchor(
   payload: string,
   options: InsertOptions = {}
 ): string {
-  const { useRegex = false, occurrence = "last", guardId = "", wrapWithMarkers = true } = options;
+  const { useRegex = false, occurrence = "last", guardId: _guardId = "", wrapWithMarkers: _wrapWithMarkers = true } = options;
   if (!payload) return gcode;
 
   const re = useRegex
@@ -192,7 +194,7 @@ export function insertAfterAnchor(
   payload: string,
   options: InsertOptions = {}
 ): string {
-  const { useRegex = false, occurrence = "last", guardId = "", wrapWithMarkers = true } = options;
+  const { useRegex = false, occurrence = "last", guardId: _guardId = "", wrapWithMarkers: _wrapWithMarkers = true } = options;
   if (!payload) return gcode;
 
   const re = useRegex
@@ -325,6 +327,7 @@ export function optimizeAMSBlocks(gcodeArray: string[]): string[] {
 
   for (let plate = 0; plate < gcodeArray.length; plate++) {
     const g = gcodeArray[plate];
+    if (!g) continue;
     let searchFrom = 0;
     while (true) {
       const idx = g.indexOf(ams_flag, searchFrom);
@@ -359,8 +362,12 @@ export function optimizeAMSBlocks(gcodeArray: string[]): string[] {
       const idxB = ams_flag_index[i + 1];
 
       // Disable (replace the AMS block with commented placeholders, see disable_ams_block)
-      gcodeArray[plateA] = disable_ams_block(gcodeArray[plateA], idxA);
-      gcodeArray[plateB] = disable_ams_block(gcodeArray[plateB], idxB);
+      if (plateA !== undefined && idxA !== undefined && gcodeArray[plateA]) {
+        gcodeArray[plateA] = disable_ams_block(gcodeArray[plateA]!, idxA);
+      }
+      if (plateB !== undefined && idxB !== undefined && gcodeArray[plateB]) {
+        gcodeArray[plateB] = disable_ams_block(gcodeArray[plateB]!, idxB);
+      }
 
       // Debug (optional)
       try {
@@ -436,11 +443,11 @@ export function keepOnlyLastMatching(
   if (matches.length === 1) return gcode;
 
   // Comment out all except the last one
-  const last = matches[matches.length - 1];
   let out = "";
   let cursor = 0;
   for (let i = 0; i < matches.length - 1; i++) {
     const m = matches[i];
+    if (!m) continue;
     out += gcode.slice(cursor, m.index);
     const original = m[0];
     const commented = original.replace(/^/m, "; ");
@@ -536,11 +543,11 @@ export function disableNextLineAfterPatternInRange(gcode: string, opts: DisableN
 /**
  * Checks if content has already been inserted (guard check)
  *
- * @param gcode - GCODE string
- * @param guardId - Guard ID to check for
+ * @param _gcode - GCODE string (unused)
+ * @param _guardId - Guard ID to check for (unused)
  * @returns Always returns false (dev mode removed)
  */
-export function _alreadyInserted(gcode: string, guardId: string): boolean {
+export function _alreadyInserted(_gcode: string, _guardId: string): boolean {
   // Since dev mode is removed, markers are never inserted, so always return false
   return false;
 }
@@ -584,13 +591,11 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
   function rewrite(cmd: string, blob: string): string {
     // Capture original form (compact S…A? P present?)
     const hadP = /\bP\d+\b/i.test(blob);
-    const hadSACompact = /(?:^|\s)S\d+A\b/i.test(blob);      // "S3A" without space
-    const hadAToken = /(?:^|\s)A\b/i.test(blob);             // separate " A"
 
     const { p: origP, s: origS } = _parseAmsParams(blob);
     const fromKey = `P${origP}S${origS}`;
     const map = state.GLOBAL_AMS.overridesPerPlate.get(plateOriginIndex) || {};
-    let toKey = map[fromKey];
+    let toKey = map[fromKey] as string | undefined;
 
     // If no user override, apply slot compaction mapping
     if (!toKey && compactionMap && compactionMap.size > 0) {
@@ -613,7 +618,7 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
     }
 
     const m = /^P(\d+)S(\d+)$/.exec(toKey);
-    if (!m) {
+    if (!m || !m[1] || !m[2]) {
       // Preserve original spacing for invalid toKey format
       const originalSpacing = /^(\s*)/.exec(blob)?.[1] || ' ';
       return `${cmd}${originalSpacing}${blob.trim()}`;
@@ -624,7 +629,7 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
     let outRest = blob;
 
     // 1) Replace S…(A) – supports "S3A", "S3 A" or just "S3"
-    outRest = outRest.replace(/(\bS)(\d{1,3})(\s*A\b|A\b)?/i, (_, S, num, aPart) => {
+    outRest = outRest.replace(/(\bS)(\d{1,3})(\s*A\b|A\b)?/i, (_fullMatch, S, _num, aPart) => {
       // Preserve A, and if it was "compact" before, keep it compact
       if (aPart) {
         const compact = !/^\s/.test(aPart); // true for "A", false for " A"
@@ -635,7 +640,7 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
 
     // 2) Replace/insert P: only show P if it was there before OR target P != 0
     if (/\bP\d+\b/i.test(outRest)) {
-      outRest = outRest.replace(/(\bP)(\d+)\b/i, (_, P, num) => `${P}${toP}`);
+      outRest = outRest.replace(/(\bP)(\d+)\b/i, (_fullMatch, P, _num) => `${P}${toP}`);
     } else if (!hadP && toP !== 0) {
       // Target has real P>0 → insert P at the front (with space)
       outRest = ` P${toP}` + outRest;
@@ -675,11 +680,11 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
   while ((m620Match = m620Pattern.exec(bodyPart)) !== null) {
     const m620Start = m620Match.index;
     const m620End = m620Start + m620Match[0].length;
-    const originalSlot = parseInt(m620Match[4]);
-    const m620Indent = m620Match[1];
-    const m620Cmd = m620Match[2];
-    const m620Rest = m620Match[3];
-    const m620LineEnd = m620Match[5];
+    const originalSlot = parseInt(m620Match[4] ?? '0');
+    const m620Indent = m620Match[1] ?? '';
+    const m620Cmd = m620Match[2] ?? 'M620';
+    const m620Rest = m620Match[3] ?? '';
+    const m620LineEnd = m620Match[5] ?? '\n';
 
     console.log(`Processing M620 S${originalSlot} block starting at ${m620Start}`);
 
@@ -693,12 +698,12 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
       continue;
     }
 
-    const m621Start = m620End + m621Match.index!;
+    const m621Start = m620End + (m621Match.index ?? 0);
     const m621End = m621Start + m621Match[0].length;
-    const m621Indent = m621Match[1];
-    const m621Cmd = m621Match[2];
-    const m621Rest = m621Match[3];
-    const m621LineEnd = m621Match[4];
+    const m621Indent = m621Match[1] ?? '';
+    const m621Cmd = m621Match[2] ?? 'M621';
+    const m621Rest = m621Match[3] ?? '';
+    const m621LineEnd = m621Match[4] ?? '\n';
 
     // Check if this range was already processed
     const rangeStart = m620Start;
@@ -727,15 +732,15 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
 
     // Extract new slot from rewritten M620 command
     const newSlotMatch = newM620.match(/S(\d+)/);
-    const newSlot = newSlotMatch ? parseInt(newSlotMatch[1]) : originalSlot;
+    const newSlot = newSlotMatch && newSlotMatch[1] ? parseInt(newSlotMatch[1]) : originalSlot;
 
     // Process T commands in the middle content if slot changed
     let processedMiddle = middleContent;
     if (newSlot !== originalSlot) {
       console.log(`Slot changed from ${originalSlot} to ${newSlot}, updating T commands`);
       // Only match T commands that are standalone on their own line (not part of other commands like M620.1)
-      processedMiddle = middleContent.replace(/^(\s*)(T)(\d+)\s*$/gmi, (tMatch, indent, tCmd, tSlot) => {
-        console.log(`Found standalone T-Command ${tCmd}${tSlot} in block, changing to ${tCmd}${newSlot}`);
+      processedMiddle = middleContent.replace(/^(\s*)(T)(\d+)\s*$/gmi, (_tMatch, indent, tCmd, _tSlot) => {
+        console.log(`Found standalone T-Command ${tCmd}${_tSlot} in block, changing to ${tCmd}${newSlot}`);
         return indent + tCmd + newSlot;
       });
     } else {
@@ -756,25 +761,25 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
   // Also handle standalone M620/M621 commands that weren't part of blocks
   modifiedBody = modifiedBody.replace(
     /^(\s*)(M620)(?!\.)\b([^\n\r]*)(\r?\n|$)/gmi,
-    (match, indent, cmd, rest, lineEnd) => {
+    (_match, indent, cmd, rest, lineEnd) => {
       // Only process if not already processed as part of a block
       const wasProcessed = processedRanges.some(range => {
-        const matchStart = modifiedBody.indexOf(match);
+        const matchStart = modifiedBody.indexOf(_match);
         return matchStart >= range.start && matchStart < range.end;
       });
-      return wasProcessed ? match : indent + rewrite(cmd, rest) + lineEnd;
+      return wasProcessed ? _match : indent + rewrite(cmd, rest) + lineEnd;
     }
   );
 
   modifiedBody = modifiedBody.replace(
     /^(\s*)(M621)(?!\.)\b([^\n\r]*)(\r?\n|$)/gmi,
-    (match, indent, cmd, rest, lineEnd) => {
+    (_match, indent, cmd, rest, lineEnd) => {
       // Only process if not already processed as part of a block
       const wasProcessed = processedRanges.some(range => {
-        const matchStart = modifiedBody.indexOf(match);
+        const matchStart = modifiedBody.indexOf(_match);
         return matchStart >= range.start && matchStart < range.end;
       });
-      return wasProcessed ? match : indent + rewrite(cmd, rest) + lineEnd;
+      return wasProcessed ? _match : indent + rewrite(cmd, rest) + lineEnd;
     }
   );
 
@@ -784,7 +789,7 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
   // Update filament header line ("; filament: 1,2,3" -> new slots)
   out = out.replace(
     /^(;\s*filament:\s*)([\d,\s]+)$/mi,
-    (match, prefix, slotList) => {
+    (_match, prefix, slotList) => {
       // Parse original slots
       const originalSlots = slotList.split(',').map((s: string) => parseInt(s.trim())).filter((n: number) => !isNaN(n));
 
@@ -792,7 +797,7 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
       const newSlots = originalSlots.map((slot: number) => {
         // Convert 1-based filament slot to 0-based AMS S-parameter
         const fromKey = `P0S${slot - 1}`;
-        let toKey = map[fromKey];
+        let toKey = map[fromKey] as string | undefined;
 
         // If no user override, apply slot compaction
         if (!toKey && compactionMap && compactionMap.size > 0) {
@@ -805,12 +810,13 @@ export function applyAmsOverridesToPlate(gcode: string, plateOriginIndex: number
         if (!toKey) return slot; // no change
 
         const m = /^P(\d+)S(\d+)$/.exec(toKey);
+        if (!m || !m[2]) return slot; // Return original if parse fails
         // Convert 0-based AMS S-parameter back to 1-based filament slot
-        return m ? +m[2] + 1 : slot; // new slot or original if parse error
+        return +m[2] + 1;
       });
 
       // Remove duplicates and sort
-      const uniqueSlots = [...new Set(newSlots)].sort((a, b) => a - b);
+      const uniqueSlots = [...new Set(newSlots)].sort((a, b) => (a as number) - (b as number));
 
       return prefix + uniqueSlots.join(',');
     }

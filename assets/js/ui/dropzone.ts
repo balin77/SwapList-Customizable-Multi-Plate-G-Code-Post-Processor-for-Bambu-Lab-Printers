@@ -24,7 +24,7 @@ export function dropHandler(ev: DragEvent, instant: boolean): void {
 
   if (ev.dataTransfer?.items) {
     // Use DataTransferItemList interface
-    [...ev.dataTransfer.items].forEach((item: DataTransferItem, i: number) => {
+    Array.from(ev.dataTransfer.items).forEach((item: DataTransferItem, i: number) => {
       if (item.kind === "file") {
         const file = item.getAsFile();
         if (file) {
@@ -39,7 +39,7 @@ export function dropHandler(ev: DragEvent, instant: boolean): void {
     });
   } else if (ev.dataTransfer?.files) {
     // Use DataTransferFileList interface (fallback)
-    [...ev.dataTransfer.files].forEach((file: File, i: number) => {
+    Array.from(ev.dataTransfer.files).forEach((file: File, i: number) => {
       if ((i + 1) === ev.dataTransfer!.files.length) {
         state.last_file = true;
       } else {
