@@ -1,18 +1,30 @@
 import esbuild from 'esbuild';
-import importGlob from 'esbuild-plugin-import-glob';
+import importGlobPlugin from 'esbuild-plugin-import-glob';
 
 const watch = process.argv.includes('--watch');
 
-esbuild.build({
-  entryPoints: ['assets/js/index.js'],
+const buildOptions = {
+  entryPoints: ['assets/js/index.ts'],
   outfile: 'dist/bundle.js',
   bundle: true,
   format: 'iife',
   target: ['es2020'],
   sourcemap: true,
   minify: !watch,
-  loader: { 
+  loader: {
     '.json': 'json',      // ← wichtig: JSON als Module laden
-    '.gcode': 'text'      // GCODE-Dateien als Text laden
+    '.gcode': 'text',     // GCODE-Dateien als Text laden
+    '.ts': 'ts',          // TypeScript-Dateien
+    '.js': 'js'           // JavaScript-Dateien (während der Migration)
   },
-}).catch(() => process.exit(1));
+  plugins: [importGlobPlugin.default ? importGlobPlugin.default() : importGlobPlugin()],
+  resolveExtensions: ['.ts', '.js', '.json'],
+};
+
+if (watch) {
+  const ctx = await esbuild.context(buildOptions);
+  await ctx.watch();
+  console.log('Watching for changes...');
+} else {
+  await esbuild.build(buildOptions).catch(() => process.exit(1));
+}
