@@ -7,8 +7,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build for production**: `npm run build`
 - **Development with watch mode**: `npm run dev`
 - **Generate filament index**: `node scripts/gen-filament-index.mjs` (runs automatically with build/dev)
+- **Type checking**: `npx tsc --noEmit` (check TypeScript types without building)
 
-The build system uses esbuild to bundle `assets/js/index.js` into `dist/bundle.js`.
+The build system uses esbuild to bundle `assets/js/index.ts` into `dist/bundle.js`.
+
+## TypeScript Migration
+
+This project has been fully migrated to TypeScript for improved type safety and developer experience:
+
+- **Type Definitions**: All core types are in `assets/js/types/index.ts`
+- **Strict Configuration**: `tsconfig.json` uses strict type checking
+- **ES Modules**: All imports use `.js` extensions (standard for ES modules with TypeScript)
+- **Build Process**: esbuild handles TypeScript compilation automatically
+- **No Runtime Changes**: Migration is purely additive - no functional changes
 
 ## Architecture Overview
 
@@ -16,45 +27,55 @@ This is a client-side web application for converting Bambu Lab/Orca Slicer multi
 
 ### Core Structure
 
-- **Entry Point**: `assets/js/index.js` → initializes via `initialize_page()` from `config/initialize.js`
+- **Entry Point**: `assets/js/index.ts` → initializes via `initialize_page()` from `config/initialize.ts`
 - **Build Output**: `dist/bundle.js` (bundled with esbuild, loaded by `index.html`)
 - **UI**: Single-page application with drag-and-drop file processing
+- **Type System**: Comprehensive TypeScript types throughout the codebase
 
 ### Key Modules
 
+- **`assets/js/types/`**: TypeScript type definitions
+  - `index.ts`: Core type definitions (PrinterModel, AppState, SwapRule, etc.)
+
 - **`assets/js/config/`**: Application initialization, state management, and configuration
-  - `initialize.js`: Main app initialization and event binding
-  - `state.js`: Global application state
-  - `mode.js`: Printer mode detection and management
-  - `materialConfig.js`: Material and filament configuration
+  - `initialize.ts`: Main app initialization and event binding
+  - `state.ts`: Global application state (typed with AppState interface)
+  - `mode.ts`: Printer mode detection and management
+  - `materialConfig.ts`: Material and filament configuration
   - `filamentConfig/`: Filament profiles and registry
 
 - **`assets/js/io/`**: File input/output operations
-  - `read3mf.js`: 3MF file parsing and plate extraction
-  - `readGcode.js`: GCODE file parsing
-  - `export3mf.js`: SWAP file generation
-  - `exportGcode.js`: GCODE export functionality
+  - `read3mf.ts`: 3MF file parsing and plate extraction
+  - `readGcode.ts`: GCODE file parsing
+  - `export3mf.ts`: SWAP file generation
+  - `exportGcode.ts`: GCODE export functionality
 
 - **`assets/js/gcode/`**: GCODE processing and manipulation
-  - `buildGcode.js`: GCODE generation and assembly
-  - `gcodeManipulation.js`: GCODE modification utilities
-  - `readGcode.js`: GCODE parsing and analysis
+  - `buildGcode.ts`: GCODE generation and assembly
+  - `gcodeManipulation.ts`: GCODE modification utilities
+  - `readGcode.ts`: GCODE parsing and analysis
 
 - **`assets/js/commands/`**: Rule engine for GCODE modifications
-  - `swapRules.js`: Declarative rules for printer-specific GCODE modifications
-  - `applySwapRules.js`: Rule application engine
+  - `swapRules.ts`: Declarative rules for printer-specific GCODE modifications (typed with SwapRule[])
+  - `applySwapRules.ts`: Rule application engine
+  - `plateRestrictions.ts`: Plate validation rules
 
 - **`assets/js/ui/`**: User interface components
-  - `plates.js`: Plate management and display
-  - `statistics.js`: Usage statistics calculation
-  - `filamentColors.js`: Color management and AMS slot mapping
-  - `dropzone.js`: File drop functionality
-  - `settings.js`: Settings panel management
+  - `plates.ts`: Plate management and display
+  - `statistics.ts`: Usage statistics calculation
+  - `filamentColors.ts`: Color management and AMS slot mapping
+  - `dropzone.ts`: File drop functionality
+  - `settings.ts`: Settings panel management
 
 - **`assets/js/utils/`**: Utility functions
-  - `amsUtils.js`: AMS (Automatic Material System) utilities
-  - `colors.js`: Color conversion and manipulation
-  - `utils.js`: General utilities
+  - `amsUtils.ts`: AMS (Automatic Material System) utilities
+  - `colors.ts`: Color conversion and manipulation
+  - `utils.ts`: General utilities
+  - `time.ts`: Time formatting utilities
+  - `regex.ts`: Regular expression utilities
+
+- **`assets/js/i18n/`**: Internationalization
+  - `i18n.ts`: Multi-language support system
 
 ### Printer Support
 
@@ -65,7 +86,7 @@ The application auto-detects printer models from GCODE headers and supports:
 
 ### Rule Engine
 
-The core feature is a declarative rule system in `commands/swapRules.js` that applies printer-specific modifications:
+The core feature is a declarative rule system in `commands/swapRules.ts` that applies printer-specific modifications:
 - **Scopes**: `startseq`, `endseq`, `body`, `all`
 - **Actions**: `disable_between`, `insert_after`, `insert_before`, `remove_lines_matching`, etc.
 - **Conditions**: Mode-specific, option-dependent, plate context-aware
@@ -87,8 +108,11 @@ Advanced feature allowing per-plate slot reassignment with GCODE rewriting:
 
 ### Development Notes
 
-- Uses ES6 modules with esbuild bundling
-- No external framework dependencies (vanilla JavaScript)
-- Extensive use of JSZip for 3MF file manipulation
-- Client-side only - no network requests or data uploads
-- Supports offline usage when saved locally
+- **Language**: TypeScript with strict type checking
+- **Modules**: ES6 modules with esbuild bundling
+- **Framework**: No external framework dependencies (vanilla TypeScript)
+- **3MF Handling**: Extensive use of JSZip for 3MF file manipulation
+- **Privacy**: Client-side only - no network requests or data uploads
+- **Offline**: Supports offline usage when saved locally
+- **Type Safety**: Comprehensive type definitions prevent runtime errors
+- **IDE Support**: Full IntelliSense and autocomplete support
