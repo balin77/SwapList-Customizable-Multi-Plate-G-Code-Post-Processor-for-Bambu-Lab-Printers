@@ -138,7 +138,6 @@ async function getRecoloredPlateImages(
     // Get cached lighting mask
     const cachedLightingMask = (plateIcon as unknown as { _cachedLightingMask?: ImageData })._cachedLightingMask;
     if (!cachedLightingMask) {
-      console.warn('No cached lighting mask found for plate during export, using original image');
       return null;
     }
 

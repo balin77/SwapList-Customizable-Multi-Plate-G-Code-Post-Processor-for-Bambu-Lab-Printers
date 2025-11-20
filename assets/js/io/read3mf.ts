@@ -252,7 +252,7 @@ export function handleFile(f: File): void {
       }
 
       for (let i = 0; i < model_plates.length; i++) {
-        (function () {
+        (async function () {
           const gcode_tag = model_plates[i]?.querySelectorAll("[key='gcode_file']");
           const plate_name = gcode_tag?.[0]?.getAttribute("value") || "";
           if (plate_name == "") return;
@@ -285,8 +285,31 @@ export function handleFile(f: File): void {
           f_name.textContent = f.name;
           f_name.title = f.name;
 
-          p_name.textContent = plate_name.split("Metadata").join("").split(".gcode").join("");
-          p_name.title = plate_name;
+          // Try to read plate name from plater_name in model_plates
+          let displayName = plate_name.split("Metadata").join("").split(".gcode").join("");
+
+          console.log(`[Plate ${i}] Looking for plater_name...`);
+
+          try {
+            // Get plater_name from current plate
+            const platerNameEl = model_plates[i]?.querySelector("metadata[key='plater_name']");
+            const platerName = platerNameEl?.getAttribute("value");
+
+            console.log(`[Plate ${i}] Found plater_name: "${platerName}"`);
+
+            if (platerName && platerName.trim() !== "") {
+              displayName = platerName;
+              console.log(`[Plate ${i}] ✓ Using plater_name: "${platerName}"`);
+            } else {
+              console.log(`[Plate ${i}] ✗ No plater_name found, using filename`);
+            }
+          } catch (e) {
+            console.warn(`[Plate ${i}] Failed to read plater_name:`, e);
+          }
+
+          console.log(`[Plate ${i}] Final display name: "${displayName}"`);
+          p_name.textContent = displayName;
+          p_name.title = plate_name; // Keep filename in title for reference
 
           f_id.title = String(current_file_id);
           f_id.innerText = "[" + current_file_id + "]";
@@ -321,7 +344,6 @@ export function handleFile(f: File): void {
                   no_light_img_file.async("blob").then(async function (no_light_u8: Blob) {
                     const unlitImageUrl = URL.createObjectURL(no_light_u8);
                     p_icon.dataset['unlitImageUrl'] = unlitImageUrl;
-                    console.log("Stored unlit image URL for plate", i);
 
                     // Calculate and cache the lighting mask (shadowmap) once during loading
                     try {
@@ -335,7 +357,6 @@ export function handleFile(f: File): void {
                           enumerable: false,
                           configurable: true
                         });
-                        console.log("Cached lighting mask for plate", i);
                       }
                     } catch (error) {
                       console.error("Failed to calculate lighting mask for plate", i, error);

@@ -738,12 +738,9 @@ export async function updatePlateImageColors(plateElement: HTMLElement | null): 
       return;
     }
 
-    console.log('Updating plate image with color mapping:', colorMapping);
-
     // Get cached lighting mask
     const cachedLightingMask = (plateIcon as any)._cachedLightingMask;
     if (!cachedLightingMask) {
-      console.warn('No cached lighting mask found for plate, skipping image update');
       return;
     }
 
