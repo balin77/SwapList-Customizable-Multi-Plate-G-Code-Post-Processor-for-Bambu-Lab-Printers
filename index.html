@@ -320,6 +320,33 @@
                   <span data-i18n="settings.globalSettings.progress.global">Global (across all plates)</span>
                 </label>
               </div>
+
+              <!-- Layer Progress -->
+              <div style="margin-top: 16px;">
+                <div style="margin-bottom: 8px; position: relative;">
+                  <strong style="margin: 0;" data-i18n="settings.globalSettings.progress.layerProgress">Layer Progress</strong>
+                  <details class="tool_info tool_info_inline">
+                    <summary style="display: inline;"></summary>
+                    <div style="clear: both; padding-top: 4px;" data-i18n="settings.globalSettings.progress.layerHelpText">
+                      <p>
+                        Controls how layer counting is displayed:
+                      </p>
+                      <ul>
+                        <li><strong>Per plate:</strong> Resets to layer 0 at the start of each plate (inserts M73.2 R1.0 command)</li>
+                        <li><strong>Global:</strong> Continuous layer counting across all plates</li>
+                      </ul>
+                    </div>
+                  </details>
+                </div>
+                <label style="display: block; margin-bottom: 4px;">
+                  <input type="radio" name="layer_progress_mode" id="layer_progress_per_plate" value="per_plate">
+                  <span data-i18n="settings.globalSettings.progress.layerPerPlate">Per plate</span>
+                </label>
+                <label style="display: block;">
+                  <input type="radio" name="layer_progress_mode" id="layer_progress_global" value="global" checked>
+                  <span data-i18n="settings.globalSettings.progress.layerGlobal">Global (across all plates)</span>
+                </label>
+              </div>
             </div>            
 
             <!-- Custom File Name Settings (Global) -->

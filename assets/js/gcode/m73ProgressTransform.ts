@@ -224,6 +224,58 @@ export function transformM73PercentageProgressGlobal(gcodeArray: string[]): stri
 }
 
 /**
+ * Inserts M73.2 R1.0 command before the first M73 L1 on each plate (starting from plate 2)
+ *
+ * This command resets the layer counter on Bambu Lab printers, allowing per-plate layer counting.
+ * The command is inserted with a newline before and after for proper formatting.
+ *
+ * @param gcodeArray - Array of GCODE strings (one per plate)
+ * @returns Modified GCODE array with M73.2 R1.0 commands inserted
+ */
+export function insertM73ResetCommands(gcodeArray: string[]): string[] {
+  if (!Array.isArray(gcodeArray) || gcodeArray.length === 0) {
+    return gcodeArray;
+  }
+
+  const modifiedGcodeArray: string[] = [];
+
+  for (let plateIdx = 0; plateIdx < gcodeArray.length; plateIdx++) {
+    let gcode = gcodeArray[plateIdx];
+
+    if (gcode === undefined) {
+      modifiedGcodeArray.push('');
+      continue;
+    }
+
+    // Only insert M73.2 R1.0 for plates after the first one (plateIdx >= 1)
+    if (plateIdx >= 1) {
+      // Find the first occurrence of M73 L1 (not L10, L11, etc., just L1)
+      const m73L1Pattern = /M73\s+L1(?:\s|$)/i;
+      const match = m73L1Pattern.exec(gcode);
+
+      if (match && match.index !== undefined) {
+        // Insert M73.2 R1.0 before the first M73 L1 command
+        const insertPosition = match.index;
+        const beforeM73L1 = gcode.substring(0, insertPosition);
+        const fromM73L1 = gcode.substring(insertPosition);
+
+        // Insert with newline before and after
+        gcode = beforeM73L1 + '\nM73.2 R1.0\n' + fromM73L1;
+
+        console.log(`[M73.2 Reset] Inserted M73.2 R1.0 before first M73 L1 on plate ${plateIdx + 1}`);
+      } else {
+        console.log(`[M73.2 Reset] Warning: No M73 L1 found on plate ${plateIdx + 1}, skipping M73.2 R1.0 insertion`);
+      }
+    }
+
+    modifiedGcodeArray.push(gcode);
+  }
+
+  console.log('[M73.2 Reset] M73.2 R1.0 insertion completed');
+  return modifiedGcodeArray;
+}
+
+/**
  * Calculates the maximum global layer index across all plates
  *
  * This function assumes the GCODE has already been transformed with global layer numbers

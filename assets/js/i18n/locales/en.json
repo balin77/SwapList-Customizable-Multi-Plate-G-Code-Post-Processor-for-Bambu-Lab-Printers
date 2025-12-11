@@ -110,7 +110,14 @@
         "perPlateDesc": "Progress shows percentage/time for current plate only (default behavior)",
         "global": "Global (across all plates)",
         "globalDesc": "Progress shows overall percentage/time across all plates in the queue",
-        "helpText": "Controls how percentage and time remaining are calculated:<ul><li><strong>Per plate:</strong> Progress shows percentage/time for current plate only (default behavior)</li><li><strong>Global:</strong> Progress shows overall percentage/time across all plates in the queue</li></ul>"
+        "helpText": "Controls how percentage and time remaining are calculated:<ul><li><strong>Per plate:</strong> Progress shows percentage/time for current plate only (default behavior)</li><li><strong>Global:</strong> Progress shows overall percentage/time across all plates in the queue</li></ul>",
+        "layerProgress": "Layer Progress",
+        "layerProgressHelp": "Controls how layer counting is displayed:",
+        "layerPerPlate": "Per plate",
+        "layerPerPlateDesc": "Resets to layer 0 at the start of each plate",
+        "layerGlobal": "Global (across all plates)",
+        "layerGlobalDesc": "Continuous layer counting across all plates",
+        "layerHelpText": "Controls how layer counting is displayed:<ul><li><strong>Per plate:</strong> Resets to layer 0 at the start of each plate</li><li><strong>Global:</strong> Continuous layer counting across all plates</li></ul>"
       },
       "file": {
         "title": "File Settings",

@@ -138,11 +138,18 @@ export function getSoundRemovalMode(): SoundRemovalMode {
 }
 
 /**
- * Get layer progress mode (always returns "global")
+ * Get layer progress mode
  */
 export function getLayerProgressMode(): string {
-  // Layer Progress UI removed - always return "global" as default behavior
-  return "global";
+  const perPlate = document.getElementById("layer_progress_per_plate") as HTMLInputElement | null;
+  const global = document.getElementById("layer_progress_global") as HTMLInputElement | null;
+
+  if (global && global.checked) {
+    return "global";
+  } else if (perPlate && perPlate.checked) {
+    return "per_plate";
+  }
+  return "global"; // default
 }
 
 /**

@@ -110,7 +110,14 @@
         "perPlateDesc": "O progresso mostra porcentagem/tempo apenas para a placa atual (comportamento padrão)",
         "global": "Global (em todas as placas)",
         "globalDesc": "O progresso mostra porcentagem/tempo geral em todas as placas na fila",
-        "helpText": "Controla como a porcentagem e o tempo restante são calculados:<ul><li><strong>Por placa:</strong> O progresso mostra porcentagem/tempo apenas para a placa atual (comportamento padrão)</li><li><strong>Global:</strong> O progresso mostra porcentagem/tempo geral em todas as placas na fila</li></ul>"
+        "helpText": "Controla como a porcentagem e o tempo restante são calculados:<ul><li><strong>Por placa:</strong> O progresso mostra porcentagem/tempo apenas para a placa atual (comportamento padrão)</li><li><strong>Global:</strong> O progresso mostra porcentagem/tempo geral em todas as placas na fila</li></ul>",
+        "layerProgress": "Progresso das camadas",
+        "layerProgressHelp": "Controla como a contagem de camadas é exibida:",
+        "layerPerPlate": "Por placa",
+        "layerPerPlateDesc": "Reinicia para camada 0 no início de cada placa",
+        "layerGlobal": "Global (em todas as placas)",
+        "layerGlobalDesc": "Contagem contínua de camadas em todas as placas",
+        "layerHelpText": "Controla como a contagem de camadas é exibida:<ul><li><strong>Por placa:</strong> Reinicia para camada 0 no início de cada placa</li><li><strong>Global:</strong> Contagem contínua de camadas em todas as placas</li></ul>"
       },
       "file": {
         "title": "Configurações de arquivo",

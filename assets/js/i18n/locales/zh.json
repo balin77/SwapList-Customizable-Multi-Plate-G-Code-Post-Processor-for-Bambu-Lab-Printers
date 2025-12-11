@@ -110,7 +110,14 @@
         "perPlateDesc": "进度仅显示当前平台的百分比/时间(默认行为)",
         "global": "全局(跨所有平台)",
         "globalDesc": "进度显示队列中所有平台的总体百分比/时间",
-        "helpText": "控制如何计算百分比和剩余时间:<ul><li><strong>按平台:</strong>进度仅显示当前平台的百分比/时间(默认行为)</li><li><strong>全局:</strong>进度显示队列中所有平台的总体百分比/时间</li></ul>"
+        "helpText": "控制如何计算百分比和剩余时间:<ul><li><strong>按平台:</strong>进度仅显示当前平台的百分比/时间(默认行为)</li><li><strong>全局:</strong>进度显示队列中所有平台的总体百分比/时间</li></ul>",
+        "layerProgress": "层数进度",
+        "layerProgressHelp": "控制如何显示层数计数:",
+        "layerPerPlate": "按平台",
+        "layerPerPlateDesc": "每个平台开始时重置为第0层",
+        "layerGlobal": "全局(跨所有平台)",
+        "layerGlobalDesc": "所有平台连续计数层数",
+        "layerHelpText": "控制如何显示层数计数:<ul><li><strong>按平台:</strong>每个平台开始时重置为第0层</li><li><strong>全局:</strong>所有平台连续计数层数</li></ul>"
       },
       "file": {
         "title": "文件设置",
