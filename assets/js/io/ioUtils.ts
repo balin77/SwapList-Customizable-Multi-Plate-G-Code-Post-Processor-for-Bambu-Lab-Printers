@@ -414,13 +414,13 @@ export async function collectAndTransform(
     const lastPlateIndex = modifiedLooped.length - 1;
     let lastPlateGcode = modifiedLooped[lastPlateIndex] || "";
 
-    // Find and remove the end sequence block using natural GCODE markers
-    // Pattern matches the plate swap sequences:
-    // - A1M: ; ==== A1M PLATE_SWAP_FULL ==== ... ; ==== End A1M SWAP_FULL ====
-    // - A1 JOBOX: ; ==== A1 JOBOX PLATE_SWAP_FULL ==== ... ; ==== End JOBOX SWAP_FULL ====
-    // - A1 3Print: ; ==== A1 PLATE_SWAP_FULL ==== ... ; ==== End SWAP_FULL ====
-    // - A1 PRINTFLOW: ; ==== A1 PRINTFLOW PLATE_SWAP_FULL ==== ... ; ==== End PRINTFLOW SWAP_FULL ====
-    const endSegPattern = /; ==== A1M? (?:JOBOX |PRINTFLOW )?PLATE_SWAP_FULL ====[\s\S]*?; ==== End (?:A1M |JOBOX |PRINTFLOW )?SWAP_FULL ====\n?/;
+    // Find and remove the end sequence block using standardized GCODE markers
+    // Pattern matches the plate swap sequences with unified format:
+    // - A1M: ; ==== A1M PLATE_SWAP_FULL ==== ... ; ==== A1M PLATE_SWAP_FULL END ====
+    // - A1 (all variants): ; ==== A1 PLATE_SWAP_FULL ==== ... ; ==== A1 PLATE_SWAP_FULL END ====
+    // Each variant also includes a subtype comment like ; === swapmod: JOBOX
+    // Uses capture group to ensure same prefix (A1 or A1M) at start and end
+    const endSegPattern = /; ==== (A1M?) PLATE_SWAP_FULL ====[\s\S]*?; ==== \1 PLATE_SWAP_FULL END ====\n?/;
     const before = lastPlateGcode;
     lastPlateGcode = lastPlateGcode.replace(endSegPattern, '');
 

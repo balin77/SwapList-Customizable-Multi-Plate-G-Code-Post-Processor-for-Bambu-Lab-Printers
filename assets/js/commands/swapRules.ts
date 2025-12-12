@@ -112,6 +112,8 @@ G28 Z; home z axis
 `;
 
 export const SWAP_END_A1M = `
+; ==== A1M PLATE_SWAP_FULL ====
+; === swapmod: SWAPLIST
 G0 X-10 F5000;  park extruder
 G0 Z175;
 G0 Y-5 F2000;
@@ -134,7 +136,8 @@ G4 P500; wait
 G0 Y10 F1000;
 G0 Z100 Y186 F2000;
 G0 Y150;
-G4 P1000; wait  `;
+G4 P1000; wait
+; ==== A1M PLATE_SWAP_FULL END ====`;
 
 export const A1_3Print_START = `
 ; ==== A1 PLATE_GRAB_ONLY ====
@@ -162,6 +165,7 @@ G28 Z                   ; home Z axis
 
 export const A1_3Print_END = `
 ; ==== A1 PLATE_SWAP_FULL ====
+; === swapmod: 3PRINT
 G90;
 ;M211 S0                ; disable soft endstops
 
@@ -186,7 +190,7 @@ G0  Y0 F300             ; snap plate
 G0  Y5 F300             ; let plate fall
 G4  P500
 G0  Y150 F2000          ; safe park position
-; ==== Ende SWAP_FULL ====`;
+; ==== A1 PLATE_SWAP_FULL END ====`;
 
 export const A1_JOBOX_START = `
 ; ==== A1 JOBOX GRAB_ONLY ====
@@ -207,7 +211,8 @@ G0 Z50                      ; lift Z for safety
 `;
 
 export const A1_JOBOX_END = `
-; ==== A1 JOBOX PLATE_SWAP_FULL ====
+; ==== A1 PLATE_SWAP_FULL ====
+; === swapmod: JOBOX
 G0 Y265 F2000               ; print bed to front position
 G0 X-37 F2000               ; move print head to side for plate swap NEW!!
 G0 Z-12 F2000               ; lower Z to engage front hook
@@ -224,7 +229,7 @@ G0 Y15 F2000                ; small adjustment to new plate
 G0 Y-2 F2000                ; final fine positioning
 G0 Y20 F2000                ; set position
 G0 Y100 F2000               ; park position
-; ==== End JOBOX SWAP_FULL ====
+; ==== A1 PLATE_SWAP_FULL END ====
 `;
 
 export const A1_PRINTFLOW_START = `
@@ -245,7 +250,8 @@ G28 Z; Home z axis
 `;
 
 export const A1_PRINTFLOW_END = `
-; ==== A1 PRINTFLOW PLATE_SWAP_FULL ====
+; ==== A1 PLATE_SWAP_FULL ====
+; === swapmod: PRINTFLOW
 M17 X1.2 Y1.2 Z0.75 ; START
 G1 Y264 Z235 F4000 ; move the bed all the way forward and hook
 G1 Y160 F1000
@@ -267,7 +273,7 @@ G1 Y-2 F500; -1.8
 M17 X1.2 Y1.2 Z0.75; motor current to 100% power
 G1 Z150 F1500
 G1 Y150 F3000; END
-; ==== END PRINTFLOW PLATE_SWAP_FULL ====
+; ==== A1 PLATE_SWAP_FULL END ====
 `;
 
 export const X1_P1_NOZZLE_CLEANING = `
