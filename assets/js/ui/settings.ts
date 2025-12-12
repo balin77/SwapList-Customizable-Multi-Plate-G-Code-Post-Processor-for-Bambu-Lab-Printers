@@ -832,5 +832,57 @@ export function reorderPlateSettings(fromIndex: number, toIndex: number): void {
   }
 }
 
+/**
+ * Update visibility of developer-only settings
+ */
+function updateDeveloperModeVisibility(): void {
+  const isDeveloperMode = state.DEVELOPER_MODE;
+
+  // Override Metadata section
+  const overrideMetadataSection = document.querySelector<HTMLElement>('.settings-group:has(#opt_override_metadata)');
+  if (overrideMetadataSection) {
+    overrideMetadataSection.style.display = isDeveloperMode ? '' : 'none';
+  }
+
+  // Test file export container
+  const testFileExportContainer = document.getElementById('test_file_export_container');
+  if (testFileExportContainer) {
+    testFileExportContainer.style.display = isDeveloperMode ? '' : 'none';
+  }
+
+  console.log(`[Settings Visibility] Developer mode ${isDeveloperMode ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Setup developer mode event listeners
+ */
+function setupDeveloperModeListeners(): void {
+  const developerModeCheckbox = document.getElementById("opt_developer_mode") as HTMLInputElement | null;
+
+  if (developerModeCheckbox) {
+    // Remove existing listeners first
+    developerModeCheckbox.removeEventListener("change", toggleDeveloperMode);
+
+    // Add new listener
+    developerModeCheckbox.addEventListener("change", toggleDeveloperMode);
+
+    // Set initial state
+    developerModeCheckbox.checked = state.DEVELOPER_MODE;
+    updateDeveloperModeVisibility();
+  }
+}
+
+/**
+ * Toggle developer mode
+ */
+function toggleDeveloperMode(): void {
+  const developerModeCheckbox = document.getElementById("opt_developer_mode") as HTMLInputElement | null;
+
+  if (developerModeCheckbox) {
+    state.DEVELOPER_MODE = developerModeCheckbox.checked;
+    updateDeveloperModeVisibility();
+  }
+}
+
 // Export the function for external use
-export { updateSettingsVisibilityForMode };
+export { updateSettingsVisibilityForMode, setupDeveloperModeListeners, updateDeveloperModeVisibility };

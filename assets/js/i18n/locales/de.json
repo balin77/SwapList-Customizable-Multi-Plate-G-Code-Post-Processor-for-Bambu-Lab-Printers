@@ -125,6 +125,11 @@
         "testExport": "Testdatei erstellen (nur Start-/Endsequenzen)",
         "testExportHelp": "Wenn aktiviert, werden nur die Start- und Endsequenzen ohne den tatsächlichen Druckcode exportiert. Dies erstellt eine kleine Testdatei, die perfekt zum Überprüfen der Plattenwechsel-Logik geeignet ist, ohne einen vollständigen Druck durchzuführen. Die Testdatei durchläuft alle Plattenwechsel, überspringt aber das tatsächliche Objektdrucken.",
         "testWaitTime": "Testdatei Wartezeit (Sekunden):"
+      },
+      "developer": {
+        "title": "Entwickler-Einstellungen",
+        "enable": "Entwicklermodus",
+        "enableHelp": "Wenn <b>aktiviert</b>, werden erweiterte Entwickleroptionen wie Override-Metadaten und Testdatei-Generierung angezeigt. Aktiviere dies nur, wenn du Zugriff auf diese experimentellen Funktionen benötigst."
       }
     }
   },

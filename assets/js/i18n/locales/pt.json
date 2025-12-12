@@ -125,6 +125,11 @@
         "testExport": "Gerar arquivo de teste (apenas sequências de início/fim)",
         "testExportHelp": "Quando habilitado, exporta apenas as sequências de início e fim sem o código de impressão real. Isso cria um pequeno arquivo de teste perfeito para verificar a lógica de troca de placa sem executar uma impressão completa. O arquivo de teste passará por todas as trocas de placa, mas pulará a impressão real dos objetos.",
         "testWaitTime": "Tempo de espera do arquivo de teste (segundos):"
+      },
+      "developer": {
+        "title": "Configurações de desenvolvedor",
+        "enable": "Modo desenvolvedor",
+        "enableHelp": "Quando <b>ativado</b>, mostra opções avançadas de desenvolvedor como substituição de metadados e geração de arquivo de teste. Ative apenas se precisar de acesso a esses recursos experimentais."
       }
     }
   },

@@ -71,7 +71,6 @@ export const VISIBILITY_RULES: Record<AppModeKey, ModeVisibilityRules> = {
       UI_ELEMENTS.PUSHOFF_LOGO,
       UI_ELEMENTS.EXPORT_BUTTON,        // SWAP file export always available
       UI_ELEMENTS.EXPORT_GCODE_BUTTON,  // GCODE export always available
-      UI_ELEMENTS.BEDLEVEL_COOLING,
       UI_ELEMENTS.SECURE_PUSHOFF,
       UI_ELEMENTS.EXTRA_PUSHOFF_CONTAINER,
       UI_ELEMENTS.OVERRIDE_METADATA
@@ -87,18 +86,18 @@ export const VISIBILITY_RULES: Record<AppModeKey, ModeVisibilityRules> = {
     deviceRules: {
       A1M: {
         visible: [UI_ELEMENTS.PRINTER_SOUNDS],
-        hidden: []
+        hidden: [UI_ELEMENTS.BEDLEVEL_COOLING]  // A1M doesn't support bed level cooling
       },
       A1: {
         visible: [UI_ELEMENTS.PRINTER_SOUNDS],
-        hidden: []
+        hidden: [UI_ELEMENTS.BEDLEVEL_COOLING]  // A1 doesn't support bed level cooling
       },
       X1: {
-        visible: [],
+        visible: [UI_ELEMENTS.BEDLEVEL_COOLING],  // Only X1/P1 support bed level cooling
         hidden: [UI_ELEMENTS.PRINTER_SOUNDS]
       },
       P1: {
-        visible: [],
+        visible: [UI_ELEMENTS.BEDLEVEL_COOLING],  // Only X1/P1 support bed level cooling
         hidden: [UI_ELEMENTS.PRINTER_SOUNDS]
       }
     }

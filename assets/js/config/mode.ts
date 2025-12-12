@@ -138,7 +138,7 @@ export function setMode(mode: PrinterModel | null): void {
   // Hide/show "Raise Bed Level for cooling" option based on printer mode
   const bedlevelCoolingContainer = document.getElementById('bedlevel_cooling_container');
   if (bedlevelCoolingContainer) {
-    // Only show for X1/P1 printers
+    // Only show for X1/P1 printers (not for A1/A1M, even in push-off mode)
     const shouldShowBedlevelCooling = isX1P1;
     bedlevelCoolingContainer.classList.toggle('hidden', !shouldShowBedlevelCooling);
     console.log(`[Mode Switch] Bedlevel cooling option ${shouldShowBedlevelCooling ? 'shown' : 'hidden'} for ${mode}`);

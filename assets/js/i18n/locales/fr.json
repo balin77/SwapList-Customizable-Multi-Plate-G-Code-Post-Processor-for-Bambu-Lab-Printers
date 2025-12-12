@@ -125,6 +125,11 @@
         "testExport": "Générer un fichier de test (séquences début/fin uniquement)",
         "testExportHelp": "Lorsqu'activé, exporte uniquement les séquences de début et de fin sans le code d'impression réel. Cela crée un petit fichier de test parfait pour vérifier la logique de changement de plateau sans exécuter une impression complète. Le fichier de test passera par tous les changements de plateau mais sautera l'impression réelle des objets.",
         "testWaitTime": "Temps d'attente du fichier de test (secondes):"
+      },
+      "developer": {
+        "title": "Paramètres développeur",
+        "enable": "Mode développeur",
+        "enableHelp": "Lorsque <b>activé</b>, affiche les options avancées pour développeurs comme le remplacement des métadonnées et la génération de fichiers de test. N'activez cela que si vous avez besoin d'accéder à ces fonctionnalités expérimentales."
       }
     }
   },

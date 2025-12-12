@@ -125,6 +125,11 @@
         "testExport": "Genera file di test (solo sequenze inizio/fine)",
         "testExportHelp": "Se abilitata, esporta solo le sequenze di inizio e fine senza il codice di stampa effettivo. Questo crea un piccolo file di test perfetto per verificare la logica di cambio piastra senza eseguire una stampa completa. Il file di test attraverserà tutti i cambi piastra ma salterà la stampa degli oggetti effettivi.",
         "testWaitTime": "Tempo di attesa file di test (secondi):"
+      },
+      "developer": {
+        "title": "Impostazioni sviluppatore",
+        "enable": "Modalità sviluppatore",
+        "enableHelp": "Quando <b>attivo</b>, mostra opzioni avanzate per sviluppatori come sovrascrittura metadati e generazione file di test. Attivare solo se è necessario accedere a queste funzionalità sperimentali."
       }
     }
   },

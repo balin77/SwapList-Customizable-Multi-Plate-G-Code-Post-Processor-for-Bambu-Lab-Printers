@@ -32,7 +32,22 @@
       "Bash(git log:*)",
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(tee:*)",
+      "Bash(awk:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(echo:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git restore:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run version:patch:*)",
+      "Bash(ls:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"File: $file\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

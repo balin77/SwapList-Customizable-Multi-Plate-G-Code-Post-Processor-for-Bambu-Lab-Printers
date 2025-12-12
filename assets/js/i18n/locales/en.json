@@ -125,6 +125,11 @@
         "testExport": "Generate test file (start/end sequences only)",
         "testExportHelp": "When enabled, exports only the start and end sequences without the actual print code. This creates a small test file perfect for verifying plate-swap logic without running a full print. The test file will go through all plate changes but skip the actual object printing.",
         "testWaitTime": "Test file wait time (seconds):"
+      },
+      "developer": {
+        "title": "Developer Settings",
+        "enable": "Developer mode",
+        "enableHelp": "When <b>on</b>, shows advanced developer options like override metadata and test file generation. Only enable this if you need access to these experimental features."
       }
     }
   },
