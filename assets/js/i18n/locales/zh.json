@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "灵感来自 Swaplist.app"
   },
@@ -130,6 +130,11 @@
         "title": "开发者设置",
         "enable": "开发者模式",
         "enableHelp": "当<b>开启</b>时,显示高级开发者选项,如覆盖元数据和生成测试文件。仅在需要访问这些实验性功能时启用。"
+      },
+      "dontSwapLastPlate": {
+        "title": "平台交换行为",
+        "enable": "不交换最后一个平台",
+        "enableHelp": "启用此设置后,最后一个平台将保留在热床上而不进行交换。当使用导轨但空间有限时,这是合理的。"
       }
     }
   },

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "Inspiré par Swaplist.app"
   },
@@ -130,6 +130,11 @@
         "title": "Paramètres développeur",
         "enable": "Mode développeur",
         "enableHelp": "Lorsque <b>activé</b>, affiche les options avancées pour développeurs comme le remplacement des métadonnées et la génération de fichiers de test. N'activez cela que si vous avez besoin d'accéder à ces fonctionnalités expérimentales."
+      },
+      "dontSwapLastPlate": {
+        "title": "Comportement d'échange de plateau",
+        "enable": "Ne pas échanger le dernier plateau",
+        "enableHelp": "Lorsque ce paramètre est activé, il gardera le dernier plateau sur le plateau chauffant sans l'échanger. Cela est raisonnable lorsque des rails sont utilisés mais que l'espace est limité."
       }
     }
   },

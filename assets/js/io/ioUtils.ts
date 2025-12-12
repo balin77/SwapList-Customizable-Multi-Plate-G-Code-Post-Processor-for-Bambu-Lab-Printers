@@ -324,17 +324,22 @@ export async function collectAndTransform(
     }
   }
 
-  const totalPlates = platesOnce.length;
+  // Get loops value early so we can calculate total plates correctly
+  const loopsInput = document.getElementById("loops") as HTMLInputElement | null;
+  const loops = Math.max(1, (loopsInput ? parseFloat(loopsInput.value) : 1) || 1);
+
+  // Total plates AFTER loop repeats are applied
+  const totalPlatesAfterLoops = platesOnce.length * loops;
 
   const modifiedPerPlate = applyRules
     ? platesOnce.map((src, i) => {
       const ctx = buildRuleContext(i, {
-        totalPlates,
+        totalPlates: totalPlatesAfterLoops,
         coords: coordsOnce[i] || [],
         sourcePlateText: src,
       });
 
-      console.log(`\n===== RULE PASS for plate ${i + 1}/${totalPlates} (mode=${state.PRINTER_MODEL}) =====`);
+      console.log(`\n===== RULE PASS for plate ${i + 1}/${platesOnce.length} (total after loops: ${totalPlatesAfterLoops}, mode=${state.PRINTER_MODEL}) =====`);
       let out = applySwapRulesToGcode(src, (SWAP_RULES || []), ctx);
 
       // Plate marker is now added by swap rules
@@ -348,9 +353,6 @@ export async function collectAndTransform(
       return out;
     })
     : platesOnce.slice();
-
-  const loopsInput = document.getElementById("loops") as HTMLInputElement | null;
-  const loops = Math.max(1, (loopsInput ? parseFloat(loopsInput.value) : 1) || 1);
 
   // Use streaming approach for large arrays to avoid RangeError
   function safeJoinArray(arr: string[], separator: string = "\n", chunkSize: number = 1000): string {
@@ -378,7 +380,12 @@ export async function collectAndTransform(
   }
 
   const originalFlat = Array(loops).fill(platesOnce).flat();
-  let modifiedLooped = Array(loops).fill(modifiedPerPlate).flat();
+  // Create independent copies for each loop iteration to avoid reference issues
+  let modifiedLooped: string[] = [];
+  for (let loop = 0; loop < loops; loop++) {
+    // Clone each plate's gcode string (strings are immutable, but we need a new array)
+    modifiedLooped.push(...modifiedPerPlate);
+  }
   if (applyOptimization) modifiedLooped = optimizeAMSBlocks(modifiedLooped);
 
   // Apply M73 progress transformations based on user settings
@@ -396,6 +403,34 @@ export async function collectAndTransform(
   if (percentageProgressMode === 'global') {
     console.log('[M73 Transform] Applying global percentage progress transformation');
     modifiedLooped = transformM73PercentageProgressGlobal(modifiedLooped);
+  }
+
+  // Apply "Don't swap last plate" post-processing if enabled
+  const dontSwapLastPlateCheckbox = document.getElementById("opt_dont_swap_last_plate") as HTMLInputElement | null;
+  const dontSwapLastPlateEnabled = dontSwapLastPlateCheckbox && dontSwapLastPlateCheckbox.checked;
+
+  if (dontSwapLastPlateEnabled && modifiedLooped.length > 0 && state.APP_MODE === 'swap') {
+    console.log('[Don\'t Swap Last Plate] Removing end sequence from last plate (index:', modifiedLooped.length - 1, ')');
+    const lastPlateIndex = modifiedLooped.length - 1;
+    let lastPlateGcode = modifiedLooped[lastPlateIndex] || "";
+
+    // Find and remove the end sequence block using natural GCODE markers
+    // Pattern matches the plate swap sequences:
+    // - A1M: ; ==== A1M PLATE_SWAP_FULL ==== ... ; ==== End A1M SWAP_FULL ====
+    // - A1 JOBOX: ; ==== A1 JOBOX PLATE_SWAP_FULL ==== ... ; ==== End JOBOX SWAP_FULL ====
+    // - A1 3Print: ; ==== A1 PLATE_SWAP_FULL ==== ... ; ==== End SWAP_FULL ====
+    // - A1 PRINTFLOW: ; ==== A1 PRINTFLOW PLATE_SWAP_FULL ==== ... ; ==== End PRINTFLOW SWAP_FULL ====
+    const endSegPattern = /; ==== A1M? (?:JOBOX |PRINTFLOW )?PLATE_SWAP_FULL ====[\s\S]*?; ==== End (?:A1M |JOBOX |PRINTFLOW )?SWAP_FULL ====\n?/;
+    const before = lastPlateGcode;
+    lastPlateGcode = lastPlateGcode.replace(endSegPattern, '');
+
+    if (before !== lastPlateGcode) {
+      const removed = before.length - lastPlateGcode.length;
+      console.log('[Don\'t Swap Last Plate] Successfully removed end sequence (removed', removed, 'chars)');
+      modifiedLooped[lastPlateIndex] = lastPlateGcode;
+    } else {
+      console.warn('[Don\'t Swap Last Plate] No end sequence markers found in last plate');
+    }
   }
 
   // Check if test file export is enabled - if so, convert each plate to test file
@@ -422,7 +457,7 @@ export async function collectAndTransform(
     empty: false,
     platesOnce,
     modifiedPerPlate,
-    modifiedLooped: modifiedLooped.map((gcode, index) => addAutoEjectComment(gcode, index, totalPlates)), // Add autoeject comment to each plate
+    modifiedLooped: modifiedLooped.map((gcode, index) => addAutoEjectComment(gcode, index, totalPlatesAfterLoops)), // Add autoeject comment to each plate
     get originalCombined(): string {
       // Only create the string when accessed
       return safeJoinArray(originalFlat);

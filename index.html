@@ -158,6 +158,22 @@
           <div id="global_settings_section">
             <h4 data-i18n="settings.globalSettings.title">Global Settings</h4>
 
+            <!-- Don't Swap Last Plate Settings (Global, Push-off only) -->
+            <div class="settings-group dont-swap-last-plate-settings">
+              <h4 data-i18n="settings.globalSettings.dontSwapLastPlate.title">Plate Swap Behavior</h4>
+              <label class="opt">
+                <input type="checkbox" id="opt_dont_swap_last_plate">
+                <span data-i18n="settings.globalSettings.dontSwapLastPlate.enable">Don't swap last plate</span>
+                <details class="tool_info">
+                  <summary></summary>
+                  <p data-i18n="settings.globalSettings.dontSwapLastPlate.enableHelp">
+                    When this setting is activated, it will keep the last plate on the heat bed without swapping.
+                    This is reasonable when rails are used but the space is limited.
+                  </p>
+                </details>
+              </label>
+            </div>
+
             <!-- Cooling Settings (Global) -->
             <div class="settings-group">
               <h4 data-i18n="settings.globalSettings.cooling.title">Cooling & Bed Temperature</h4>

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "Inspirado por Swaplist.app"
   },
@@ -130,6 +130,11 @@
         "title": "Configuración de desarrollador",
         "enable": "Modo desarrollador",
         "enableHelp": "Cuando está <b>activado</b>, muestra opciones avanzadas de desarrollador como sobrescribir metadatos y generación de archivos de prueba. Actívelo solo si necesita acceso a estas funciones experimentales."
+      },
+      "dontSwapLastPlate": {
+        "title": "Comportamiento de intercambio de placa",
+        "enable": "No intercambiar la última placa",
+        "enableHelp": "Cuando esta configuración está activada, mantendrá la última placa en la cama caliente sin intercambiarla. Esto es razonable cuando se usan rieles pero el espacio es limitado."
       }
     }
   },

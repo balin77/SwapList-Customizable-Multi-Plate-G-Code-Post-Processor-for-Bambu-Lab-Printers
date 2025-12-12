@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "Ispirato da Swaplist.app"
   },
@@ -130,6 +130,11 @@
         "title": "Impostazioni sviluppatore",
         "enable": "Modalità sviluppatore",
         "enableHelp": "Quando <b>attivo</b>, mostra opzioni avanzate per sviluppatori come sovrascrittura metadati e generazione file di test. Attivare solo se è necessario accedere a queste funzionalità sperimentali."
+      },
+      "dontSwapLastPlate": {
+        "title": "Comportamento di cambio piastra",
+        "enable": "Non cambiare l'ultima piastra",
+        "enableHelp": "Quando questa impostazione è attivata, manterrà l'ultima piastra sul piatto riscaldato senza cambiarla. Questo è ragionevole quando vengono utilizzati i binari ma lo spazio è limitato."
       }
     }
   },

@@ -1,7 +1,7 @@
 /**
  * i18n - Internationalization Module
  *
- * Provides translation functionality for the CLEAR.bed application.
+ * Provides translation functionality for the AutoEject application.
  * Supports multiple languages with dynamic loading and automatic page translation.
  */
 

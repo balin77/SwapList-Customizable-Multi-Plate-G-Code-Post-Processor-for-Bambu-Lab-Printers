@@ -193,6 +193,14 @@ export function getDisableFirstLayerScan(): boolean {
 }
 
 /**
+ * Get don't swap last plate setting
+ */
+export function getDontSwapLastPlate(): boolean {
+  const el = document.getElementById("opt_dont_swap_last_plate") as HTMLInputElement | null;
+  return !!(el && el.checked);
+}
+
+/**
  * Update plate selector with click handlers
  */
 export function updatePlateSelector(): void {
@@ -679,6 +687,12 @@ function updateSettingsVisibilityForMode(): void {
   // Global settings sections - use CSS classes for reliable targeting
   const globalSection = document.getElementById('global_settings_section');
   if (globalSection) {
+    // Don't swap last plate: Only in SWAP mode
+    const dontSwapSection = globalSection.querySelector<HTMLElement>('.settings-group.dont-swap-last-plate-settings');
+    if (dontSwapSection) {
+      dontSwapSection.classList.toggle('hidden', !isSwapMode);
+    }
+
     // Cooling section: Hide in SWAP mode
     const coolingSection = globalSection.querySelector<HTMLElement>('.settings-group:has(#opt_bedlevel_cooling)');
     if (coolingSection) {
@@ -756,7 +770,7 @@ function updateSettingsVisibilityForMode(): void {
   }
 
   console.log(`[Settings Visibility] Updated - Printer: ${state.PRINTER_MODEL}, App Mode: ${state.APP_MODE}`);
-  console.log(`[Settings Visibility] Cooling: ${!isSwapMode ? 'visible' : 'hidden'}, AMS Opt: ${isA1Mode ? 'visible' : 'hidden'}, Sounds: ${isA1Mode ? 'visible' : 'hidden'}, Startseq: ${isPushoffMode && (isX1 || isP1) ? 'visible' : 'hidden'}`);
+  console.log(`[Settings Visibility] Don't Swap Last Plate: ${isSwapMode ? 'visible' : 'hidden'}, Cooling: ${!isSwapMode ? 'visible' : 'hidden'}, AMS Opt: ${isA1Mode ? 'visible' : 'hidden'}, Sounds: ${isA1Mode ? 'visible' : 'hidden'}, Startseq: ${isPushoffMode && (isX1 || isP1) ? 'visible' : 'hidden'}`);
 }
 
 /**

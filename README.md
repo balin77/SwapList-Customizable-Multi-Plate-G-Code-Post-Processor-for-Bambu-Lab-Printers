@@ -1,4 +1,4 @@
-# CLEAR.bed - Extended Swaplist.app (local)
+# AutoEject - Extended Swaplist.app (local)
 
 A lightweight, fully client-side web app for converting **Bambu Lab / Orca Slicer** multi-plate projects into **SWAP files** or customized **GCODE**.
 The app runs 100% in your browser – no server, no data collection, no installation required.

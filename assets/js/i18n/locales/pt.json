@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "Inspirado em Swaplist.app"
   },
@@ -130,6 +130,11 @@
         "title": "Configurações de desenvolvedor",
         "enable": "Modo desenvolvedor",
         "enableHelp": "Quando <b>ativado</b>, mostra opções avançadas de desenvolvedor como substituição de metadados e geração de arquivo de teste. Ative apenas se precisar de acesso a esses recursos experimentais."
+      },
+      "dontSwapLastPlate": {
+        "title": "Comportamento de troca de placa",
+        "enable": "Não trocar a última placa",
+        "enableHelp": "Quando esta configuração está ativada, manterá a última placa na mesa aquecida sem trocá-la. Isto é razoável quando trilhos são usados mas o espaço é limitado."
       }
     }
   },

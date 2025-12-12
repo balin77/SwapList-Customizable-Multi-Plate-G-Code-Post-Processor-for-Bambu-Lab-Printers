@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "Inspiriert von Swaplist.app"
   },
@@ -69,6 +69,11 @@
     },
     "globalSettings": {
       "title": "Globale Einstellungen",
+      "dontSwapLastPlate": {
+        "title": "Plattenwechsel-Verhalten",
+        "enable": "Letzte Platte nicht wechseln",
+        "enableHelp": "Wenn diese Einstellung aktiviert ist, bleibt die letzte Platte auf dem Heizbett, ohne gewechselt zu werden. Dies ist sinnvoll, wenn Schienen verwendet werden, aber der Platz begrenzt ist."
+      },
       "cooling": {
         "title": "Kühlung & Betttemperatur",
         "raiseBed": "Bett zum Kühlen anheben",

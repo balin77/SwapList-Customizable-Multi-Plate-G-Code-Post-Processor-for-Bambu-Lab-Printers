@@ -112,6 +112,9 @@ export interface AppState {
   // Developer mode flag
   DEVELOPER_MODE: boolean;
 
+  // Don't swap last plate (push-off mode only)
+  DONT_SWAP_LAST_PLATE: boolean;
+
   // AMS global state
   GLOBAL_AMS: GlobalAMS;
 

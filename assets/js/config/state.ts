@@ -38,6 +38,9 @@ export const state: AppState = {
   // Developer mode flag
   DEVELOPER_MODE: false,
 
+  // Don't swap last plate (push-off mode only)
+  DONT_SWAP_LAST_PLATE: false,
+
   // AMS global state
   GLOBAL_AMS: {
     devices: [],                 // [{id, slots:[...]}]

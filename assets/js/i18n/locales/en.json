@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CLEAR.bed",
+    "title": "AutoEject",
     "version": "AutoEject Version V1.7",
     "inspiredBy": "Inspired by Swaplist.app"
   },
@@ -69,6 +69,11 @@
     },
     "globalSettings": {
       "title": "Global Settings",
+      "dontSwapLastPlate": {
+        "title": "Plate Swap Behavior",
+        "enable": "Don't swap last plate",
+        "enableHelp": "When this setting is activated, it will keep the last plate on the heat bed without swapping. This is reasonable when rails are used but the space is limited."
+      },
       "cooling": {
         "title": "Cooling & Bed Temperature",
         "raiseBed": "Raise Bed Level for cooling",
