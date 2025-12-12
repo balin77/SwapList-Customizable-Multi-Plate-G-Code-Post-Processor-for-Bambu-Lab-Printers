@@ -109,6 +109,9 @@ export interface AppState {
   // Controls project_settings + slice_info Filament-Override
   OVERRIDE_METADATA: boolean;
 
+  // Developer mode flag
+  DEVELOPER_MODE: boolean;
+
   // AMS global state
   GLOBAL_AMS: GlobalAMS;
 

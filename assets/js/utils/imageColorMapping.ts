@@ -120,22 +120,8 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
     if (oldRgb && newRgb) {
       const oldKey = `${oldRgb.r},${oldRgb.g},${oldRgb.b}`;
       rgbMapping[oldKey] = { ...newRgb, original: oldRgb };
-      console.log(
-        `[replaceColorsInImage] Mapping: ${oldHex} (${oldKey}) -> ${newHex} ` +
-        `(${newRgb.r},${newRgb.g},${newRgb.b})`
-      );
     }
   }
-
-  let exactMatches = 0;
-  let fuzzyMatches = 0;
-  let noMatches = 0;
-  const samplePixels: Array<{
-    type: string;
-    from: string;
-    to: string;
-    tolerance?: number;
-  }> = [];
 
   for (let i = 0; i < source.length; i += 4) {
     const r = source[i];
@@ -146,17 +132,6 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
     // Try exact match first
     const key = `${r},${g},${b}`;
     let newColor: RGBMappingEntry | undefined = rgbMapping[key];
-
-    if (newColor) {
-      exactMatches++;
-      if (exactMatches <= 5) {
-        samplePixels.push({
-          type: 'exact',
-          from: key,
-          to: `${newColor.r},${newColor.g},${newColor.b}`
-        });
-      }
-    }
 
     // If no exact match, try fuzzy matching with adaptive tolerance
     if (!newColor) {
@@ -176,15 +151,6 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
             Math.abs(g - orig.g) <= tolerance &&
             Math.abs(b - orig.b) <= tolerance) {
           newColor = color;
-          fuzzyMatches++;
-          if (fuzzyMatches <= 5) {
-            samplePixels.push({
-              type: 'fuzzy',
-              from: key,
-              to: `${newColor.r},${newColor.g},${newColor.b}`,
-              tolerance
-            });
-          }
           break;
         }
       }
@@ -198,16 +164,9 @@ function replaceColorsInImage(unlitImageData: ImageData, colorMapping: ColorMapp
       target[i] = r ?? 0;
       target[i + 1] = g ?? 0;
       target[i + 2] = b ?? 0;
-      if ((a ?? 0) > 0) noMatches++; // Only count non-transparent pixels
     }
     target[i + 3] = a ?? 255;
   }
-
-  console.log(
-    `[replaceColorsInImage] Stats: ${exactMatches} exact matches, ` +
-    `${fuzzyMatches} fuzzy matches, ${noMatches} no matches (non-transparent)`
-  );
-  console.log(`[replaceColorsInImage] Sample pixels:`, samplePixels);
 
   return newImageData;
 }
@@ -433,9 +392,8 @@ export async function createRecoloredPlateImage(
     // Use cached lighting mask if available
     let lightingMask = cachedLightingMask;
 
-    // If no cached mask is provided, log a warning (shouldn't happen in normal flow)
+    // If no cached mask is provided, create a neutral multiplicative mask as fallback
     if (!lightingMask) {
-      console.warn('No cached lighting mask provided, color changes may accumulate incorrectly');
       // Create a neutral multiplicative mask as fallback
       const canvas = document.createElement('canvas');
       canvas.width = unlitImageData.width;

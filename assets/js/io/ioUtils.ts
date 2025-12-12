@@ -26,7 +26,7 @@ import {
   END_SOUND_A1M,
   HEATERS_OFF
 } from "../commands/swapRules.js";
-import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal } from "../gcode/m73ProgressTransform.js";
+import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal, insertM73ResetCommands } from "../gcode/m73ProgressTransform.js";
 import { getLayerProgressMode, getPercentageProgressMode } from "../ui/settings.js";
 import type { SwapMode, AMSSlotMapping, RuleContext } from "../types/index.js";
 // @ts-expect-error - Type import for documentation
@@ -388,6 +388,9 @@ export async function collectAndTransform(
   if (layerProgressMode === 'global') {
     console.log('[M73 Transform] Applying global layer progress transformation');
     modifiedLooped = transformM73LayerProgressGlobal(modifiedLooped);
+  } else if (layerProgressMode === 'per_plate') {
+    console.log('[M73 Transform] Applying per-plate layer progress (inserting M73.2 R1.0 commands)');
+    modifiedLooped = insertM73ResetCommands(modifiedLooped);
   }
 
   if (percentageProgressMode === 'global') {

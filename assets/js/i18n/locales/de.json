@@ -110,7 +110,14 @@
         "perPlateDesc": "Fortschritt zeigt Prozent/Zeit nur für aktuelle Platte (Standardverhalten)",
         "global": "Global (über alle Platten)",
         "globalDesc": "Fortschritt zeigt Gesamtprozent/Zeit über alle Platten in der Warteschlange",
-        "helpText": "Steuert, wie Prozent und verbleibende Zeit berechnet werden:<ul><li><strong>Pro Platte:</strong> Fortschritt zeigt Prozent/Zeit nur für aktuelle Platte (Standardverhalten)</li><li><strong>Global:</strong> Fortschritt zeigt Gesamtprozent/Zeit über alle Platten in der Warteschlange</li></ul>"
+        "helpText": "Steuert, wie Prozent und verbleibende Zeit berechnet werden:<ul><li><strong>Pro Platte:</strong> Fortschritt zeigt Prozent/Zeit nur für aktuelle Platte (Standardverhalten)</li><li><strong>Global:</strong> Fortschritt zeigt Gesamtprozent/Zeit über alle Platten in der Warteschlange</li></ul>",
+        "layerProgress": "Layer-Fortschritt",
+        "layerProgressHelp": "Steuert, wie die Layer-Zählung angezeigt wird:",
+        "layerPerPlate": "Pro Platte",
+        "layerPerPlateDesc": "Setzt auf Layer 0 zu Beginn jeder Platte zurück",
+        "layerGlobal": "Global (über alle Platten)",
+        "layerGlobalDesc": "Durchgehende Layer-Zählung über alle Platten",
+        "layerHelpText": "Steuert, wie die Layer-Zählung angezeigt wird:<ul><li><strong>Pro Platte:</strong> Setzt auf Layer 0 zu Beginn jeder Platte zurück</li><li><strong>Global:</strong> Durchgehende Layer-Zählung über alle Platten</li></ul>"
       },
       "file": {
         "title": "Dateieinstellungen",
@@ -118,6 +125,11 @@
         "testExport": "Testdatei erstellen (nur Start-/Endsequenzen)",
         "testExportHelp": "Wenn aktiviert, werden nur die Start- und Endsequenzen ohne den tatsächlichen Druckcode exportiert. Dies erstellt eine kleine Testdatei, die perfekt zum Überprüfen der Plattenwechsel-Logik geeignet ist, ohne einen vollständigen Druck durchzuführen. Die Testdatei durchläuft alle Plattenwechsel, überspringt aber das tatsächliche Objektdrucken.",
         "testWaitTime": "Testdatei Wartezeit (Sekunden):"
+      },
+      "developer": {
+        "title": "Entwickler-Einstellungen",
+        "enable": "Entwicklermodus",
+        "enableHelp": "Wenn <b>aktiviert</b>, werden erweiterte Entwickleroptionen wie Override-Metadaten und Testdatei-Generierung angezeigt. Aktiviere dies nur, wenn du Zugriff auf diese experimentellen Funktionen benötigst."
       }
     }
   },

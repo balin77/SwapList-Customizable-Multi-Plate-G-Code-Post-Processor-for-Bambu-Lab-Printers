@@ -110,7 +110,14 @@
         "perPlateDesc": "进度仅显示当前平台的百分比/时间(默认行为)",
         "global": "全局(跨所有平台)",
         "globalDesc": "进度显示队列中所有平台的总体百分比/时间",
-        "helpText": "控制如何计算百分比和剩余时间:<ul><li><strong>按平台:</strong>进度仅显示当前平台的百分比/时间(默认行为)</li><li><strong>全局:</strong>进度显示队列中所有平台的总体百分比/时间</li></ul>"
+        "helpText": "控制如何计算百分比和剩余时间:<ul><li><strong>按平台:</strong>进度仅显示当前平台的百分比/时间(默认行为)</li><li><strong>全局:</strong>进度显示队列中所有平台的总体百分比/时间</li></ul>",
+        "layerProgress": "层数进度",
+        "layerProgressHelp": "控制如何显示层数计数:",
+        "layerPerPlate": "按平台",
+        "layerPerPlateDesc": "每个平台开始时重置为第0层",
+        "layerGlobal": "全局(跨所有平台)",
+        "layerGlobalDesc": "所有平台连续计数层数",
+        "layerHelpText": "控制如何显示层数计数:<ul><li><strong>按平台:</strong>每个平台开始时重置为第0层</li><li><strong>全局:</strong>所有平台连续计数层数</li></ul>"
       },
       "file": {
         "title": "文件设置",
@@ -118,6 +125,11 @@
         "testExport": "生成测试文件(仅启动/结束序列)",
         "testExportHelp": "启用后,仅导出启动和结束序列而不包含实际打印代码。这将创建一个小型测试文件,非常适合在不运行完整打印的情况下验证平台交换逻辑。测试文件将经过所有平台更换,但跳过实际对象打印。",
         "testWaitTime": "测试文件等待时间(秒):"
+      },
+      "developer": {
+        "title": "开发者设置",
+        "enable": "开发者模式",
+        "enableHelp": "当<b>开启</b>时,显示高级开发者选项,如覆盖元数据和生成测试文件。仅在需要访问这些实验性功能时启用。"
       }
     }
   },

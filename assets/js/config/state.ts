@@ -35,6 +35,9 @@ export const state: AppState = {
   // Controls project_settings + slice_info Filament-Override
   OVERRIDE_METADATA: false,
 
+  // Developer mode flag
+  DEVELOPER_MODE: false,
+
   // AMS global state
   GLOBAL_AMS: {
     devices: [],                 // [{id, slots:[...]}]

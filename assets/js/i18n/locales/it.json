@@ -110,7 +110,14 @@
         "perPlateDesc": "Il progresso mostra percentuale/tempo solo per la piastra corrente (comportamento predefinito)",
         "global": "Globale (su tutte le piastre)",
         "globalDesc": "Il progresso mostra percentuale/tempo complessivo su tutte le piastre in coda",
-        "helpText": "Controlla come vengono calcolati percentuale e tempo rimanente:<ul><li><strong>Per piastra:</strong> Il progresso mostra percentuale/tempo solo per la piastra corrente (comportamento predefinito)</li><li><strong>Globale:</strong> Il progresso mostra percentuale/tempo complessivo su tutte le piastre in coda</li></ul>"
+        "helpText": "Controlla come vengono calcolati percentuale e tempo rimanente:<ul><li><strong>Per piastra:</strong> Il progresso mostra percentuale/tempo solo per la piastra corrente (comportamento predefinito)</li><li><strong>Globale:</strong> Il progresso mostra percentuale/tempo complessivo su tutte le piastre in coda</li></ul>",
+        "layerProgress": "Progresso dei livelli",
+        "layerProgressHelp": "Controlla come viene visualizzato il conteggio dei livelli:",
+        "layerPerPlate": "Per piastra",
+        "layerPerPlateDesc": "Si reimposta al livello 0 all'inizio di ogni piastra",
+        "layerGlobal": "Globale (su tutte le piastre)",
+        "layerGlobalDesc": "Conteggio continuo dei livelli su tutte le piastre",
+        "layerHelpText": "Controlla come viene visualizzato il conteggio dei livelli:<ul><li><strong>Per piastra:</strong> Si reimposta al livello 0 all'inizio di ogni piastra</li><li><strong>Globale:</strong> Conteggio continuo dei livelli su tutte le piastre</li></ul>"
       },
       "file": {
         "title": "Impostazioni file",
@@ -118,6 +125,11 @@
         "testExport": "Genera file di test (solo sequenze inizio/fine)",
         "testExportHelp": "Se abilitata, esporta solo le sequenze di inizio e fine senza il codice di stampa effettivo. Questo crea un piccolo file di test perfetto per verificare la logica di cambio piastra senza eseguire una stampa completa. Il file di test attraverserà tutti i cambi piastra ma salterà la stampa degli oggetti effettivi.",
         "testWaitTime": "Tempo di attesa file di test (secondi):"
+      },
+      "developer": {
+        "title": "Impostazioni sviluppatore",
+        "enable": "Modalità sviluppatore",
+        "enableHelp": "Quando <b>attivo</b>, mostra opzioni avanzate per sviluppatori come sovrascrittura metadati e generazione file di test. Attivare solo se è necessario accedere a queste funzionalità sperimentali."
       }
     }
   },

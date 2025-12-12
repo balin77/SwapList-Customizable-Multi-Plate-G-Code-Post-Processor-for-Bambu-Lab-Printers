@@ -110,7 +110,14 @@
         "perPlateDesc": "El progreso muestra porcentaje/tiempo solo para la placa actual (comportamiento predeterminado)",
         "global": "Global (en todas las placas)",
         "globalDesc": "El progreso muestra porcentaje/tiempo global en todas las placas de la cola",
-        "helpText": "Controla cómo se calculan el porcentaje y el tiempo restante:<ul><li><strong>Por placa:</strong> El progreso muestra porcentaje/tiempo solo para la placa actual (comportamiento predeterminado)</li><li><strong>Global:</strong> El progreso muestra porcentaje/tiempo global en todas las placas de la cola</li></ul>"
+        "helpText": "Controla cómo se calculan el porcentaje y el tiempo restante:<ul><li><strong>Por placa:</strong> El progreso muestra porcentaje/tiempo solo para la placa actual (comportamiento predeterminado)</li><li><strong>Global:</strong> El progreso muestra porcentaje/tiempo global en todas las placas de la cola</li></ul>",
+        "layerProgress": "Progreso de capas",
+        "layerProgressHelp": "Controla cómo se muestra el conteo de capas:",
+        "layerPerPlate": "Por placa",
+        "layerPerPlateDesc": "Se reinicia a capa 0 al inicio de cada placa",
+        "layerGlobal": "Global (en todas las placas)",
+        "layerGlobalDesc": "Conteo de capas continuo en todas las placas",
+        "layerHelpText": "Controla cómo se muestra el conteo de capas:<ul><li><strong>Por placa:</strong> Se reinicia a capa 0 al inicio de cada placa</li><li><strong>Global:</strong> Conteo de capas continuo en todas las placas</li></ul>"
       },
       "file": {
         "title": "Configuración de archivo",
@@ -118,6 +125,11 @@
         "testExport": "Generar archivo de prueba (solo secuencias inicio/fin)",
         "testExportHelp": "Cuando está activado, exporta solo las secuencias de inicio y fin sin el código de impresión real. Esto crea un pequeño archivo de prueba perfecto para verificar la lógica de cambio de placa sin ejecutar una impresión completa. El archivo de prueba pasará por todos los cambios de placa pero omitirá la impresión real de los objetos.",
         "testWaitTime": "Tiempo de espera del archivo de prueba (segundos):"
+      },
+      "developer": {
+        "title": "Configuración de desarrollador",
+        "enable": "Modo desarrollador",
+        "enableHelp": "Cuando está <b>activado</b>, muestra opciones avanzadas de desarrollador como sobrescribir metadatos y generación de archivos de prueba. Actívelo solo si necesita acceso a estas funciones experimentales."
       }
     }
   },

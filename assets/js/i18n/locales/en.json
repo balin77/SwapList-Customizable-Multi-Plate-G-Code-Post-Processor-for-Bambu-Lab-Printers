@@ -110,7 +110,14 @@
         "perPlateDesc": "Progress shows percentage/time for current plate only (default behavior)",
         "global": "Global (across all plates)",
         "globalDesc": "Progress shows overall percentage/time across all plates in the queue",
-        "helpText": "Controls how percentage and time remaining are calculated:<ul><li><strong>Per plate:</strong> Progress shows percentage/time for current plate only (default behavior)</li><li><strong>Global:</strong> Progress shows overall percentage/time across all plates in the queue</li></ul>"
+        "helpText": "Controls how percentage and time remaining are calculated:<ul><li><strong>Per plate:</strong> Progress shows percentage/time for current plate only (default behavior)</li><li><strong>Global:</strong> Progress shows overall percentage/time across all plates in the queue</li></ul>",
+        "layerProgress": "Layer Progress",
+        "layerProgressHelp": "Controls how layer counting is displayed:",
+        "layerPerPlate": "Per plate",
+        "layerPerPlateDesc": "Resets to layer 0 at the start of each plate",
+        "layerGlobal": "Global (across all plates)",
+        "layerGlobalDesc": "Continuous layer counting across all plates",
+        "layerHelpText": "Controls how layer counting is displayed:<ul><li><strong>Per plate:</strong> Resets to layer 0 at the start of each plate</li><li><strong>Global:</strong> Continuous layer counting across all plates</li></ul>"
       },
       "file": {
         "title": "File Settings",
@@ -118,6 +125,11 @@
         "testExport": "Generate test file (start/end sequences only)",
         "testExportHelp": "When enabled, exports only the start and end sequences without the actual print code. This creates a small test file perfect for verifying plate-swap logic without running a full print. The test file will go through all plate changes but skip the actual object printing.",
         "testWaitTime": "Test file wait time (seconds):"
+      },
+      "developer": {
+        "title": "Developer Settings",
+        "enable": "Developer mode",
+        "enableHelp": "When <b>on</b>, shows advanced developer options like override metadata and test file generation. Only enable this if you need access to these experimental features."
       }
     }
   },

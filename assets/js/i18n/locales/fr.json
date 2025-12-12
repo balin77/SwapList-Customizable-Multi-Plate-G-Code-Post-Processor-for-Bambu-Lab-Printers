@@ -110,7 +110,14 @@
         "perPlateDesc": "La progression affiche le pourcentage/temps pour le plateau actuel uniquement (comportement par défaut)",
         "global": "Global (sur tous les plateaux)",
         "globalDesc": "La progression affiche le pourcentage/temps global sur tous les plateaux de la file",
-        "helpText": "Contrôle comment le pourcentage et le temps restant sont calculés:<ul><li><strong>Par plateau:</strong> La progression affiche le pourcentage/temps pour le plateau actuel uniquement (comportement par défaut)</li><li><strong>Global:</strong> La progression affiche le pourcentage/temps global sur tous les plateaux de la file</li></ul>"
+        "helpText": "Contrôle comment le pourcentage et le temps restant sont calculés:<ul><li><strong>Par plateau:</strong> La progression affiche le pourcentage/temps pour le plateau actuel uniquement (comportement par défaut)</li><li><strong>Global:</strong> La progression affiche le pourcentage/temps global sur tous les plateaux de la file</li></ul>",
+        "layerProgress": "Progression des couches",
+        "layerProgressHelp": "Contrôle comment le comptage des couches est affiché:",
+        "layerPerPlate": "Par plateau",
+        "layerPerPlateDesc": "Se réinitialise à la couche 0 au début de chaque plateau",
+        "layerGlobal": "Global (sur tous les plateaux)",
+        "layerGlobalDesc": "Comptage continu des couches sur tous les plateaux",
+        "layerHelpText": "Contrôle comment le comptage des couches est affiché:<ul><li><strong>Par plateau:</strong> Se réinitialise à la couche 0 au début de chaque plateau</li><li><strong>Global:</strong> Comptage continu des couches sur tous les plateaux</li></ul>"
       },
       "file": {
         "title": "Paramètres de fichier",
@@ -118,6 +125,11 @@
         "testExport": "Générer un fichier de test (séquences début/fin uniquement)",
         "testExportHelp": "Lorsqu'activé, exporte uniquement les séquences de début et de fin sans le code d'impression réel. Cela crée un petit fichier de test parfait pour vérifier la logique de changement de plateau sans exécuter une impression complète. Le fichier de test passera par tous les changements de plateau mais sautera l'impression réelle des objets.",
         "testWaitTime": "Temps d'attente du fichier de test (secondes):"
+      },
+      "developer": {
+        "title": "Paramètres développeur",
+        "enable": "Mode développeur",
+        "enableHelp": "Lorsque <b>activé</b>, affiche les options avancées pour développeurs comme le remplacement des métadonnées et la génération de fichiers de test. N'activez cela que si vous avez besoin d'accéder à ces fonctionnalités expérimentales."
       }
     }
   },

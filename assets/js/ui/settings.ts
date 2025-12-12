@@ -138,11 +138,18 @@ export function getSoundRemovalMode(): SoundRemovalMode {
 }
 
 /**
- * Get layer progress mode (always returns "global")
+ * Get layer progress mode
  */
 export function getLayerProgressMode(): string {
-  // Layer Progress UI removed - always return "global" as default behavior
-  return "global";
+  const perPlate = document.getElementById("layer_progress_per_plate") as HTMLInputElement | null;
+  const global = document.getElementById("layer_progress_global") as HTMLInputElement | null;
+
+  if (global && global.checked) {
+    return "global";
+  } else if (perPlate && perPlate.checked) {
+    return "per_plate";
+  }
+  return "global"; // default
 }
 
 /**
@@ -641,6 +648,26 @@ window.getDisableFirstLayerScan = getDisableFirstLayerScan;
 
 /**
  * Function to hide/show settings sections based on current app mode
+ *
+ * Visibility Rules:
+ *
+ * GLOBAL SETTINGS:
+ * - Cooling & Bed Temperature: Hidden in SWAP mode, visible in Push-off mode
+ * - Printer Sounds: Only visible for A1/A1M printers (all modes)
+ * - AMS Optimization: Only visible for A1/A1M printers (all modes)
+ * - Startsequence: Only visible for X1/P1 printers in Push-off mode
+ *   - Bed Leveling checkbox: Visible for X1 and P1
+ *   - First Layer Scan checkbox: Only visible for X1
+ *
+ * PER-PLATE SETTINGS:
+ * - Objects section: Hidden in SWAP mode OR for A1/A1M printers
+ * - Nozzle & Filament section: Hidden in SWAP mode
+ * - Push-off & Ejection section: Hidden in SWAP mode
+ *
+ * MODE COMBINATIONS:
+ * - A1M: Always SWAP mode (no toggle)
+ * - A1: Can toggle between SWAP and Push-off mode
+ * - X1/P1: Always Push-off mode (no toggle)
  */
 function updateSettingsVisibilityForMode(): void {
   const isSwapMode = state.APP_MODE === 'swap';
@@ -649,90 +676,87 @@ function updateSettingsVisibilityForMode(): void {
   const isX1 = state.PRINTER_MODEL === 'X1';
   const isP1 = state.PRINTER_MODEL === 'P1';
 
-  // Global settings sections - find cooling section by looking for all h4 elements
+  // Global settings sections - use CSS classes for reliable targeting
   const globalSection = document.getElementById('global_settings_section');
   if (globalSection) {
-    const settingsGroups = globalSection.querySelectorAll<HTMLElement>('.settings-group');
-    settingsGroups.forEach(group => {
-      const h4 = group.querySelector('h4');
-      if (h4 && h4.textContent?.includes('Cooling')) {
-        group.classList.toggle('hidden', isSwapMode);
-      }
-      // Hide AMS Optimization section for non-A1/A1M printers
-      if (h4 && h4.textContent?.includes('AMS Optimization')) {
-        group.classList.toggle('hidden', !isA1Mode);
-      }
-      // Hide Printer Sounds section for non-A1/A1M printers
-      if (h4 && h4.textContent?.includes('Printer Sounds')) {
-        group.classList.toggle('hidden', !isA1Mode);
-      }
-      // Hide Startsequence section unless in pushoff mode with X1 or P1
-      if (h4 && h4.textContent?.includes('Startsequence')) {
-        const shouldShow = isPushoffMode && (isX1 || isP1);
-        group.classList.toggle('hidden', !shouldShow);
+    // Cooling section: Hide in SWAP mode
+    const coolingSection = globalSection.querySelector<HTMLElement>('.settings-group:has(#opt_bedlevel_cooling)');
+    if (coolingSection) {
+      coolingSection.classList.toggle('hidden', isSwapMode);
+    }
 
-        // Within Startsequence, handle individual checkbox visibility
-        if (shouldShow) {
-          const bedLevelingLabel = group.querySelector<HTMLElement>('label:has(#opt_disable_bed_leveling)');
-          const firstLayerScanLabel = group.querySelector<HTMLElement>('label:has(#opt_disable_first_layer_scan)');
+    // AMS Optimization: Only for A1/A1M printers
+    const amsSection = globalSection.querySelector<HTMLElement>('.settings-group.ams-optimization-settings');
+    if (amsSection) {
+      amsSection.classList.toggle('hidden', !isA1Mode);
+    }
 
-          // Bed leveling: X1 and P1 in pushoff mode
-          if (bedLevelingLabel) {
-            bedLevelingLabel.style.display = (isX1 || isP1) ? 'block' : 'none';
-          }
+    // Printer Sounds: Only for A1/A1M printers
+    const soundsSection = globalSection.querySelector<HTMLElement>('.settings-group.printer-sounds-settings');
+    if (soundsSection) {
+      soundsSection.classList.toggle('hidden', !isA1Mode);
+    }
 
-          // First layer scan: X1 only in pushoff mode
-          if (firstLayerScanLabel) {
-            firstLayerScanLabel.style.display = isX1 ? 'block' : 'none';
-          }
+    // Startsequence: Only for X1/P1 in pushoff mode
+    const startseqSection = globalSection.querySelector<HTMLElement>('.settings-group.startsequence-settings');
+    if (startseqSection) {
+      const shouldShow = isPushoffMode && (isX1 || isP1);
+      startseqSection.classList.toggle('hidden', !shouldShow);
+
+      // Within Startsequence, handle individual checkbox visibility
+      if (shouldShow) {
+        const bedLevelingLabel = startseqSection.querySelector<HTMLElement>('label:has(#opt_disable_bed_leveling)');
+        const firstLayerScanLabel = startseqSection.querySelector<HTMLElement>('label:has(#opt_disable_first_layer_scan)');
+
+        // Bed leveling: X1 and P1 in pushoff mode
+        if (bedLevelingLabel) {
+          bedLevelingLabel.style.display = (isX1 || isP1) ? 'block' : 'none';
+        }
+
+        // First layer scan: X1 only in pushoff mode
+        if (firstLayerScanLabel) {
+          firstLayerScanLabel.style.display = isX1 ? 'block' : 'none';
         }
       }
-    });
+    }
   }
 
   // Setup sound settings event listeners if in A1/A1M mode
   setupSoundSettingsListeners();
 
-  // Per-plate settings sections in template
-  const plateSettings = document.getElementById('plate_specific_settings');
-  if (plateSettings) {
-    let hasVisibleGroups = false;
+  // Per-plate settings sections: Hide entire section in SWAP mode
+  const plateSettingsSection = document.getElementById('plate_settings_section');
+  if (plateSettingsSection) {
+    // In SWAP mode, hide the entire plate settings section
+    plateSettingsSection.classList.toggle('hidden', isSwapMode);
+  }
 
-    // Objects section - find by h5 text content
-    const settingsGroups = plateSettings.querySelectorAll<HTMLElement>('.settings-group');
-    settingsGroups.forEach(group => {
-      const h5 = group.querySelector('h5');
-      if (h5) {
-        const text = h5.textContent || "";
-        if (text.includes('Objects')) {
-          // Hide Objects section for SWAP mode OR for A1/A1M modes
-          const shouldHide = isSwapMode || isA1Mode;
-          group.classList.toggle('hidden', shouldHide);
-          if (!shouldHide) {
-            hasVisibleGroups = true;
-          }
-        } else if (text.includes('Nozzle') || text.includes('Push-off')) {
-          group.classList.toggle('hidden', isSwapMode);
-          if (!isSwapMode) {
-            hasVisibleGroups = true;
-          }
-        } else {
-          // Count other visible groups (like future custom sections)
-          if (!group.classList.contains('hidden')) {
-            hasVisibleGroups = true;
-          }
-        }
+  // Per-plate settings sub-sections in template (only relevant if not in SWAP mode)
+  if (!isSwapMode) {
+    const plateSettings = document.getElementById('plate_specific_settings');
+    if (plateSettings) {
+      // Objects section: Hidden for A1/A1M printers (X-coordinates not needed)
+      const objectsSection = plateSettings.querySelector<HTMLElement>('.settings-group:has(.obj-count)');
+      if (objectsSection) {
+        objectsSection.classList.toggle('hidden', isA1Mode);
       }
-    });
 
-    // Hide/show the entire plate settings section based on whether it has visible content
-    const plateSettingsSection = document.getElementById('plate_settings_section');
-    if (plateSettingsSection) {
-      plateSettingsSection.classList.toggle('hidden', isSwapMode && !hasVisibleGroups);
+      // Nozzle & Filament section: Always visible in push-off mode
+      const nozzleSection = plateSettings.querySelector<HTMLElement>('.settings-group.plate-nozzle-settings');
+      if (nozzleSection) {
+        nozzleSection.classList.remove('hidden');
+      }
+
+      // Push-off & Ejection section: Always visible in push-off mode
+      const pushoffSection = plateSettings.querySelector<HTMLElement>('.settings-group.plate-pushoff-settings');
+      if (pushoffSection) {
+        pushoffSection.classList.remove('hidden');
+      }
     }
   }
 
-  console.log(`Settings visibility updated - SWAP: ${isSwapMode}, A1: ${isA1Mode}, Mode: ${state.PRINTER_MODEL}`);
+  console.log(`[Settings Visibility] Updated - Printer: ${state.PRINTER_MODEL}, App Mode: ${state.APP_MODE}`);
+  console.log(`[Settings Visibility] Cooling: ${!isSwapMode ? 'visible' : 'hidden'}, AMS Opt: ${isA1Mode ? 'visible' : 'hidden'}, Sounds: ${isA1Mode ? 'visible' : 'hidden'}, Startseq: ${isPushoffMode && (isX1 || isP1) ? 'visible' : 'hidden'}`);
 }
 
 /**
@@ -808,5 +832,57 @@ export function reorderPlateSettings(fromIndex: number, toIndex: number): void {
   }
 }
 
+/**
+ * Update visibility of developer-only settings
+ */
+function updateDeveloperModeVisibility(): void {
+  const isDeveloperMode = state.DEVELOPER_MODE;
+
+  // Override Metadata section
+  const overrideMetadataSection = document.querySelector<HTMLElement>('.settings-group:has(#opt_override_metadata)');
+  if (overrideMetadataSection) {
+    overrideMetadataSection.style.display = isDeveloperMode ? '' : 'none';
+  }
+
+  // Test file export container
+  const testFileExportContainer = document.getElementById('test_file_export_container');
+  if (testFileExportContainer) {
+    testFileExportContainer.style.display = isDeveloperMode ? '' : 'none';
+  }
+
+  console.log(`[Settings Visibility] Developer mode ${isDeveloperMode ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Setup developer mode event listeners
+ */
+function setupDeveloperModeListeners(): void {
+  const developerModeCheckbox = document.getElementById("opt_developer_mode") as HTMLInputElement | null;
+
+  if (developerModeCheckbox) {
+    // Remove existing listeners first
+    developerModeCheckbox.removeEventListener("change", toggleDeveloperMode);
+
+    // Add new listener
+    developerModeCheckbox.addEventListener("change", toggleDeveloperMode);
+
+    // Set initial state
+    developerModeCheckbox.checked = state.DEVELOPER_MODE;
+    updateDeveloperModeVisibility();
+  }
+}
+
+/**
+ * Toggle developer mode
+ */
+function toggleDeveloperMode(): void {
+  const developerModeCheckbox = document.getElementById("opt_developer_mode") as HTMLInputElement | null;
+
+  if (developerModeCheckbox) {
+    state.DEVELOPER_MODE = developerModeCheckbox.checked;
+    updateDeveloperModeVisibility();
+  }
+}
+
 // Export the function for external use
-export { updateSettingsVisibilityForMode };
+export { updateSettingsVisibilityForMode, setupDeveloperModeListeners, updateDeveloperModeVisibility };

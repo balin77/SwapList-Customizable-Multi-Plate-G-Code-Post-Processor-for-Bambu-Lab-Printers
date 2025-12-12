@@ -13,7 +13,7 @@ import { dragOutHandler, dragOverHandler, dropHandler } from "../ui/dropzone.js"
 import { handleFile } from "../io/read3mf.js";
 import { export_3mf } from "../io/export3mf.js";
 import { export_gcode_txt } from "../io/exportGcode.js";
-import { custom_file_name, adj_field_length, show_settings_when_plates_loaded } from "../ui/settings.js";
+import { custom_file_name, adj_field_length, show_settings_when_plates_loaded, setupDeveloperModeListeners } from "../ui/settings.js";
 import { initInfobox, showWarning } from "../ui/infobox.js";
 import { i18n } from "../i18n/i18n.js";
 
@@ -144,6 +144,9 @@ export async function initialize_page(): Promise<void> {
     chkTestFile.addEventListener("change", toggleWaitTimeVisibility);
     toggleWaitTimeVisibility(); // Set initial state
   }
+
+  // Developer mode - setup listeners and initial visibility
+  setupDeveloperModeListeners();
 
   // App Mode Toggle (Swap Mode / Push Off Mode)
   const modeToggleCheckbox = document.getElementById("mode_toggle_checkbox") as HTMLInputElement | null;
