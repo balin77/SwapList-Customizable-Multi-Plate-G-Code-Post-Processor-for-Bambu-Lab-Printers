@@ -1,6 +1,6 @@
 # 🚀 AutoEject - Automatische Versionierung
 
-Dieses Dokument beschreibt das automatische Versionierungssystem für AutoEject.
+Dieses Dokument beschreibt das vollautomatische Versionierungssystem für AutoEject.
 
 ---
 
@@ -10,16 +10,22 @@ Dieses Dokument beschreibt das automatische Versionierungssystem für AutoEject.
 2. [Schnellstart](#schnellstart)
 3. [Versionsformat](#versionsformat)
 4. [Manuelle Versionierung](#manuelle-versionierung)
-5. [Automatische Versionierung](#automatische-versionierung)
+5. [Automatische Versionierung via GitHub](#automatische-versionierung-via-github)
 6. [Commit-Message-Konventionen](#commit-message-konventionen)
 7. [Beispiele](#beispiele)
-8. [Troubleshooting](#troubleshooting)
+8. [Workflow](#workflow)
+9. [Troubleshooting](#troubleshooting)
+10. [Setup & Dateien](#setup--dateien)
 
 ---
 
 ## 📖 Übersicht
 
 AutoEject verwendet ein intelligentes Versionierungssystem, das automatisch die Version bei jedem GitHub-Commit aktualisiert. Die Version wird zentral in `version.json` gespeichert und automatisch in alle relevanten Dateien übertragen.
+
+### 📦 Wie es funktioniert
+
+Die Version wird zentral verwaltet und bei jedem Push automatisch aktualisiert, basierend auf deiner Commit-Message. Du musst dich um nichts kümmern - das System erkennt automatisch die Art der Änderung und erhöht die entsprechende Versionsnummer.
 
 ### Betroffene Dateien:
 - ✅ `version.json` - Zentrale Versionsdatei
@@ -139,23 +145,29 @@ Next steps:
 
 ---
 
-## 🤖 Automatische Versionierung
+## 🤖 Automatische Versionierung via GitHub
 
 Bei jedem Push auf `main` oder `master` wird die Version **automatisch** erhöht!
 
 ### Wie funktioniert es?
 
 1. Du machst einen Commit mit aussagekräftiger Message
-2. Du pushst zu GitHub
+2. Du pushst zu GitHub (`git push`)
 3. GitHub Action analysiert deine Commit-Message
-4. Version wird automatisch erhöht
+4. Version wird automatisch erhöht (basierend auf Commit-Konventionen)
 5. Änderungen werden automatisch committed und gepusht
+6. **Fertig!** Die GitHub Action erstellt einen automatischen Commit mit der neuen Version
 
 ### GitHub Action läuft bei:
 - ✅ Push auf `main` Branch
 - ✅ Push auf `master` Branch
 - ❌ NICHT bei Änderungen an `version.json` (verhindert Endlosschleife)
 - ❌ NICHT bei Commits mit `[skip-version]`
+
+### Voraussetzungen
+- ✅ Node.js (für lokale Versionsaktualisierung)
+- ✅ GitHub Repository mit Actions aktiviert
+- ✅ Richtige Commit-Message-Konventionen verwenden
 
 ---
 
@@ -268,6 +280,30 @@ git push
 
 ---
 
+## 📝 Workflow
+
+Das System ist bereits eingerichtet und läuft vollautomatisch. Dein typischer Workflow:
+
+1. **Änderungen machen**: Code bearbeiten und testen
+2. **Committen**: Mit aussagekräftiger Commit-Message committen
+   ```bash
+   git add .
+   git commit -m "feat: neue Funktion hinzugefügt"
+   ```
+3. **Pushen**: Änderungen zu GitHub pushen
+   ```bash
+   git push
+   ```
+4. **Fertig!** Die GitHub Action:
+   - Analysiert deine Commit-Message
+   - Erhöht die Version automatisch
+   - Erstellt einen automatischen Commit
+   - Du kannst direkt weiterarbeiten
+
+**Keine manuelle Versionsverwaltung mehr nötig!**
+
+---
+
 ## 🔧 Troubleshooting
 
 ### Problem: Version wird nicht automatisch erhöht
@@ -355,7 +391,7 @@ npm run version:bump
 
 ---
 
-## 📚 Weitere Informationen
+## 🛠️ Setup & Dateien
 
 ### Dateien im System
 
@@ -446,6 +482,20 @@ git push
 
 # 4. Fertig! Version wurde automatisch erhöht 🎉
 ```
+
+---
+
+## 📚 Weitere Informationen
+
+### System-Komponenten
+
+Das Versionierungssystem besteht aus drei Hauptkomponenten:
+
+1. **`version.json`** - Zentrale Versionsdatei mit allen Versionsinformationen
+2. **`scripts/update-version.mjs`** - Script zur Versionsaktualisierung (lokal und in GitHub Action)
+3. **`.github/workflows/version-bump.yml`** - GitHub Action für automatische Versionierung bei jedem Push
+
+Alle drei Komponenten arbeiten zusammen, um ein nahtloses Versionierungserlebnis zu bieten.
 
 ---
 
