@@ -95,7 +95,9 @@
         "disableBedLeveling": "Desactivar nivelación de cama entre placas",
         "disableBedLevelingHelp": "Cuando está activado, se omite la nivelación de cama para todas las placas después de la primera. Esto acelera la impresión multi-placa reutilizando los datos de nivelación de la primera placa. Solo disponible para impresoras X1/P1 en modo push-off.",
         "disableFirstLayerScan": "Desactivar escaneo de primera capa",
-        "disableFirstLayerScanHelp": "Cuando está activado, se desactiva el escaneo de inspección de primera capa. Esto puede acelerar el inicio de la impresión pero elimina la verificación de calidad automática. Solo disponible para impresoras X1 en modo push-off."
+        "disableFirstLayerScanHelp": "Cuando está activado, se desactiva el escaneo de inspección de primera capa. Esto puede acelerar el inicio de la impresión pero elimina la verificación de calidad automática. Solo disponible para impresoras X1 en modo push-off.",
+        "disableMechModeFastCheck": "Desactivar verificación rápida de modo mecánico",
+        "disableMechModeFastCheckHelp": "Cuando está activado, la secuencia de verificación rápida de modo mecánico se desactiva para todas las placas después de la primera. Esto acelera la impresión multi-placa. Disponible para impresoras X1/P1/A1."
       },
       "project": {
         "title": "Configuración del proyecto",

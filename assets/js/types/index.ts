@@ -332,6 +332,7 @@ declare global {
     getSoundRemovalMode?: () => string;
     getDisableBedLeveling?: () => boolean;
     getDisableFirstLayerScan?: () => boolean;
+    getDisableMechModeFastCheck?: () => boolean;
     repaintAllPlateSwatchesFromStats?: () => void;
   }
 }

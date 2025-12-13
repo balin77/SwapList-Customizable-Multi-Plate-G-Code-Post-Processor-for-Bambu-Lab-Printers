@@ -95,7 +95,9 @@
         "disableBedLeveling": "Désactiver le nivellement du plateau entre les plateaux",
         "disableBedLevelingHelp": "Lorsqu'activé, le nivellement du plateau est ignoré pour tous les plateaux après le premier. Cela accélère l'impression multi-plateaux en réutilisant les données de nivellement du premier plateau. Disponible uniquement pour les imprimantes X1/P1 en mode push-off.",
         "disableFirstLayerScan": "Désactiver le scan de première couche",
-        "disableFirstLayerScanHelp": "Lorsqu'activé, le scan d'inspection de la première couche est désactivé. Cela peut accélérer le démarrage de l'impression mais supprime le contrôle qualité automatique. Disponible uniquement pour les imprimantes X1 en mode push-off."
+        "disableFirstLayerScanHelp": "Lorsqu'activé, le scan d'inspection de la première couche est désactivé. Cela peut accélérer le démarrage de l'impression mais supprime le contrôle qualité automatique. Disponible uniquement pour les imprimantes X1 en mode push-off.",
+        "disableMechModeFastCheck": "Désactiver la vérification rapide du mode mécanique",
+        "disableMechModeFastCheckHelp": "Lorsqu'activé, la séquence de vérification rapide du mode mécanique est désactivée pour tous les plateaux après le premier. Cela accélère l'impression multi-plateaux. Disponible pour les imprimantes X1/P1/A1."
       },
       "project": {
         "title": "Paramètres du projet",

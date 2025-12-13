@@ -95,7 +95,9 @@
         "disableBedLeveling": "禁用平台之间的热床调平",
         "disableBedLevelingHelp": "启用后,第一个平台之后的所有平台都将跳过热床调平。这通过重用第一个平台的调平数据来加快多平台打印。仅适用于推出模式下的 X1/P1 打印机。",
         "disableFirstLayerScan": "禁用首层扫描",
-        "disableFirstLayerScanHelp": "启用后,将禁用首层检查扫描。这可以加快打印开始,但会移除自动质量检查。仅适用于推出模式下的 X1 打印机。"
+        "disableFirstLayerScanHelp": "启用后,将禁用首层检查扫描。这可以加快打印开始,但会移除自动质量检查。仅适用于推出模式下的 X1 打印机。",
+        "disableMechModeFastCheck": "禁用机械模式快速检查",
+        "disableMechModeFastCheckHelp": "启用后,第一个平台之后的所有平台都将禁用机械模式快速检查序列。这可以加快多平台打印。适用于 X1/P1/A1 打印机。"
       },
       "project": {
         "title": "项目设置",

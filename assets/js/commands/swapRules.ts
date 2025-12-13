@@ -434,7 +434,7 @@ export const SWAP_RULES: SwapRule[] = [
     when: {
       modes: ["X1", "P1"],
       appModes: ["pushoff"],
-      requireTrue: [],
+      requireTrue: ["opt_disable_mech_mode_fast_check"],
       requireFalse: []
     },
     onlyIf: { plateIndexGreaterThan: 0 },
@@ -665,8 +665,8 @@ export const SWAP_RULES: SwapRule[] = [
     scope: "startseq",
     when: {
       modes: ["A1"],
-      appModes: ["pushoff"],
-      requireTrue: [],
+      appModes: ["pushoff", "swap"],
+      requireTrue: ["opt_disable_mech_mode_fast_check"],
       requireFalse: []
     },
     onlyIf: { plateIndexGreaterThan: 0 },

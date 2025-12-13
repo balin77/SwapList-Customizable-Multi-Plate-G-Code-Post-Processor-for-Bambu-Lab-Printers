@@ -17,6 +17,8 @@ export const UI_ELEMENTS = {
   AMS_OPTIMIZATION: 'ams-optimization-settings',
   PRINTER_SOUNDS: 'printer-sounds-settings',
   OVERRIDE_METADATA: 'opt_override_metadata',
+  STARTSEQUENCE_SETTINGS: 'startsequence-settings',
+  MECH_MODE_FAST_CHECK: 'opt_disable_mech_mode_fast_check_container',
 
   // Logo Elements
   SWAP_LOGO: 'logo',
@@ -72,8 +74,8 @@ export const VISIBILITY_RULES: Record<AppModeKey, ModeVisibilityRules> = {
       UI_ELEMENTS.EXPORT_BUTTON,        // SWAP file export always available
       UI_ELEMENTS.EXPORT_GCODE_BUTTON,  // GCODE export always available
       UI_ELEMENTS.SECURE_PUSHOFF,
-      UI_ELEMENTS.EXTRA_PUSHOFF_CONTAINER,
-      UI_ELEMENTS.OVERRIDE_METADATA
+      UI_ELEMENTS.EXTRA_PUSHOFF_CONTAINER
+      // Note: OVERRIDE_METADATA is controlled by developer mode in settings.ts
     ],
     // Always hidden in Push Off Mode
     hidden: [
@@ -86,18 +88,30 @@ export const VISIBILITY_RULES: Record<AppModeKey, ModeVisibilityRules> = {
     deviceRules: {
       A1M: {
         visible: [UI_ELEMENTS.PRINTER_SOUNDS],
-        hidden: [UI_ELEMENTS.BEDLEVEL_COOLING]  // A1M doesn't support bed level cooling
+        hidden: [
+          UI_ELEMENTS.BEDLEVEL_COOLING,  // A1M doesn't support bed level cooling
+          UI_ELEMENTS.MECH_MODE_FAST_CHECK  // A1M doesn't support mech mode fast check option
+        ]
       },
       A1: {
-        visible: [UI_ELEMENTS.PRINTER_SOUNDS],
+        visible: [
+          UI_ELEMENTS.PRINTER_SOUNDS,
+          UI_ELEMENTS.MECH_MODE_FAST_CHECK  // A1 supports mech mode fast check option
+        ],
         hidden: [UI_ELEMENTS.BEDLEVEL_COOLING]  // A1 doesn't support bed level cooling
       },
       X1: {
-        visible: [UI_ELEMENTS.BEDLEVEL_COOLING],  // Only X1/P1 support bed level cooling
+        visible: [
+          UI_ELEMENTS.BEDLEVEL_COOLING,  // Only X1/P1 support bed level cooling
+          UI_ELEMENTS.MECH_MODE_FAST_CHECK  // X1 supports mech mode fast check option
+        ],
         hidden: [UI_ELEMENTS.PRINTER_SOUNDS]
       },
       P1: {
-        visible: [UI_ELEMENTS.BEDLEVEL_COOLING],  // Only X1/P1 support bed level cooling
+        visible: [
+          UI_ELEMENTS.BEDLEVEL_COOLING,  // Only X1/P1 support bed level cooling
+          UI_ELEMENTS.MECH_MODE_FAST_CHECK  // P1 supports mech mode fast check option
+        ],
         hidden: [UI_ELEMENTS.PRINTER_SOUNDS]
       }
     }
@@ -107,9 +121,8 @@ export const VISIBILITY_RULES: Record<AppModeKey, ModeVisibilityRules> = {
   SWAP: {
     // Always visible in Swap Mode
     visible: [
-      UI_ELEMENTS.TEST_FILE_EXPORT,
-      UI_ELEMENTS.EXPORT_BUTTON,
-      UI_ELEMENTS.OVERRIDE_METADATA
+      UI_ELEMENTS.EXPORT_BUTTON
+      // Note: TEST_FILE_EXPORT and OVERRIDE_METADATA are controlled by developer mode in settings.ts
     ],
     // Always hidden in Swap Mode
     hidden: [
@@ -128,14 +141,16 @@ export const VISIBILITY_RULES: Record<AppModeKey, ModeVisibilityRules> = {
           UI_ELEMENTS.PRINTER_SOUNDS
         ],
         hidden: [
-          UI_ELEMENTS.SWAP_MODE_LOGOS
+          UI_ELEMENTS.SWAP_MODE_LOGOS,
+          UI_ELEMENTS.MECH_MODE_FAST_CHECK  // A1M doesn't support mech mode fast check option in swap mode
         ]
       },
       A1: {
         visible: [
           UI_ELEMENTS.SWAP_MODE_LOGOS,
           UI_ELEMENTS.AMS_OPTIMIZATION,
-          UI_ELEMENTS.PRINTER_SOUNDS
+          UI_ELEMENTS.PRINTER_SOUNDS,
+          UI_ELEMENTS.MECH_MODE_FAST_CHECK  // A1 supports mech mode fast check option in swap mode
         ],
         hidden: [
           UI_ELEMENTS.SWAP_LOGO
@@ -213,7 +228,8 @@ export const INITIAL_STATE_RULES: InitialStateRules = {
     UI_ELEMENTS.BEDLEVEL_COOLING,
     UI_ELEMENTS.SECURE_PUSHOFF,
     UI_ELEMENTS.EXTRA_PUSHOFF_CONTAINER,
-    UI_ELEMENTS.OVERRIDE_METADATA
+    UI_ELEMENTS.OVERRIDE_METADATA,
+    UI_ELEMENTS.MECH_MODE_FAST_CHECK
   ]
 };
 

@@ -201,6 +201,14 @@ export function getDontSwapLastPlate(): boolean {
 }
 
 /**
+ * Get disable mech mode fast check setting
+ */
+export function getDisableMechModeFastCheck(): boolean {
+  const el = document.getElementById("opt_disable_mech_mode_fast_check") as HTMLInputElement | null;
+  return !!(el && el.checked);
+}
+
+/**
  * Update plate selector with click handlers
  */
 export function updatePlateSelector(): void {
@@ -653,6 +661,7 @@ window.getDisablePrinterSounds = getDisablePrinterSounds;
 window.getSoundRemovalMode = getSoundRemovalMode;
 window.getDisableBedLeveling = getDisableBedLeveling;
 window.getDisableFirstLayerScan = getDisableFirstLayerScan;
+window.getDisableMechModeFastCheck = getDisableMechModeFastCheck;
 
 /**
  * Function to hide/show settings sections based on current app mode
@@ -711,25 +720,32 @@ function updateSettingsVisibilityForMode(): void {
       soundsSection.classList.toggle('hidden', !isA1Mode);
     }
 
-    // Startsequence: Only for X1/P1 in pushoff mode
+    // Startsequence: For X1/P1 in pushoff mode, and A1 in both pushoff and swap modes
     const startseqSection = globalSection.querySelector<HTMLElement>('.settings-group.startsequence-settings');
     if (startseqSection) {
-      const shouldShow = isPushoffMode && (isX1 || isP1);
+      const isA1 = state.PRINTER_MODEL === 'A1';
+      const shouldShow = (isPushoffMode && (isX1 || isP1)) || isA1;
       startseqSection.classList.toggle('hidden', !shouldShow);
 
       // Within Startsequence, handle individual checkbox visibility
       if (shouldShow) {
         const bedLevelingLabel = startseqSection.querySelector<HTMLElement>('label:has(#opt_disable_bed_leveling)');
         const firstLayerScanLabel = startseqSection.querySelector<HTMLElement>('label:has(#opt_disable_first_layer_scan)');
+        const mechModeFastCheckContainer = startseqSection.querySelector<HTMLElement>('#opt_disable_mech_mode_fast_check_container');
 
-        // Bed leveling: X1 and P1 in pushoff mode
+        // Bed leveling: X1 and P1 in pushoff mode only
         if (bedLevelingLabel) {
-          bedLevelingLabel.style.display = (isX1 || isP1) ? 'block' : 'none';
+          bedLevelingLabel.style.display = (isX1 || isP1) && isPushoffMode ? 'block' : 'none';
         }
 
         // First layer scan: X1 only in pushoff mode
         if (firstLayerScanLabel) {
-          firstLayerScanLabel.style.display = isX1 ? 'block' : 'none';
+          firstLayerScanLabel.style.display = isX1 && isPushoffMode ? 'block' : 'none';
+        }
+
+        // Mech mode fast check: X1/P1 in pushoff mode, A1 in both pushoff and swap modes
+        if (mechModeFastCheckContainer) {
+          mechModeFastCheckContainer.style.display = (isX1 || isP1 || isA1) ? 'block' : 'none';
         }
       }
     }
@@ -771,6 +787,9 @@ function updateSettingsVisibilityForMode(): void {
 
   console.log(`[Settings Visibility] Updated - Printer: ${state.PRINTER_MODEL}, App Mode: ${state.APP_MODE}`);
   console.log(`[Settings Visibility] Don't Swap Last Plate: ${isSwapMode ? 'visible' : 'hidden'}, Cooling: ${!isSwapMode ? 'visible' : 'hidden'}, AMS Opt: ${isA1Mode ? 'visible' : 'hidden'}, Sounds: ${isA1Mode ? 'visible' : 'hidden'}, Startseq: ${isPushoffMode && (isX1 || isP1) ? 'visible' : 'hidden'}`);
+
+  // Apply developer mode visibility after mode-specific visibility
+  updateDeveloperModeVisibility();
 }
 
 /**
@@ -848,20 +867,37 @@ export function reorderPlateSettings(fromIndex: number, toIndex: number): void {
 
 /**
  * Update visibility of developer-only settings
+ * NOTE: This function overrides visibility rules from uiVisibility.ts
+ * Developer mode settings should always be shown when enabled, regardless of app mode
  */
 function updateDeveloperModeVisibility(): void {
   const isDeveloperMode = state.DEVELOPER_MODE;
 
-  // Override Metadata section
-  const overrideMetadataSection = document.querySelector<HTMLElement>('.settings-group:has(#opt_override_metadata)');
-  if (overrideMetadataSection) {
-    overrideMetadataSection.style.display = isDeveloperMode ? '' : 'none';
+  // Override Metadata section - hide the entire settings-group
+  const overrideMetadataGroup = document.querySelector<HTMLElement>('.settings-group:has(#opt_override_metadata)');
+  if (overrideMetadataGroup) {
+    overrideMetadataGroup.style.display = isDeveloperMode ? '' : 'none';
   }
 
-  // Test file export container
+  // Test file export container - FORCE visibility when developer mode is on
+  // This overrides any visibility rules from uiVisibility.ts
   const testFileExportContainer = document.getElementById('test_file_export_container');
   if (testFileExportContainer) {
-    testFileExportContainer.style.display = isDeveloperMode ? '' : 'none';
+    if (isDeveloperMode) {
+      // Force show - remove hidden class AND set display to block
+      testFileExportContainer.classList.remove('hidden');
+      testFileExportContainer.style.display = 'block';
+    } else {
+      // Hide - add hidden class AND set display to none
+      testFileExportContainer.classList.add('hidden');
+      testFileExportContainer.style.display = 'none';
+    }
+  }
+
+  // Test wait time container - only hide when developer mode is off
+  const testWaitTimeContainer = document.getElementById('test_wait_time_container');
+  if (testWaitTimeContainer && !isDeveloperMode) {
+    testWaitTimeContainer.style.display = 'none';
   }
 
   console.log(`[Settings Visibility] Developer mode ${isDeveloperMode ? 'enabled' : 'disabled'}`);

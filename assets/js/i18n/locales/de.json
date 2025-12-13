@@ -100,7 +100,9 @@
         "disableBedLeveling": "Bettnivellierung zwischen Platten deaktivieren",
         "disableBedLevelingHelp": "Wenn aktiviert, wird die Bettnivellierung für alle Platten nach der ersten übersprungen. Dies beschleunigt den Multi-Platten-Druck durch Wiederverwendung der Nivellierdaten von der ersten Platte. Nur verfügbar für X1/P1-Drucker im Push-Off-Modus.",
         "disableFirstLayerScan": "Erste-Schicht-Scan deaktivieren",
-        "disableFirstLayerScanHelp": "Wenn aktiviert, wird der Erste-Schicht-Inspektionsscan deaktiviert. Dies kann den Druckstart beschleunigen, entfernt aber die automatische Qualitätsprüfung. Nur verfügbar für X1-Drucker im Push-Off-Modus."
+        "disableFirstLayerScanHelp": "Wenn aktiviert, wird der Erste-Schicht-Inspektionsscan deaktiviert. Dies kann den Druckstart beschleunigen, entfernt aber die automatische Qualitätsprüfung. Nur verfügbar für X1-Drucker im Push-Off-Modus.",
+        "disableMechModeFastCheck": "Mech-Mode-Fast-Check deaktivieren",
+        "disableMechModeFastCheckHelp": "Wenn aktiviert, wird die mechanische Modus-Schnellprüfung für alle Platten nach der ersten deaktiviert. Dies beschleunigt den Multi-Platten-Druck. Verfügbar für X1/P1/A1-Drucker."
       },
       "project": {
         "title": "Projekteinstellungen",

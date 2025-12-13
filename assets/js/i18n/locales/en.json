@@ -100,7 +100,9 @@
         "disableBedLeveling": "Disable bed leveling between plates",
         "disableBedLevelingHelp": "When on, bed leveling is skipped for all plates after the first one. This speeds up multi-plate printing by reusing the leveling data from the first plate. Only available for X1/P1 printers in push-off mode.",
         "disableFirstLayerScan": "Disable first layer scan",
-        "disableFirstLayerScanHelp": "When on, the first layer inspection scan is disabled. This can speed up the print start but removes the automatic quality check. Only available for X1 printers in push-off mode."
+        "disableFirstLayerScanHelp": "When on, the first layer inspection scan is disabled. This can speed up the print start but removes the automatic quality check. Only available for X1 printers in push-off mode.",
+        "disableMechModeFastCheck": "Disable mech mode fast check",
+        "disableMechModeFastCheckHelp": "When on, the mechanical mode fast check sequence is disabled for all plates after the first one. This speeds up multi-plate printing. Available for X1/P1/A1 printers."
       },
       "project": {
         "title": "Project Settings",
