@@ -96,8 +96,8 @@
         "disableBedLevelingHelp": "Quando ativado, o nivelamento da mesa é ignorado para todas as placas após a primeira. Isso acelera a impressão de múltiplas placas reutilizando os dados de nivelamento da primeira placa. Disponível apenas para impressoras X1/P1 no modo push-off.",
         "disableFirstLayerScan": "Desativar varredura da primeira camada",
         "disableFirstLayerScanHelp": "Quando ativado, a varredura de inspeção da primeira camada é desabilitada. Isso pode acelerar o início da impressão, mas remove a verificação de qualidade automática. Disponível apenas para impressoras X1 no modo push-off.",
-        "disableMechModeFastCheck": "Desativar verificação rápida do modo mecânico",
-        "disableMechModeFastCheckHelp": "Quando ativado, a sequência de verificação rápida do modo mecânico é desabilitada para todas as placas após a primeira. Isso acelera a impressão de múltiplas placas. Disponível para impressoras X1/P1/A1."
+        "vibrationCalibrationOnlyOnce": "Calibração de vibração apenas uma vez",
+        "vibrationCalibrationOnlyOnceHelp": "Quando ativado, a calibração de vibração é realizada apenas para a primeira placa. Isso acelera a impressão de múltiplas placas. Disponível para impressoras X1/P1/A1."
       },
       "project": {
         "title": "Configurações do projeto",

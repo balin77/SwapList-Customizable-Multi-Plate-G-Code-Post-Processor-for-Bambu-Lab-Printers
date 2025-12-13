@@ -96,8 +96,8 @@
         "disableBedLevelingHelp": "Se attivata, il livellamento del piatto viene saltato per tutte le piastre dopo la prima. Questo accelera la stampa multi-piastra riutilizzando i dati di livellamento della prima piastra. Disponibile solo per stampanti X1/P1 in modalità push-off.",
         "disableFirstLayerScan": "Disabilita scansione primo strato",
         "disableFirstLayerScanHelp": "Se attivata, la scansione di ispezione del primo strato viene disabilitata. Questo può accelerare l'avvio della stampa ma rimuove il controllo qualità automatico. Disponibile solo per stampanti X1 in modalità push-off.",
-        "disableMechModeFastCheck": "Disabilita controllo rapido modalità meccanica",
-        "disableMechModeFastCheckHelp": "Se attivata, la sequenza di controllo rapido della modalità meccanica viene disabilitata per tutte le piastre dopo la prima. Questo accelera la stampa multi-piastra. Disponibile per stampanti X1/P1/A1."
+        "vibrationCalibrationOnlyOnce": "Calibrazione delle vibrazioni solo una volta",
+        "vibrationCalibrationOnlyOnceHelp": "Se attivata, la calibrazione delle vibrazioni viene eseguita solo per la prima piastra. Questo accelera la stampa multi-piastra. Disponibile per stampanti X1/P1/A1."
       },
       "project": {
         "title": "Impostazioni progetto",
