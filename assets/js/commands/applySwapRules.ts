@@ -24,6 +24,7 @@ import {
 import { A1_3Print_START, A1_3Print_END, A1_PRINTFLOW_START, A1_PRINTFLOW_END, A1_JOBOX_START, A1_JOBOX_END } from "./swapRules.js";
 import { state } from "../config/state.js";
 
+// Import buildGcode functions from @swapmod/core (UI-independent)
 import {
   bumpFirstExtrusionToE3,
   bumpFirstThreeExtrusionsX1P1,
@@ -38,7 +39,7 @@ import {
   buildA1MPushoffTempSequence,
   buildA1MPushoffExtrusionSequence,
   buildWaitBeforeSwapPayload,
-} from "../gcode/buildGcode.js";
+} from "@swapmod/core";
 
 import {
   _countPattern,

@@ -11,6 +11,7 @@ import { optimizeAMSBlocks } from "../gcode/gcodeManipulation.js";
 import { SWAP_RULES } from "../commands/swapRules.js";
 import { showWarning } from "../ui/infobox.js";
 import { splitIntoSections, joinSectionsTestMode } from "../gcode/readGcode.js";
+import { collectSettingsForPlate } from "../ui/settingsCollector.js";
 import {
   SWAP_START_A1M,
   SWAP_END_A1M,
@@ -178,12 +179,16 @@ function addAutoEjectComment(gcode: string, _plateIndex: number = 0, totalPlates
  * Build rule context for GCODE processing
  */
 function buildRuleContext(plateIndex: number, extra: Partial<RuleContext> = {}): RuleContext {
+  // Collect settings from UI for this plate
+  const settings = collectSettingsForPlate(plateIndex);
+
   return {
     mode: state.PRINTER_MODEL,
     appMode: state.APP_MODE,
     plateIndex,
     totalPlates: extra.totalPlates ?? 0,
     isLastPlate: (extra.totalPlates ? plateIndex === extra.totalPlates - 1 : false),
+    settings, // Add settings to context
     ...extra
   };
 }

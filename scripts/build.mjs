@@ -19,6 +19,10 @@ const buildOptions = {
   },
   plugins: [importGlobPlugin.default ? importGlobPlugin.default() : importGlobPlugin()],
   resolveExtensions: ['.ts', '.js', '.json'],
+  // Alias for @swapmod/core to point to the monorepo package
+  alias: {
+    '@swapmod/core': '../swapmod-monorepo/packages/core/src/index.ts'
+  },
 };
 
 if (watch) {
