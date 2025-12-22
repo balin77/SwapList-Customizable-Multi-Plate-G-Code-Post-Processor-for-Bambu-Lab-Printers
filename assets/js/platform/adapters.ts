@@ -7,29 +7,6 @@
 
 import { isTauri } from './detection.js';
 
-// Type definitions for Tauri APIs (will be available when running in Tauri)
-declare global {
-  interface Window {
-    __TAURI__?: {
-      dialog?: {
-        open(options: {
-          multiple?: boolean;
-          directory?: boolean;
-          filters?: Array<{ name: string; extensions: string[] }>;
-        }): Promise<string | string[] | null>;
-        save(options: {
-          defaultPath?: string;
-          filters?: Array<{ name: string; extensions: string[] }>;
-        }): Promise<string | null>;
-      };
-      fs?: {
-        readFile(path: string): Promise<Uint8Array>;
-        writeFile(path: string, contents: Uint8Array): Promise<void>;
-      };
-    };
-  }
-}
-
 /**
  * Select a file using native dialog (Tauri) or browser file input (Web)
  *
@@ -37,14 +14,17 @@ declare global {
  * @returns Promise<File | null>
  */
 export async function selectFile(accept?: string): Promise<File | null> {
-  if (isTauri && window.__TAURI__?.dialog) {
+  if (isTauri()) {
     // Tauri: Use native file dialog
     try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const { readFile } = await import('@tauri-apps/plugin-fs');
+
       const extensions = accept
         ? accept.split(',').map(ext => ext.trim().replace('.', ''))
         : undefined;
 
-      const filePath = await window.__TAURI__.dialog.open({
+      const filePath = await open({
         multiple: false,
         directory: false,
         filters: extensions ? [{
@@ -56,7 +36,7 @@ export async function selectFile(accept?: string): Promise<File | null> {
       if (!filePath || Array.isArray(filePath)) return null;
 
       // Read file content
-      const content = await window.__TAURI__.fs!.readFile(filePath);
+      const content = await readFile(filePath);
       const filename = filePath.split(/[/\\]/).pop() || 'file';
 
       return new File([content], filename, {
@@ -102,19 +82,29 @@ export async function downloadFile(
   filename: string,
   data: Blob | string | Uint8Array
 ): Promise<boolean> {
-  if (isTauri && window.__TAURI__?.dialog && window.__TAURI__?.fs) {
+  console.log('[Platform] downloadFile called:', { filename, isTauri: isTauri() });
+
+  if (isTauri()) {
+    console.log('[Platform] Using Tauri native save dialog');
     // Tauri: Use native save dialog
     try {
+      console.log('[Platform] Importing Tauri plugins...');
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const { writeFile } = await import('@tauri-apps/plugin-fs');
+      console.log('[Platform] Tauri plugins imported successfully');
+
       const ext = filename.split('.').pop()?.toLowerCase();
       const filters = ext ? [{
         name: getFilterName(ext),
         extensions: [ext]
       }] : undefined;
 
-      const savePath = await window.__TAURI__.dialog.save({
+      console.log('[Platform] Opening native save dialog with:', { filename, filters });
+      const savePath = await save({
         defaultPath: filename,
         filters
       });
+      console.log('[Platform] Save dialog returned:', savePath);
 
       if (!savePath) {
         console.log('[Platform] Save cancelled by user');
@@ -134,7 +124,7 @@ export async function downloadFile(
       }
 
       // Write file
-      await window.__TAURI__.fs.writeFile(savePath, content);
+      await writeFile(savePath, content);
 
       console.log(`[Platform] File saved: ${savePath}`);
       return true;

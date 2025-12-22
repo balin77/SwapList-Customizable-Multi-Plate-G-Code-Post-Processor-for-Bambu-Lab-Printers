@@ -51,7 +51,10 @@
       "Bash(timeout 30 bash:*)",
       "Bash(cargo:*)",
       "Bash(powershell -Command \"& {rustc --version}\")",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(npm run prepare:*)",
+      "Bash(Select-String -Pattern \"\\(Running|Finished|icon|Icon\\)\")",
+      "Bash(npm run build:production:*)"
     ],
     "deny": [],
     "ask": []

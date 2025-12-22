@@ -4,7 +4,7 @@ import JSZip from "jszip";
 import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
-import { download, collectAndTransform, chunked_md5, generateFilenameFormat } from "./ioUtils.js";
+import { collectAndTransform, chunked_md5, generateFilenameFormat } from "./ioUtils.js";
 import { generateModelSettingsXml } from "../config/xmlConfig.js";
 import { colorToHex } from "../utils/colors.js";
 import { buildProjectSettingsForUsedSlots } from "../config/materialConfig.js";
@@ -14,6 +14,7 @@ import { createRecoloredPlateImage } from "../utils/imageColorMapping.js";
 import { getSlotColor } from "../ui/filamentColors.js";
 import { checkAllPlatesRestrictions } from "../commands/plateRestrictions.js";
 import { calculateTotalGlobalLayers } from "../gcode/m73ProgressTransform.js";
+import { downloadFile } from "../platform/index.js";
 import type { SwapMode } from "../types/index.js";
 
 /**
@@ -993,11 +994,16 @@ export async function export_3mf(): Promise<void> {
       // Generate filename with new format including loop count
       const fileName = generateFilenameFormat(baseName, true);
 
-      const url = URL.createObjectURL(zipBlob);
-      download(fileName, url);
+      // Use platform-agnostic download (Tauri native dialog or browser download)
+      const success = await downloadFile(fileName, zipBlob);
 
-      update_progress(100);
-      setTimeout(() => update_progress(-1), 400);
+      if (success) {
+        update_progress(100);
+        setTimeout(() => update_progress(-1), 400);
+      } else {
+        showError('Download wurde abgebrochen');
+        update_progress(-1);
+      }
     });
   } catch (err) {
     const error = err as Error;
