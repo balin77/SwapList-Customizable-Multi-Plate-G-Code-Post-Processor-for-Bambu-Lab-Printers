@@ -26,7 +26,7 @@ import {
   END_SOUND_A1M,
   HEATERS_OFF
 } from "../commands/swapRules.js";
-import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal, insertM73ResetCommands } from "../gcode/m73ProgressTransform.js";
+import { transformM73LayerProgressGlobal, transformM73PercentageProgressGlobal, insertM73ResetCommands, calculateTotalGlobalLayers, updateTotalLayerNumberHeader } from "../gcode/m73ProgressTransform.js";
 import { getLayerProgressMode, getPercentageProgressMode } from "../ui/settings.js";
 import type { SwapMode, AMSSlotMapping, RuleContext } from "../types/index.js";
 // @ts-expect-error - Type import for documentation
@@ -403,6 +403,20 @@ export async function collectAndTransform(
   if (percentageProgressMode === 'global') {
     console.log('[M73 Transform] Applying global percentage progress transformation');
     modifiedLooped = transformM73PercentageProgressGlobal(modifiedLooped);
+  }
+
+  // Update GCODE header "total layer number" if global layer progress is enabled
+  if (layerProgressMode === 'global' && modifiedLooped.length > 0) {
+    const globalMaxLayerIndex = calculateTotalGlobalLayers(modifiedLooped);
+    const totalLayerCount = globalMaxLayerIndex + 1; // Convert 0-based index to 1-based count
+
+    console.log(`[Header Update] Updating first plate header with total layer count: ${totalLayerCount}`);
+
+    // Update the header in the first plate only (where the header is located)
+    const firstPlate = modifiedLooped[0];
+    if (firstPlate) {
+      modifiedLooped[0] = updateTotalLayerNumberHeader(firstPlate, totalLayerCount);
+    }
   }
 
   // Apply "Don't swap last plate" post-processing if enabled

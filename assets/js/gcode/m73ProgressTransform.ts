@@ -315,3 +315,25 @@ export function calculateTotalGlobalLayers(gcodeArray: string[]): number {
   console.log(`[Layer Count] Global max layer index: ${globalMaxLayer} (total: ${globalMaxLayer + 1} layers)`);
   return globalMaxLayer;
 }
+
+/**
+ * Updates the "; total layer number: X" header line in GCODE with the global total
+ *
+ * @param gcode - GCODE string with header
+ * @param totalLayers - Total number of layers (1-based count)
+ * @returns Modified GCODE with updated header
+ */
+export function updateTotalLayerNumberHeader(gcode: string, totalLayers: number): string {
+  // Pattern matches "; total layer number: <number>"
+  const pattern = /^(;\s*total\s+layer\s+number:\s*)\d+$/im;
+
+  const match = pattern.exec(gcode);
+  if (match) {
+    const updated = gcode.replace(pattern, `$1${totalLayers}`);
+    console.log(`[Header Update] Updated "total layer number" from original value to ${totalLayers}`);
+    return updated;
+  }
+
+  console.log('[Header Update] No "total layer number" header line found, skipping update');
+  return gcode;
+}
