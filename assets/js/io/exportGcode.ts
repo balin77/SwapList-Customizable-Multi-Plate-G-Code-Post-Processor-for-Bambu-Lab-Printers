@@ -3,8 +3,9 @@
 import { state } from "../config/state.js";
 import { update_progress } from "../ui/progressbar.js";
 import { validatePlateXCoords } from "../ui/plates.js";
-import { download, collectAndTransform, generateFilenameFormat } from "./ioUtils.js";
+import { collectAndTransform, generateFilenameFormat } from "./ioUtils.js";
 import { showError, showWarning } from "../ui/infobox.js";
+import { exportGcodeWithUI } from "./exportGcodeAdapter.js";
 
 /**
  * Export GCODE as text file
@@ -52,6 +53,7 @@ export async function export_gcode_txt(): Promise<void> {
 
 /**
  * Export GCODE in normal mode (not debug mode)
+ * Now uses core exportGcode function via adapter
  */
 async function exportNormalMode(base: string, modeTag: string, modifiedCombined: string): Promise<void> {
   update_progress(60);
@@ -60,9 +62,6 @@ async function exportNormalMode(base: string, modeTag: string, modifiedCombined:
   const filenameWithoutExt = generateFilenameFormat(`${base}.${modeTag}`, false);
   const filename = `${filenameWithoutExt}.gcode`;
 
-  // Create GCODE file directly from string - avoids string length issues
-  const gcodeBlob = new Blob([modifiedCombined], { type: "text/x-gcode" });
-  const gcodeUrl = URL.createObjectURL(gcodeBlob);
-
-  download(filename, gcodeUrl);
+  // Use core exportGcode function via adapter
+  await exportGcodeWithUI(modifiedCombined, filename);
 }

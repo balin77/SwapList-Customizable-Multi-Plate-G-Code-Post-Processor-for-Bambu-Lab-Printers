@@ -480,5 +480,141 @@ export * from './utils/*';
 
 ---
 
-**Stand**: ✅ Phase 2 abgeschlossen - Mittel-Variante erfolgreich
-**Empfehlung**: Desktop-App starten (Core ist ready!)
+## 🚀 Phase 3: Maximal-Variante - IO-Module
+
+**Ziel**: 80-85% Code-Sharing durch IO-Module Refactoring
+**Status**: ✅ Teilweise abgeschlossen (~65% erreicht)
+
+### ✅ IO-Module refactored
+
+#### exportGcode.ts → Core
+
+**Durchgeführte Schritte**:
+
+1. ✅ **Core exportGcode function erstellt**
+   - Location: `swapmod-monorepo/packages/core/src/io/exportGcode.ts`
+   - UI-unabhängig: Gibt `{ blob, filename }` zurück statt direkten Download
+   - Callback-basiert: `ExportGcodeCallbacks` für Progress/Error-Handling
+   - Hilfsfunktion: `getGcodeFileSize()` für Größen-Berechnung
+
+2. ✅ **3MF Utilities extrahiert**
+   - Location: `swapmod-monorepo/packages/core/src/io/3mfUtils.ts`
+   - Functions:
+     - `generateProject3mfXml()` - XML-Generierung für 3MF
+     - `generatePlateJson()` - Metadata JSON für Plates
+     - `sanitize3mfFilename()` - Dateinamen-Bereinigung
+     - `getPlateGcodeFilename()` - Plate GCODE Dateiname
+     - `getPlateThumbnailFilename()` - Plate Thumbnail Dateiname
+
+3. ✅ **Web Adapter erstellt**
+   - Location: `Swapmod Website/assets/js/io/exportGcodeAdapter.ts`
+   - `exportGcodeWithUI()` - Integriert Core-Funktion mit UI (Progress, Errors, Download)
+   - `formatGcodeFileSize()` - Human-readable Größen-Formatierung
+
+4. ✅ **Web Integration aktualisiert**
+   - `exportGcode.ts` nutzt jetzt `exportGcodeWithUI()` aus Adapter
+   - `exportNormalMode()` vereinfacht - Core übernimmt Blob-Erstellung
+   - Keine Breaking Changes für UI-Code
+
+5. ✅ **Build erfolgreich**
+   - Core-Package kompiliert ohne Fehler
+   - Web-Package baut und nutzt Core-IO-Funktionen
+   - esbuild alias funktioniert korrekt
+
+**Code-Beispiele**:
+
+```typescript
+// Core: exportGcode.ts (UI-unabhängig)
+export async function exportGcode(
+  gcode: string,
+  filename: string,
+  callbacks?: ExportGcodeCallbacks
+): Promise<{ blob: Blob; filename: string }> {
+  callbacks?.onProgress?.(10, 'Preparing GCODE data...');
+  const blob = new Blob([gcode], { type: 'text/x-gcode' });
+  callbacks?.onProgress?.(90, 'GCODE ready for download');
+  return { blob, filename };
+}
+
+// Web: exportGcodeAdapter.ts (UI-Integration)
+export async function exportGcodeWithUI(gcode: string, filename: string): Promise<void> {
+  const callbacks: ExportGcodeCallbacks = {
+    onProgress: (progress, message) => {
+      update_progress(progress);
+      console.log(`[Export GCODE] ${progress}% - ${message}`);
+    },
+    onError: (message) => {
+      showError(message);
+      update_progress(-1);
+    }
+  };
+
+  const { blob } = await coreExportGcode(gcode, filename, callbacks);
+  // Download-Logik (Browser-spezifisch)
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+}
+
+// Web: exportGcode.ts (vereinfacht)
+async function exportNormalMode(base: string, modeTag: string, modifiedCombined: string): Promise<void> {
+  const filename = `${generateFilenameFormat(`${base}.${modeTag}`, false)}.gcode`;
+  await exportGcodeWithUI(modifiedCombined, filename); // ← Nutzt Core via Adapter
+}
+```
+
+### 📊 Code-Verteilung (Phase 3)
+
+| Package | Module | Status |
+|---------|--------|--------|
+| **Core** | types, utils, gcode, commands, **io (exportGcode, 3mfUtils)** | ✅ ~65% |
+| **Web** | io (adapters, read3mf, export3mf), ui, state, i18n | ✅ ~35% |
+
+**Aktueller Code-Sharing**: ✅ **~65%** (Phase 3 teilweise abgeschlossen)
+
+**Im Core-Package hinzugefügt** (~5% mehr):
+- ✅ io/exportGcode.ts - GCODE-Export-Logik
+- ✅ io/3mfUtils.ts - 3MF-Utility-Funktionen (5 functions)
+- ✅ IO Callback Interfaces (Export3mfCallbacks, ExportGcodeCallbacks, Read3mfCallbacks)
+
+**Im Web-Package** (Adapter-Pattern):
+- exportGcodeAdapter.ts - UI-Integration für Core-Export
+- exportGcode.ts - Nutzt Adapter (vereinfacht)
+- Restliche IO (read3mf, export3mf bleiben vorerst in Web)
+
+---
+
+## 🎯 Phase 3 Fortschritt
+
+### ✅ Abgeschlossen
+1. Core exportGcode function
+2. 3MF Utility functions nach Core
+3. Web Adapter für exportGcode
+4. Web Integration aktualisiert
+5. Build erfolgreich (Core + Web)
+
+### ⏳ Optional: Weitere IO-Module
+- read3mf.ts - Parsing-Logik nach Core (komplex wegen DOM-Integration)
+- export3mf.ts - 3MF-Generierung nach Core (komplex wegen JSZip + Progress)
+
+**Entscheidung**: Parsing-Utilities und 3MF-Helpers sind extrahiert. Weitere Refactoring würde nur ~10-15% mehr Sharing bringen, aber erheblichen Aufwand bedeuten (komplexe DOM/JSZip-Abhängigkeiten).
+
+**Core-Exports (aktualisiert)**:
+```typescript
+// @swapmod/core jetzt verfügbar:
+export * from './gcode/buildGcode.js';      // 15 build functions
+export * from './gcode/readGcode.js';       // parsing & splitting
+export * from './gcode/gcodeManipulation.js';
+export * from './commands/swapRules.js';
+export * from './io/exportGcode.js';        // NEW: exportGcode, getGcodeFileSize
+export * from './io/3mfUtils.js';           // NEW: 5 utility functions
+export * from './types/index.js';
+export * from './utils/*';
+```
+
+---
+
+**Stand**: ✅ Phase 3 teilweise abgeschlossen - **65% Code-Sharing erreicht!**
+**Empfehlung**: Committen und Desktop-App starten (Core hat 65% shared code!)
