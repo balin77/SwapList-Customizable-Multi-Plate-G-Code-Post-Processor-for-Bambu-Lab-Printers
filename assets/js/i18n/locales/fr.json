@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "AutoEject",
-    "version": "AutoEject Version V1.11",
+    "version": "AutoEject Version V2.0",
     "inspiredBy": "Inspiré par Swaplist.app"
   },
   "ui": {
@@ -268,7 +268,7 @@
   },
   "appInfo": {
     "title": "Informations sur l'application",
-    "version": "AutoEject Version V1.11",
+    "version": "AutoEject Version V2.0",
     "inspiredBy": "Inspiré par Swaplist.app",
     "howToUse": {
       "title": "Comment utiliser cette application",
