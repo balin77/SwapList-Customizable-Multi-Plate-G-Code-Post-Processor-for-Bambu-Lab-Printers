@@ -10,6 +10,7 @@ import {
   getSecurePushOffEnabledForPlate,
   getExtraPushOffLevelsForPlate,
   getUserBedRaiseOffsetForPlate,
+  getWaitMinutesBeforeSwapForPlate,
 } from "../ui/settings.js";
 
 /**
@@ -209,6 +210,27 @@ export function buildCooldownFansWaitPayload(_gcode: string, _ctx: BuildContext)
   lines.push(";>>> Cooldown_fans_wait END");
 
   return lines.join("\n");
+}
+
+/**
+ * Builds the wait sequence before swap
+ *
+ * @param _gcode - GCODE string (unused)
+ * @param ctx - Build context
+ * @returns GCODE string for wait sequence
+ */
+export function buildWaitBeforeSwapPayload(_gcode: string, ctx: BuildContext): string {
+  const plateIndex = ctx.plateIndex;
+  if (plateIndex === undefined) return "";
+
+  const waitMinutes = getWaitMinutesBeforeSwapForPlate(plateIndex);
+  if (waitMinutes <= 0) return "";
+
+  const waitMilliseconds = waitMinutes * 60 * 1000;
+
+  console.log(`[Wait Before Swap] Plate ${plateIndex}: waiting ${waitMinutes} minutes (${waitMilliseconds}ms)`);
+
+  return `\n; ====== Wait before swap =====\nG4 P${waitMilliseconds} ; wait ${waitMinutes} minutes\n;>>> Wait_before_swap END\n`;
 }
 
 /**

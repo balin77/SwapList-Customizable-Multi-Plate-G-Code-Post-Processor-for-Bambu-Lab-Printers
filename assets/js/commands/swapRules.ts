@@ -941,6 +941,20 @@ export const SWAP_RULES: SwapRule[] = [
     wrapWithMarkers: true
   },
   {
+    id: "wait_before_swap_a1m",
+    description: "Insert wait sequence before A1M swap end sequence (SWAP mode only)",
+    enabled: true,
+    order: 89,
+    action: "insert_before",
+    scope: "all",
+    useRegex: true,
+    occurrence: "last",
+    anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_END[ \\t]*(\\n|$)",
+    when: { modes: ["A1M"], appModes: ["swap"], requireTrue: [], requireFalse: [] },
+    payloadFnId: "waitBeforeSwap",
+    wrapWithMarkers: true
+  },
+  {
     id: "a1m_append_endseg",
     description: "Insert A1M end segment BEFORE ; EXECUTABLE_BLOCK_END on every plate (SWAP mode only)",
     enabled: true,
@@ -970,6 +984,20 @@ export const SWAP_RULES: SwapRule[] = [
     when: { modes: ["A1"], appModes: ["swap"], requireTrue: [], requireFalse: [] },
     onlyIf: { plateIndexEquals: 0 },
     payload: A1_3Print_START,
+    wrapWithMarkers: true
+  },
+  {
+    id: "wait_before_swap_a1",
+    description: "Insert wait sequence before A1 swap end sequence (SWAP mode only)",
+    enabled: true,
+    order: 89,
+    action: "insert_before",
+    scope: "all",
+    useRegex: true,
+    occurrence: "last",
+    anchor: "(^|\\n)[ \\t]*;[ \\t]*EXECUTABLE_BLOCK_END[ \\t]*(\\n|$)",
+    when: { modes: ["A1"], appModes: ["swap"], requireTrue: [], requireFalse: [] },
+    payloadFnId: "waitBeforeSwap",
     wrapWithMarkers: true
   },
   {

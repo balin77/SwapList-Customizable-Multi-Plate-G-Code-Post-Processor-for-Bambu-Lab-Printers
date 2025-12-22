@@ -18,6 +18,7 @@ interface PlateSettings {
   bedRaiseOffset: number;
   securePushoff: boolean;
   extraPushoffLevels: number;
+  waitMinutesBeforeSwap: number;
 }
 
 const currentPlateSettings = new Map<number, PlateSettings>();
@@ -334,7 +335,8 @@ function initializePlateSettings(plateIndex: number): void {
     turnOffPurge: false,
     bedRaiseOffset: 30,
     securePushoff: true,
-    extraPushoffLevels: 2
+    extraPushoffLevels: 2,
+    waitMinutesBeforeSwap: 0
   });
 }
 
@@ -399,6 +401,15 @@ function loadPlateSettingsToUI(plateIndex: number, _plateEl: HTMLElement): void 
     extraLevelsInput.value = String(settings.extraPushoffLevels);
     extraLevelsInput.addEventListener("change", (e) => {
       settings.extraPushoffLevels = Math.max(1, Math.min(10, parseInt((e.target as HTMLInputElement).value, 10) || 2));
+    });
+  }
+
+  // Wait minutes before swap
+  const waitMinutesInput = plateSpecificSettings.querySelector<HTMLInputElement>(".wait_minutes_before_swap_plate");
+  if (waitMinutesInput) {
+    waitMinutesInput.value = String(settings.waitMinutesBeforeSwap);
+    waitMinutesInput.addEventListener("change", (e) => {
+      settings.waitMinutesBeforeSwap = Math.max(0, Math.min(60, parseInt((e.target as HTMLInputElement).value, 10) || 0));
     });
   }
 }
@@ -536,7 +547,8 @@ export function duplicatePlateSettings(sourcePlateIndex: number, targetPlateInde
       turnOffPurge: sourceSettings.turnOffPurge,
       bedRaiseOffset: sourceSettings.bedRaiseOffset,
       securePushoff: sourceSettings.securePushoff,
-      extraPushoffLevels: sourceSettings.extraPushoffLevels
+      extraPushoffLevels: sourceSettings.extraPushoffLevels,
+      waitMinutesBeforeSwap: sourceSettings.waitMinutesBeforeSwap
     };
 
     currentPlateSettings.set(targetPlateIndex, clonedSettings);
@@ -582,6 +594,18 @@ export function getExtraPushOffLevelsForPlate(plateIndex: number): number {
   }
   // Fallback to global setting
   return getExtraPushOffLevels();
+}
+
+/**
+ * Get wait minutes before swap for a specific plate
+ */
+export function getWaitMinutesBeforeSwapForPlate(plateIndex: number): number {
+  const settings = getPlateSettings(plateIndex);
+  if (settings && settings.waitMinutesBeforeSwap !== undefined) {
+    return settings.waitMinutesBeforeSwap;
+  }
+  // Default: no wait
+  return 0;
 }
 
 /**

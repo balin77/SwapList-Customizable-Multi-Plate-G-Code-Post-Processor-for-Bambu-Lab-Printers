@@ -504,6 +504,16 @@
 
             <div class="settings-separator"></div>
 
+            <label><span data-i18n="settings.plateSettings.pushoff.waitMinutesBeforeSwap">Wait minutes before swap</span>
+              <input class="wait_minutes_before_swap_plate" type="number" step="1" min="0" max="60" value="0">
+              <details class="tool_info">
+                <summary></summary>
+                <p data-i18n="settings.plateSettings.pushoff.waitMinutesBeforeSwapHelp">This setting allows you to set up a delay to allow the plate to cool down before the swap. This is appropriate for large parts that tend to warp.</p>
+              </details>
+            </label>
+
+            <div class="settings-separator"></div>
+
             <label>
               <input type="checkbox" class="opt_secure_pushoff_plate" checked>
               <span data-i18n="settings.plateSettings.pushoff.securePushoff">Secure push‑off sequence</span>

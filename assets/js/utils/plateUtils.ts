@@ -236,7 +236,8 @@ export async function autoPopulatePlateCoordinates(li: HTMLElement): Promise<voi
           turnOffPurge: false,
           bedRaiseOffset: 30,
           securePushoff: true,
-          extraPushoffLevels: 2
+          extraPushoffLevels: 2,
+          waitMinutesBeforeSwap: 0
         });
       } else {
         // Update existing settings

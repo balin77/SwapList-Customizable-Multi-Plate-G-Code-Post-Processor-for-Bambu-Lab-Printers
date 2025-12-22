@@ -61,6 +61,8 @@
         "title": "Push-off & Ejection",
         "bedRaiseOffset": "Bed raise offset before push-out (mm)",
         "bedRaiseOffsetHelp": "Defines how much the bed is raised before performing the push-out sequence.",
+        "waitMinutesBeforeSwap": "Wait minutes before swap",
+        "waitMinutesBeforeSwapHelp": "This setting allows you to set up a delay to allow the plate to cool down before the swap. This is appropriate for large parts that tend to warp.",
         "securePushoff": "Secure push‑off sequence",
         "securePushoffHelp": "When enabled, the app performs multiple controlled push‑offs at decreasing Z heights before the final push at Z=1. This helps avoid collisions and smooths the ejection.",
         "additionalLevels": "Additional push‑off levels",

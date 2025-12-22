@@ -37,6 +37,7 @@ import {
   buildA1SafetyClear,
   buildA1MPushoffTempSequence,
   buildA1MPushoffExtrusionSequence,
+  buildWaitBeforeSwapPayload,
 } from "../gcode/buildGcode.js";
 
 import {
@@ -134,6 +135,8 @@ function resolveDynamicPayload(fnId: string, gcode: string, ctx: RuleContext): s
       return buildA1MPushoffTempSequence(gcode, ctx);
     case "a1mPushoffExtrusionSequence":
       return buildA1MPushoffExtrusionSequence(gcode, ctx);
+    case "waitBeforeSwap":
+      return buildWaitBeforeSwapPayload(gcode, ctx);
     default:
       return "";
   }

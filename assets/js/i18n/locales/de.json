@@ -61,6 +61,8 @@
         "title": "Push-Off & Auswurf",
         "bedRaiseOffset": "Bettanhebung vor Push-Out (mm)",
         "bedRaiseOffsetHelp": "Definiert, wie viel das Bett angehoben wird, bevor die Push-Out-Sequenz ausgeführt wird.",
+        "waitMinutesBeforeSwap": "Wartezeit vor Wechsel (Minuten)",
+        "waitMinutesBeforeSwapHelp": "Diese Einstellung ermöglicht es, eine Verzögerung einzurichten, damit die Platte vor dem Wechsel abkühlen kann. Dies ist geeignet für große Teile, die zum Verziehen neigen.",
         "securePushoff": "Sichere Push-Off-Sequenz",
         "securePushoffHelp": "Wenn aktiviert, führt die App mehrere kontrollierte Push-Offs bei abnehmenden Z-Höhen durch, bevor der finale Push bei Z=1 erfolgt. Dies hilft, Kollisionen zu vermeiden und erleichtert den Auswurf.",
         "additionalLevels": "Zusätzliche Push-Off-Ebenen",
