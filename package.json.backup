@@ -1,0 +1,30 @@
+{
+  "name": "swapmod-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/gen-filament-index.mjs && node scripts/build.mjs --watch",
+    "build": "node scripts/gen-filament-index.mjs && node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "dev:compare-settings": "node scripts/compare-project-settings.mjs",
+    "dev:compare-template": "node scripts/compare-template-modified.mjs",
+    "dev:compare-gcode": "node scripts/compare-gcode.mjs",
+    "dev:remove-m73": "node scripts/remove-m73.mjs",
+    "version:bump": "node scripts/update-version.mjs build",
+    "version:patch": "node scripts/update-version.mjs patch",
+    "version:minor": "node scripts/update-version.mjs minor",
+    "version:major": "node scripts/update-version.mjs major"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "spark-md5": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/jszip": "^3.4.0",
+    "@types/spark-md5": "^3.0.5",
+    "esbuild": "^0.24.0",
+    "esbuild-plugin-import-glob": "^0.1.1",
+    "typescript": "^5.9.3"
+  }
+}

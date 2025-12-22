@@ -1,9 +1,11 @@
-// Web adapter for exportGcode - integrates core functionality with UI
+// Platform-agnostic adapter for exportGcode
 // Uses @swapmod/core for GCODE export logic with UI-specific callbacks
+// Automatically uses Tauri or Web download based on environment
 
 import { exportGcode as coreExportGcode, type ExportGcodeCallbacks } from '@swapmod/core';
 import { update_progress } from '../ui/progressbar.js';
 import { showError } from '../ui/infobox.js';
+import { downloadFile } from '../platform/index.js';
 
 /**
  * Web adapter for exportGcode that integrates with UI
@@ -28,23 +30,16 @@ export async function exportGcodeWithUI(gcode: string, filename: string): Promis
   try {
     const { blob, filename: exportFilename } = await coreExportGcode(gcode, filename, callbacks);
 
-    // Create download URL and trigger download
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = exportFilename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
+    // Use platform-agnostic download (Tauri native dialog or browser download)
+    const success = await downloadFile(exportFilename, blob);
 
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-
-    update_progress(100);
-    setTimeout(() => update_progress(-1), 500);
+    if (success) {
+      update_progress(100);
+      setTimeout(() => update_progress(-1), 500);
+    } else {
+      showError('Download wurde abgebrochen');
+      update_progress(-1);
+    }
   } catch (err) {
     const error = err as Error;
     console.error('GCODE export failed:', err);

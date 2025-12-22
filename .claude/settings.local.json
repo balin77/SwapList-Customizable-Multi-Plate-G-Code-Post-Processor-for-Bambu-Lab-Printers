@@ -48,7 +48,10 @@
       "Bash(for:*)",
       "Bash(do echo \"File: $file\")",
       "Bash(done)",
-      "Bash(timeout 30 bash:*)"
+      "Bash(timeout 30 bash:*)",
+      "Bash(cargo:*)",
+      "Bash(powershell -Command \"& {rustc --version}\")",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "ask": []
